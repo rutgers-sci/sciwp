@@ -124,7 +124,6 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 			'margin_padding' => array(
 				'css'           => array(
 					'main' => '%%order_class%%',
-                    'important' => array( 'custom_margin' )
 				),
 			),
 			'text'                  => array(
