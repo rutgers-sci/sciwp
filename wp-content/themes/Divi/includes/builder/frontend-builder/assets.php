@@ -17,14 +17,6 @@ function et_fb_enqueue_main_assets() {
 
 	wp_register_style( 'et_pb_admin_date_css', "{$root}/styles/jquery-ui-1.10.4.custom.css", array(), $ver );
 
-	if ( et_is_builder_plugin_active() || et_builder_post_is_of_custom_post_type() ) {
-		$responsive_preview_styles = 'responsive-preview-wrapped.css';
-	} else {
-		$responsive_preview_styles = 'responsive-preview.css';
-	}
-
-	wp_register_style( 'et-fb-responsive-preview', "{$assets}/css/{$responsive_preview_styles}", array(), $ver );
-
 	// Enqueue styles if the Divi Builder plugin is not active.
 	if ( ! et_is_builder_plugin_active() ) {
 		wp_enqueue_style( 'et-frontend-builder', "{$assets}/css/style.css", array(
@@ -32,7 +24,6 @@ function et_fb_enqueue_main_assets() {
 			'wp-mediaelement',
 			'wp-color-picker',
 			'et-core-admin',
-			'et-fb-responsive-preview',
 		), $ver );
 	}
 
@@ -41,12 +32,9 @@ function et_fb_enqueue_main_assets() {
 		wp_enqueue_style(
 			'et-builder-divi-builder-styles',
 			"{$assets}/css/divi-builder-style.css",
-			array( 'et-core-admin', 'wp-color-picker', 'et-fb-responsive-preview' ),
+			array( 'et-core-admin', 'wp-color-picker' ),
 			$ver
 		);
-	}
-
-	if ( ! et_core_use_google_fonts() || et_is_builder_plugin_active() ) {
 		et_fb_enqueue_open_sans();
 	}
 
@@ -183,16 +171,14 @@ function et_fb_enqueue_assets() {
 		wp_enqueue_script( 'avada' );
 	}
 
-	$DEBUG        = defined( 'ET_DEBUG' ) && ET_DEBUG;
-	$core_scripts = ET_CORE_URL . '/admin/js';
+	$DEBUG = defined( 'ET_DEBUG' ) && ET_DEBUG;
 
 	if ( $DEBUG || DiviExtensions::is_debugging_extension() ) {
 		wp_enqueue_script( 'react', 'https://cdn.jsdelivr.net/npm/react@16.2/umd/react.development.js', array(), '16.2', true );
 		wp_enqueue_script( 'react-dom', 'https://cdn.jsdelivr.net/npm/react-dom@16.2/umd/react-dom.development.js', array( 'react' ), '16.2', true );
-		add_filter( 'script_loader_tag', 'et_core_add_crossorigin_attribute', 10, 3 );
 	} else {
-		wp_enqueue_script( 'react', "{$core_scripts}/react.production.min.js", array(), '16.2', true );
-		wp_enqueue_script( 'react-dom', "{$core_scripts}/react-dom.production.min.js", array( 'react' ), '16.2', true );
+		wp_enqueue_script( 'react', "{$assets}/scripts/react.production.min.js", array(), '16.2', true );
+		wp_enqueue_script( 'react-dom', "{$assets}/scripts/react-dom.production.min.js", array( 'react' ), '16.2', true );
 	}
 
 	// Enqueue scripts.

@@ -84,9 +84,7 @@ class ET_Builder_Element {
 
 	private static $_current_section_index = -1;
 	private static $_current_row_index     = -1;
-	private static $_current_row_inner_index = -1;
 	private static $_current_column_index  = -1;
-	private static $_current_column_inner_index = -1;
 	private static $_current_module_index  = -1;
 	private static $_current_module_item_index  = -1;
 	private static $_unique_bb_keys_map = array();
@@ -106,13 +104,6 @@ class ET_Builder_Element {
 	 * @var int
 	 */
 	private static $_shop_render_count = 0;
-
-	/**
-	 * Slug of a module whose render count should also be bumped when this module's is bumped.
-	 *
-	 * @var string
-	 */
-	protected $_bumps_render_count;
 
 	/**
 	 * Priority number applied to some CSS rules.
@@ -136,9 +127,10 @@ class ET_Builder_Element {
 	private static $media_queries = array();
 	private static $modules_order;
 	private static $inner_modules_order;
-	private static $modules = array();
 	private static $parent_modules = array();
 	private static $child_modules = array();
+	private static $ab_tests_processed = array();
+	private static $ab_tests_saved_id;
 	private static $current_module_index = 0;
 	private static $structure_modules = array();
 	private static $structure_module_slugs = array();
@@ -275,8 +267,6 @@ class ET_Builder_Element {
 		$this->main_tabs = $this->get_main_tabs();
 
 		$this->custom_css_tab = isset( $this->custom_css_tab ) ? $this->custom_css_tab : true;
-
-		self::$modules[ $this->slug ] = $this;
 
 		$post_types = ! empty( $this->post_types ) ? $this->post_types : et_builder_get_builder_post_types();
 
@@ -579,7 +569,6 @@ class ET_Builder_Element {
 
 		$resource_owner = $unified_styles ? 'core' : 'builder';
 		$resource_slug  = $unified_styles ? 'unified' : 'module-design';
-		$resource_slug .= $unified_styles && et_builder_post_is_of_custom_post_type( $post_id ) ? '-cpt' : '';
 
 		// If the post is password protected and a password has not been provided yet,
 		// no content (including any custom style) will be printed.
@@ -669,18 +658,12 @@ class ET_Builder_Element {
 	 *
 	 * @since 3.0.85
 	 *
-	 * @param string $post_type Get module slugs for this post type. If falsy, all slugs are returned.
+	 * @param string $post_type Get module slugs for this post type. If falsey, all slugs are returned.
 	 *
 	 * @return array
 	 */
 	public static function get_module_slugs_by_post_type( $post_type = 'post' ) {
-		if ( $post_type ) {
-			if ( ! isset( self::$_module_slugs_by_post_type[ $post_type ] ) ) {
-				// We get all modules when post type is not enabled so that posts that have
-				// had their post type support disabled still load all necessary modules.
-				return array_keys( self::get_modules() );
-			}
-
+		if ( $post_type && isset( self::$_module_slugs_by_post_type[ $post_type ] ) ) {
 			return self::$_module_slugs_by_post_type[ $post_type ];
 		}
 
@@ -1045,22 +1028,6 @@ class ET_Builder_Element {
 	}
 
 	/**
-	 * Bumps the render count for this module instance and the module instance whose slug is
-	 * set as {@see self::$_bumps_render_count} (if any).
-	 *
-	 * @since 3.10
-	 */
-	protected function _bump_render_count() {
-		$this->_render_count++;
-
-		if ( $this->_bumps_render_count ) {
-			$module = self::get_module( $this->_bumps_render_count, $this->get_post_type() );
-
-			$module->_render_count++;
-		}
-	}
-
-	/**
 	 * check whether ab testing enabled for current module and calculate whether it should be displayed currently or not
 	 *
 	 * @return bool
@@ -1082,13 +1049,68 @@ class ET_Builder_Element {
 	 * @return bool
 	 */
 	private function _check_ab_test_subject( $ab_subject_id = false ) {
-		global $et_pb_ab_subject;
-
 		if ( ! $ab_subject_id ) {
 			return true;
 		}
 
-		return $ab_subject_id === $et_pb_ab_subject;
+		$ab_subject_id = intval( $ab_subject_id );
+
+		$test_id = apply_filters( 'et_is_ab_testing_active_post_id', get_the_ID() );
+
+		$test_id = (int) $test_id;
+
+		// return false if the current ab module was processed already
+		if ( isset( $this->ab_tests_processed[ $test_id ] ) && $this->ab_tests_processed[ $test_id ] ) {
+			return false;
+		}
+
+		$user_unique_id = et_pb_get_visitor_id();
+		$saved_module_id = $this->_get_saved_ab_module_id( $test_id, $user_unique_id );
+
+		$current_ab_module_id = et_pb_ab_get_current_ab_module_id( $test_id, $saved_module_id );
+
+		// return false if current module is not the module which should be displayed this time
+		if ( (int) $current_ab_module_id !== (int) $ab_subject_id ) {
+			return false;
+		}
+
+		// If current loop is advanced styles being populated, skip it
+		if ( ! self::$setting_advanced_styles ) {
+			// mark current ab module as processed
+			$this->ab_tests_processed[ $test_id ] = true;
+		}
+
+		// Only log a stat if this is opened on actual frontend
+		if ( false === $saved_module_id && ! is_admin() && ! et_fb_enabled() ) {
+
+			// log the view_page event right away
+			et_pb_add_stats_record( array(
+					'test_id'     => $test_id,
+					'subject_id'  => $ab_subject_id,
+					'record_type' => 'view_page',
+				)
+			);
+
+			// increment the module id for the next time
+			et_pb_ab_increment_current_ab_module_id( $test_id, $user_unique_id );
+		}
+
+		return true;
+	}
+
+	private function _get_saved_ab_module_id( $test_id, $client_id ) {
+		if ( ! empty( $this->ab_tests_saved_id[ $test_id ] ) ) {
+			return $this->ab_tests_saved_id[ $test_id ];
+		}
+
+		$saved_module_id = et_pb_ab_get_saved_ab_module_id( $test_id, $client_id );
+
+		if ( false !== $saved_module_id ) {
+			// cache the retrieved value
+			$this->ab_tests_saved_id[ $test_id ] = $saved_module_id;
+		}
+
+		return $saved_module_id;
 	}
 
 	/**
@@ -1124,9 +1146,7 @@ class ET_Builder_Element {
 
 		self::$_current_section_index       = -1;
 		self::$_current_row_index           = -1;
-		self::$_current_row_inner_index     = -1;
 		self::$_current_column_index        = -1;
-		self::$_current_column_inner_index  = -1;
 		self::$_current_module_index        = -1;
 		self::$_current_module_item_index   = -1;
 
@@ -1151,89 +1171,33 @@ class ET_Builder_Element {
 	 * @since 3.1 Renamed from `_get_current_shortcode_address()` to `generate_element_address()`
 	 * @since 3.0.60
 	 *
-	 * @param string render slug
-	 *
 	 * @return string
 	 */
-	public function generate_element_address( $render_slug = '' ) {
-		// Flag child module. $this->type isn't accurate in this context since some modules reuse other
-		// modules' render() method for rendering their output (ie. accordion item).
-		$is_child_module = in_array( $render_slug, self::get_child_slugs( $this->get_post_type() ) );
-
-		if ( false !== strpos( $render_slug, '_section' ) ) {
+	public function generate_element_address() {
+		if ( false !== strpos( $this->slug, '_section' ) ) {
 			self::$_current_section_index++;
-
-			// Reset every module index inside section
-			self::$_current_row_index          = -1;
-			self::$_current_row_inner_index    = -1;
-			self::$_current_column_index       = -1;
-			self::$_current_column_inner_index = -1;
-			self::$_current_module_index       = -1;
-			self::$_current_module_item_index  = -1;
-
-		} else if ( false !== strpos( $render_slug, '_row_inner' ) ) {
-			self::$_current_row_inner_index++;
-
-			// Reset every module index inside row inner
-			self::$_current_column_inner_index = -1;
-			self::$_current_module_index       = -1;
-			self::$_current_module_item_index  = -1;
-
-		} else if ( false !== strpos( $render_slug, '_row' ) ) {
-			self::$_current_row_index++;
-
-			// Reset every module index inside row
+			self::$_current_row_index         = -1;
 			self::$_current_column_index      = -1;
 			self::$_current_module_index      = -1;
 			self::$_current_module_item_index = -1;
-
-		} else if ( false !== strpos( $render_slug, '_column_inner' ) ) {
-			self::$_current_column_inner_index++;
-
-			// Reset every module index inside column inner
+		} else if ( false !== strpos( $this->slug, '_row' ) ) {
+			self::$_current_row_index++;
+			self::$_current_column_index      = -1;
 			self::$_current_module_index      = -1;
 			self::$_current_module_item_index = -1;
-
-		} else if ( false !== strpos( $render_slug, '_column' ) && -1 === self::$_current_row_index ) {
+		} else if ( false !== strpos( $this->slug, '_column' ) ) {
 			self::$_current_column_index++;
-
-			// Reset every module index inside column of specialty section
-			self::$_current_row_inner_index    = -1;
-			self::$_current_column_inner_index = -1;
-			self::$_current_module_index       = -1;
-			self::$_current_module_item_index  = -1;
-
-		} else if ( false !== strpos( $render_slug, '_column' ) ) {
-			self::$_current_column_index++;
-
-			// Reset every module index inside column of regular section
 			self::$_current_module_index      = -1;
 			self::$_current_module_item_index = -1;
-
-		} else if ( $is_child_module ) {
+		} else if ( 'child' === $this->type ) {
 			self::$_current_module_item_index++;
-
 		} else {
 			self::$_current_module_index++;
-
-			// Reset module item index inside module
 			self::$_current_module_item_index = -1;
 		}
 
 		$address = self::$_current_section_index;
-
-		if ( -1 === self::$_current_row_index && -1 === self::$_current_row_inner_index ) {
-			// Fullwidth & Specialty (without column inner) Section's module
-			$parts = array( self::$_current_column_index, self::$_current_module_index );
-
-		} else if ( 0 <= self::$_current_row_inner_index ) {
-			// Specialty (inside column inner) Section's module
-			$parts = array( self::$_current_column_index, self::$_current_row_inner_index, self::$_current_column_inner_index, self::$_current_module_index );
-
-		} else {
-			// Regular section's module
-			$parts = array( self::$_current_row_index, self::$_current_column_index, self::$_current_module_index );
-		}
+		$parts   = array( self::$_current_row_index, self::$_current_column_index, self::$_current_module_index );
 
 		foreach ( $parts as $part ) {
 			if ( $part > -1 ) {
@@ -1241,7 +1205,7 @@ class ET_Builder_Element {
 			}
 		}
 
-		if ( $is_child_module ) {
+		if ( 'child' === $this->type ) {
 			$address .= '.' . self::$_current_module_item_index;
 		}
 
@@ -1251,23 +1215,24 @@ class ET_Builder_Element {
 	/**
 	 * Resolves conditional defaults
 	 *
-	 * @param array  $values      Fields.
-	 * @param string $render_slug
+	 * @param array $values Fields.
 	 *
 	 * @return array
 	 */
-	function resolve_conditional_defaults( $values, $render_slug = '' ) {
-		// Resolve conditional defaults for the FE
-		$resolved = $this->get_default_props();
+	function resolve_conditional_defaults( $values ) {
+		global $et_fb_processing_shortcode_object;
 
-		if ( $render_slug && $render_slug !== $this->slug ) {
-			if ( $module = self::get_module( $render_slug, $this->get_post_type() ) ) {
-				$resolved = array_merge( $resolved, $module->get_default_props() );
-			}
+		// VB handles conditional defaults itself in settings-modal.jsx
+		if ( $et_fb_processing_shortcode_object ) {
+			// Shortcode trimming for conditional defaults requires them to be resolved here too.
+			// I'm leaving this code in place in case trimming has to be disabled for whatever reason.
+			// return $this->get_shortcode_fields();
 		}
 
+		// Resolve conditional defaults for the FE
+		$resolved = $this->get_default_props();
 		foreach ( $resolved as $field_name => $field_default ) {
-			if ( is_array( $field_default ) && 2 === count( $field_default ) && ! empty( $field_default[0] ) && is_array( $field_default[1] ) ) {
+			if ( is_array( $field_default ) && ! empty( $field_default[0] ) && is_array( $field_default[1] ) ) {
 				// Looks like we have a conditional default
 				// Get $depend_field value or use the first default if undefined.
 				list ( $depend_field, $conditional_defaults ) = $field_default;
@@ -1277,7 +1242,6 @@ class ET_Builder_Element {
 				$resolved[ $field_name ] = isset( $conditional_defaults[ $default_key ] ) ? $conditional_defaults[ $default_key ] : null;
 			}
 		}
-
 		return $resolved;
 	}
 
@@ -1410,7 +1374,7 @@ class ET_Builder_Element {
 	function _render( $attrs, $content = null, $render_slug, $parent_address = '', $global_parent = '', $global_parent_type = '' ) {
 		global $et_fb_processing_shortcode_object;
 
-		$this->props = shortcode_atts( $this->resolve_conditional_defaults($attrs, $render_slug), $attrs );
+		$this->props = shortcode_atts( $this->resolve_conditional_defaults($attrs), $attrs );
 
 		$this->_decode_double_quotes();
 
@@ -1420,7 +1384,7 @@ class ET_Builder_Element {
 		// This inheritance needs to be done before migration to make it compatible with migration process
 		$this->maybe_inherit_values();
 
-		$_address = $this->generate_element_address( $render_slug );
+		$_address = $this->generate_element_address();
 
 		/**
 		 * Filters Module Props.
@@ -1429,15 +1393,14 @@ class ET_Builder_Element {
 		 * @param array $attrs     Array of original shortcode attrs
 		 * @param string $slug     Module slug
 		 * @param string $_address Module Address
-		 * @param string $content  Module content
 		 */
-		$this->props = apply_filters( 'et_pb_module_shortcode_attributes', $this->props, $attrs, $render_slug, $_address, $content );
+		$this->props = apply_filters( 'et_pb_module_shortcode_attributes', $this->props, $attrs, $this->slug, $_address );
 
 		$global_content = false;
 
 		$ab_testing_enabled = et_is_ab_testing_active();
 
-		$hide_subject_module_cached = $hide_subject_module = false;
+		$hide_subject_module = false;
 
 		$post_id = apply_filters( 'et_is_ab_testing_active_post_id', get_the_ID() );
 
@@ -1451,7 +1414,9 @@ class ET_Builder_Element {
 		// need to perform additional check and some modifications in case AB testing enabled
 		if ( $ab_testing_enabled ) {
 			// check if ab testing enabled for this module and if it shouldn't be displayed currently
-			$hide_subject_module = ! $et_fb_processing_shortcode_object && ! $this->_is_display_module( $this->props ) && ! et_pb_detect_cache_plugins();
+			if ( ! $et_fb_processing_shortcode_object && ! $this->_is_display_module( $this->props ) && ! et_pb_detect_cache_plugins() ) {
+				return;
+			}
 
 			// add class to the AB testing subject if needed
 			if ( isset( $this->props['ab_subject_id'] ) && '' !== $this->props['ab_subject_id'] ) {
@@ -1462,7 +1427,7 @@ class ET_Builder_Element {
 				$this->props['module_class'] = isset( $this->props['module_class'] ) && '' !== $this->props['module_class'] ? $this->props['module_class'] . $subject_class : $subject_class;
 
 				if ( et_pb_detect_cache_plugins() ) {
-					$hide_subject_module_cached = true;
+					$hide_subject_module = true;
 				}
 			}
 
@@ -1499,23 +1464,16 @@ class ET_Builder_Element {
 				$global_atts = shortcode_parse_atts( et_pb_remove_shortcode_content( $global_content_processed, $this->slug ) );
 
 				// reset module addresses because global items will be processed once again and address will be incremented wrongly
-				if ( false !== strpos( $render_slug, '_section' ) ) {
+				if ( false !== strpos( $this->slug, '_section' ) ) {
 					self::$_current_section_index--;
-					self::$_current_row_index          = -1;
-					self::$_current_row_inner_index    = -1;
-					self::$_current_column_index       = -1;
-					self::$_current_column_inner_index = -1;
-					self::$_current_module_index       = -1;
-					self::$_current_module_item_index  = -1;
-				} else if ( false !== strpos( $render_slug, '_row_inner' ) ) {
+					self::$_current_row_index    = -1;
+					self::$_current_column_index = -1;
+					self::$_current_module_index = -1;
+					self::$_current_module_item_index = -1;
+				} else if ( false !== strpos( $this->slug, '_row' ) ) {
 					self::$_current_row_index--;
-					self::$_current_column_inner_index = -1;
-					self::$_current_module_index       = -1;
-					self::$_current_module_item_index  = -1;
-				} else if ( false !== strpos( $render_slug, '_row' ) ) {
-					self::$_current_row_index--;
-					self::$_current_column_index      = -1;
-					self::$_current_module_index      = -1;
+					self::$_current_column_index = -1;
+					self::$_current_module_index = -1;
 					self::$_current_module_item_index = -1;
 				} else {
 					self::$_current_module_index--;
@@ -1680,13 +1638,9 @@ class ET_Builder_Element {
 		 */
 		$output = apply_filters( "{$render_slug}_shortcode_output", $output, $render_slug );
 
-		$this->_bump_render_count();
+		$this->_render_count++;
 
 		if ( $hide_subject_module ) {
-			return '';
-		}
-
-		if ( $hide_subject_module_cached ) {
 			$previous_subjects_cache = get_post_meta( $post_id, 'et_pb_subjects_cache', true );
 
 			if ( empty( $previous_subjects_cache ) ) {
@@ -1888,12 +1842,6 @@ class ET_Builder_Element {
 		$global_module_id = isset( $atts['global_module'] ) ? $atts['global_module'] : false;
 		$is_global_template = false;
 
-		if ( $render_slug && $render_slug !== $this->slug ) {
-			if ( $rendering_module = self::get_module( $render_slug, $this->get_post_type() ) ) {
-				$fields = array_merge( $fields, $this->process_fields( $rendering_module->fields_unprocessed ) );
-			}
-		}
-
 		// Add support of new selective sync feature for library modules in VB
 		if ( isset( $_POST['et_post_type'], $_POST['et_post_id'], $_POST['et_layout_type'] ) && 'et_pb_layout' === $_POST['et_post_type'] && 'module' === $_POST['et_layout_type'] ) {
 			$template_scope = wp_get_object_terms( $_POST['et_post_id'], 'scope' );
@@ -1955,7 +1903,7 @@ class ET_Builder_Element {
 				}
 
 				// Run et_pb_module_shortcode_attributes filter to apply migration system on attributes of global module
-				$global_atts = apply_filters( 'et_pb_module_shortcode_attributes', $global_atts, $atts, $this->slug, $this->generate_element_address( $render_slug ), $content );
+				$global_atts = apply_filters( 'et_pb_module_shortcode_attributes', $global_atts, $atts, $this->slug, $this->generate_element_address() );
 
 				foreach( $this->props as $single_attr => $value ) {
 					if ( isset( $global_atts[$single_attr] ) && ! in_array( $single_attr, $unsynced_options ) ) {
@@ -2063,12 +2011,9 @@ class ET_Builder_Element {
 		$processed_content = false !== $global_content ? $global_content : $this->content;
 		$content = array_key_exists( 'content', $this->fields_unprocessed ) || 'et_pb_code' === $function_name_processed || 'et_pb_fullwidth_code' === $function_name_processed ? $processed_content : et_fb_process_shortcode( $processed_content, $address, $global_parent, $global_parent_type );
 
-		// Global Code module content should be decoded before passing to VB.
-		$is_global_code = in_array( $function_name_processed, array( 'et_pb_code', 'et_pb_fullwidth_code' ) );
-
 		$prepared_content = $content;
 
-		if ( ( ! is_array( $content ) && $this->vb_support !== 'on' && ! $this->has_line_breaks( $content ) ) || $is_global_code ) {
+		if ( ! is_array( $content ) && $this->vb_support !== 'on' && ! $this->has_line_breaks( $content ) ) {
 			$prepared_content = html_entity_decode( $content, ENT_COMPAT, 'UTF-8' );
 		}
 
@@ -2078,11 +2023,33 @@ class ET_Builder_Element {
 			$attrs = new stdClass();
 		}
 
-		$module_type                 = $this->type;
-		$render_count                = $this->_render_count;
-		$child_title_var             = isset( $this->child_title_var ) ? $this->child_title_var : '';
-		$child_title_fallback_var    = isset( $this->child_title_fallback_var ) ? $this->child_title_fallback_var : '';
-		$advanced_setting_title_text = isset( $this->advanced_setting_title_text ) ? $this->advanced_setting_title_text : '';
+		$module_type = $this->type;
+
+		// Ensuring that module which uses another module's template (i.e. accordion item uses toggle's
+		// component) has correct $this->type value. This is covered on front-end, but it causes inheriting
+		// module uses its template's value on render_as_builder_data()
+		if ( $this->slug !== $render_slug && isset( $_POST['et_post_type'] ) ) {
+			$et_post_type    = sanitize_text_field( $_POST['et_post_type'] );
+			$parent_modules  = self::get_parent_modules( $et_post_type );
+			$function_module = false;
+
+			if ( isset( $parent_modules[ $render_slug ] ) ) {
+				$function_module = $parent_modules[ $render_slug ];
+			} else {
+				$child_modules = self::get_child_modules( $et_post_type );
+
+				if ( isset( $child_modules[ $render_slug] ) ) {
+					$function_module = $child_modules[ $render_slug ];
+				}
+			}
+
+			if ( $function_module && isset( $function_module->type ) ) {
+				$module_type = $function_module->type;
+			}
+		}
+
+		// Get the current render count
+		$render_count = $this->_render_count;
 
 		// If this is a shop module use the Shop module render count
 		// Shop module creates a new class instance which resets the $_render_count value
@@ -2091,16 +2058,6 @@ class ET_Builder_Element {
 		if ( 'et_pb_shop' === $render_slug ) {
 			$render_count = self::$_shop_render_count;
 			self::$_shop_render_count++;
-		}
-
-		// Ensuring that module which uses another module's template (i.e. accordion item uses toggle's
-		// component) has correct values for class properties where it makes a difference. This is covered on front-end, but it causes inheriting
-		// module uses its template's value on render_as_builder_data()
-		if ( isset( $rendering_module, $rendering_module->type ) ) {
-			$module_type                 = $rendering_module->type;
-			$child_title_var             = isset( $rendering_module->child_title_var ) ? $rendering_module->child_title_var : $child_title_var;
-			$child_title_fallback_var    = isset( $rendering_module->child_title_fallback_var ) ? $rendering_module->child_title_fallback_var : $child_title_fallback_var;
-			$advanced_setting_title_text = isset( $rendering_module->advanced_setting_title_text ) ? $rendering_module->advanced_setting_title_text : $advanced_setting_title_text;
 		}
 
 		// Build object.
@@ -2120,9 +2077,9 @@ class ET_Builder_Element {
 			'content'                     => $prepared_content,
 			'is_module_child'             => 'child' === $module_type,
 			'is_official_module'          => $this->_is_official_module,
-			'child_title_var'             => $child_title_var,
-			'child_title_fallback_var'    => $child_title_fallback_var,
-			'advanced_setting_title_text' => $advanced_setting_title_text,
+			'child_title_var'             => isset( $this->child_title_var ) ? $this->child_title_var : '',
+			'child_title_fallback_var'    => isset( $this->child_title_fallback_var ) ? $this->child_title_fallback_var : '',
+			'advanced_setting_title_text' => isset( $this->advanced_setting_title_text ) ? $this->advanced_setting_title_text : '',
 			'wrapper_settings'            => $this->get_wrapper_settings( $render_slug ),
 		);
 
@@ -2132,10 +2089,6 @@ class ET_Builder_Element {
 
 		if ( $is_global_template ) {
 			$object['libraryModuleScope'] = 'global';
-		}
-
-		if ( isset( $this->module_items_config ) ) {
-			$object['module_items_config'] = $this->module_items_config;
 		}
 
 		return $object;
@@ -5043,10 +4996,6 @@ class ET_Builder_Element {
 	function get_post_type() {
 		global $post, $et_builder_post_type;
 
-		if ( isset( $_POST['et_post_type'] ) && ! $et_builder_post_type ) {
-			$et_builder_post_type = sanitize_text_field( $_POST['et_post_type'] );
-		}
-
 		if ( is_a( $post, 'WP_POST' ) && ( is_admin() || ! isset( $et_builder_post_type ) ) ) {
 			return $post->post_type;
 		} else {
@@ -6226,12 +6175,8 @@ class ET_Builder_Element {
 					$main_content_property_name = "data.{$main_content_property_name}";
 				}
 
-				if ( 'et_pb_signup' === $this->slug ) {
-					$main_content_property_name = $main_content_field_name = $field['name'];
-
-				}
 				$field_el .= sprintf(
-					'<div id="%1$s" class="et_pb_tiny_mce_field"><%%= typeof( %2$s ) !== \'undefined\' ? %2$s : \'\' %%></div>',
+					'<div id="%1$s"><%%= typeof( %2$s ) !== \'undefined\' ? %2$s : \'\' %%></div>',
 					esc_attr( $main_content_field_name ),
 					esc_html( $main_content_property_name )
 				);
@@ -6241,9 +6186,8 @@ class ET_Builder_Element {
 			case 'textarea':
 			case 'custom_css':
 			case 'options_list':
-			case 'sortable_list':
 				$field_custom_value = esc_html( $field_var_name );
-				if ( in_array( $field['type'], array( 'custom_css', 'options_list', 'sortable_list' ) ) ) {
+				if ( in_array( $field['type'], array( 'custom_css', 'options_list' ) ) ) {
 					$field_custom_value .= '.replace( /\|\|/g, "\n" ).replace( /%22/g, "&quot;" ).replace( /%92/g, "\\\" )';
 					$field_custom_value .= '.replace( /%91/g, "&#91;" ).replace( /%93/g, "&#93;" )';
 				}
@@ -6261,7 +6205,7 @@ class ET_Builder_Element {
 					et_esc_previously( $field_custom_value )
 				);
 
-				if ( 'options_list' === $field['type'] || 'sortable_list' === $field['type'] ) {
+				if ( 'options_list' === $field['type'] ) {
 					$radio_check = '';
 					$row_class   = 'et_options_list_row';
 
@@ -7159,10 +7103,6 @@ class ET_Builder_Element {
 				continue;
 			}
 
-			if ( ! self::$_->array_get( $field, 'bb_support', true ) ) {
-				continue;
-			}
-
 			// add only options allowed for current user
 			if (
 				( ! et_pb_is_allowed( 'edit_colors' ) && ( ! empty( $field['type'] ) && in_array( $field['type'], array( 'color', 'color-alpha' ) ) || ( ! empty( $field['option_category'] ) && 'color_option' === $field['option_category'] ) ) )
@@ -7380,14 +7320,7 @@ class ET_Builder_Element {
 
 	function children_settings() {
 		$output = '';
-
 		if ( ! empty( $this->child_slug ) ) {
-			$child_module = self::get_module( $this->child_slug );
-
-			if ( isset( $child_module->bb_support ) && ! $child_module->bb_support ) {
-				return $output;
-			}
-
 			$output = sprintf(
 			'%6$s<div class="et-pb-option-advanced-module-settings" data-module_type="%1$s">
 				<ul class="et-pb-sortable-options">
@@ -7738,40 +7671,30 @@ class ET_Builder_Element {
 	 * @return void
 	 */
 	function process_additional_options( $function_name ) {
-		$module = $this;
-
-		if ( $function_name && $function_name !== $this->slug ) {
-			if ( ! $module = self::get_module( $function_name, $this->get_post_type() ) ) {
-				$module = $this;
-			} else {
-				$module->props = $this->props;
-			}
+		if ( ! isset( $this->advanced_fields ) || false === $this->advanced_fields ) {
+			return false;
 		}
 
-		if ( ! isset( $module->advanced_fields ) || false === $module->advanced_fields ) {
-			return;
-		}
-
-		$module->process_advanced_fonts_options( $function_name );
+		$this->process_advanced_fonts_options( $function_name );
 
 		// Process Text Shadow CSS
-		$module->text_shadow->process_advanced_css( $module, $function_name );
+		$this->text_shadow->process_advanced_css( $this, $function_name );
 
-		$module->process_advanced_background_options( $function_name );
+		$this->process_advanced_background_options( $function_name );
 
-		$module->process_advanced_text_options( $function_name );
+		$this->process_advanced_text_options( $function_name );
 
-		$module->process_advanced_borders_options( $function_name );
+		$this->process_advanced_borders_options( $function_name );
 
-		$module->process_advanced_filter_options( $function_name );
+		$this->process_advanced_filter_options( $function_name );
 
-		$module->process_max_width_options( $function_name );
+		$this->process_max_width_options( $function_name );
 
-		$module->process_advanced_custom_margin_options( $function_name );
+		$this->process_advanced_custom_margin_options( $function_name );
 
-		$module->process_advanced_button_options( $function_name );
+		$this->process_advanced_button_options( $function_name );
 
-		$module->process_box_shadow( $function_name );
+		$this->process_box_shadow( $function_name );
 	}
 
 	function process_inline_fonts_option( $fonts_list ) {
@@ -8871,17 +8794,15 @@ class ET_Builder_Element {
 				$button_border_radius_hover_processed = '' !== $button_border_radius_hover && 'px' !== $button_border_radius_hover ? et_builder_process_range_value( $button_border_radius_hover ) : '';
 				$button_use_icon = '' === $button_use_icon ? 'on' : $button_use_icon;
 
-				$css_element           = ! empty( $option_settings['css']['main'] ) ? $option_settings['css']['main'] : $this->main_css_element . ' .et_pb_button';
-				$css_element_processed = $css_element;
-				$is_dbp                = et_is_builder_plugin_active();
+				$css_element = ! empty( $option_settings['css']['main'] ) ? $option_settings['css']['main'] : $this->main_css_element . ' .et_pb_button';
 
-				if ( $is_dbp && ! empty( $option_settings['css']['plugin_main'] ) ) {
-					$css_element_processed = $option_settings['css']['plugin_main'];
-				} else if ( ! $is_dbp ) {
-					$css_element_processed = "body #page-container {$css_element}";
+				if ( et_is_builder_plugin_active() && ! empty( $option_settings['css']['plugin_main'] ) ) {
+					$css_element = $option_settings['css']['plugin_main'];
 				}
 
-				if ( $is_dbp ) {
+				$css_element_processed = et_is_builder_plugin_active() ? $css_element : 'body #page-container ' . $css_element;
+
+				if ( et_is_builder_plugin_active() ) {
 					$button_bg_color .= '' !== $button_bg_color ? ' !important' : '';
 					$button_border_radius_processed .= '' !== $button_border_radius_processed ? ' !important' : '';
 					$button_border_radius_hover_processed .= '' !== $button_border_radius_hover_processed ? ' !important' : '';
@@ -8957,32 +8878,14 @@ class ET_Builder_Element {
 
 				if ( 'off' === $button_use_icon ) {
 					$main_element_styles_after = 'display:none !important;';
+					$no_icon_styles = 'padding: 0.3em 1em !important;';
+
 					$selector = sprintf( '%1$s:before, %1$s:after', $css_element_processed );
-					$custom_padding = $this->props['custom_padding'];
-					$no_icon_styles = '';
 
-					if ( empty( $custom_padding ) ) {
-						$no_icon_styles .= 'padding: 0.3em 1em !important;';
-					} else {
-						$padding_array = explode( '|', $custom_padding );
-
-						if ( empty( $padding_array[1] ) ) {
-							$no_icon_styles .= 'padding-right: 1em !important;';
-						}
-
-						if ( empty( $padding_array[3] ) ) {
-							$no_icon_styles .= 'padding-left: 1em !important;';
-						}
-					}
-
-					if ( ! empty( $no_icon_styles ) ) {
-						self::set_style( $function_name, array(
-							'selector'    => $css_element_processed . ',' . $css_element_processed . ':hover',
-							'declaration' => rtrim( $no_icon_styles ),
-						) );
-					}
-
-
+					self::set_style( $function_name, array(
+						'selector'    => $css_element . ',' . $css_element . ':hover',
+						'declaration' => rtrim( $no_icon_styles ),
+					) );
 				} else {
 					$button_icon_code = '' !== $button_icon ? str_replace( ';', '', str_replace( '&#x', '', html_entity_decode( et_pb_process_font_icon( $button_icon ) ) ) ) : '';
 					if ( '' !== $button_text_size_processed ) {
@@ -9747,58 +9650,9 @@ class ET_Builder_Element {
 		return self::$structure_modules;
 	}
 
-	/**
-	 * Get a filtered list of modules.
-	 *
-	 * @since 3.10
-	 *
-	 * @param string $post_type Leave empty for any.
-	 * @param string $type 'parent' or 'child'. Leave empty for any.
-	 *
-	 * @return array<string, ET_Builder_Element>
-	 */
-	static function get_modules( $post_type = '', $type = '' ) {
-		$modules = array();
-
-		foreach ( self::$modules as $slug => $module ) {
-			if ( '' !== $post_type && ! in_array( $post_type, $module->post_types ) ) {
-				continue;
-			}
-
-			if ( '' !== $type && ! $module->type !== $type ) {
-				continue;
-			}
-
-			$modules[ $slug ] = $module;
-		}
-
-		return $modules;
-	}
-
-	static function get_custom_post_type_fallback_modules( $type = 'parent' ) {
-		$modules = 'child' === $type ? self::$child_modules : self::$parent_modules;
-
-		// Most of the time, page module is expected to be used as disabled post type fallback
-		if ( isset( $modules['page'] ) ) {
-			return $modules['page'];
-		}
-
-		// Post module is also expected to be used
-		if ( isset( $modules['post'] ) ) {
-			return $modules['post'];
-		}
-
-		// If all else fail, use all modules
-		return self::get_modules();
-	}
-
 	static function get_parent_modules( $post_type = '' ) {
 		if ( ! empty( $post_type ) ) {
-			// We get all modules when post type is not enabled so that posts that have
-			// had their post type support disabled still load all necessary modules.
-			$parent_modules = ! empty( self::$parent_modules[ $post_type ] )
-				? self::$parent_modules[ $post_type ]
-				: self::get_custom_post_type_fallback_modules( 'parent' );
+			$parent_modules = ! empty( self::$parent_modules[ $post_type ] ) ? self::$parent_modules[ $post_type ] : array();
 		} else {
 			$parent_modules = self::$parent_modules;
 		}
@@ -9808,11 +9662,7 @@ class ET_Builder_Element {
 
 	static function get_child_modules( $post_type = '' ) {
 		if ( ! empty( $post_type ) ) {
-			// We get all modules when post type is not enabled so that posts that have
-			// had their post type support disabled still load all necessary modules.
-			$child_modules = ! empty( self::$child_modules[ $post_type ] )
-				? self::$child_modules[ $post_type ]
-				: self::get_custom_post_type_fallback_modules( 'child' );
+			$child_modules = ! empty( self::$child_modules[ $post_type ] ) ? self::$child_modules[ $post_type ] : array();
 		} else {
 			$child_modules = self::$child_modules;
 		}
@@ -9866,22 +9716,6 @@ class ET_Builder_Element {
 		$child_modules  = self::get_child_modules( $post_type );
 
 		return array_merge( $parent_modules, $child_modules );
-	}
-
-	/**
-	 * Get a module instance for provided post type by its slug.
-	 *
-	 * @since 3.10
-	 *
-	 * @param string $slug
-	 * @param string $post_type
-	 *
-	 * @return ET_Builder_Element|null
-	 */
-	public static function get_module( $slug, $post_type = 'post' ) {
-		$modules = self::get_parent_and_child_modules( $post_type );
-
-		return self::$_->array_get( $modules, $slug );
 	}
 
 	/**
@@ -10255,6 +10089,11 @@ class ET_Builder_Element {
 			}
 
 			foreach ( $_module->fields_unprocessed as $field_key => $field ) {
+				// do not add the fields with 'skip' type. These fields used for rendering shortcode on Front End only
+				if ( isset( $field['type'] ) && 'skip' === $field['type'] ) {
+					continue;
+				}
+
 				if ( ! isset( $field['tab_slug'] ) || 'advanced' !== $field['tab_slug'] ) {
 					continue;
 				}
@@ -10370,19 +10209,6 @@ class ET_Builder_Element {
 		}
 
 		return $fields;
-	}
-
-	public static function get_module_items_configs( $post_type ) {
-		$modules = self::get_parent_and_child_modules( $post_type );
-		$configs = array();
-
-		foreach ( $modules as $slug => $module ) {
-			if ( isset( $module->module_items_config ) ) {
-				$configs[ $slug ] = $module->module_items_config;
-			}
-		}
-
-		return $configs;
 	}
 
 	static function get_module_fields( $post_type, $module ) {
@@ -10625,7 +10451,7 @@ class ET_Builder_Element {
 	 */
 	protected static function set_field_dependencies( $slug, $field_id, $field_info ) {
 		// bail if the field_info is not an array.
-		if ( ! is_array( $field_info ) || ! self::$_->array_get( $field_info, 'bb_support', true ) ) {
+		if ( ! is_array( $field_info ) ) {
 			return;
 		}
 
@@ -10724,8 +10550,15 @@ class ET_Builder_Element {
 			$selector     = str_replace( '%%parent_class%%', ".{$parent_class}", $selector );
 		}
 
-		$selector = strip_tags( apply_filters( 'et_pb_set_style_selector', $selector, $function_name ) );
-		$selector = et_builder_maybe_wrap_css_selectors( $selector, false );
+		$selector = apply_filters( 'et_pb_set_style_selector', $selector, $function_name );
+
+		// Prepend .et_divi_builder class before all CSS rules in the Divi Builder plugin
+		if ( et_is_builder_plugin_active() ) {
+			$selector = ".et_divi_builder #et_builder_outer_content $selector";
+
+			// add the prefix for all the selectors in a string.
+			$selector = str_replace( ',', ',.et_divi_builder #et_builder_outer_content ', $selector );
+		}
 
 		// New lines are saved as || in CSS Custom settings, remove them
 		$declaration = preg_replace( '/(\|\|)/i', '', $declaration );
@@ -11331,12 +11164,13 @@ class ET_Builder_Element {
 	 * @deprecated
 	 */
 	public static function get_slugs_with_children( $post_type ) {
-		$parent_modules = self::get_parent_modules( $post_type );
 		$slugs = array();
 
-		foreach ( $parent_modules as $module ) {
-			if ( ! empty( $module->child_slug ) ) {
-				$slugs[] = sprintf( '"%1$s":"%2$s"', esc_js( $module->slug ), esc_js( $module->child_slug ) );
+		if ( ! empty( self::$parent_modules[ $post_type ] ) ) {
+			foreach ( self::$parent_modules[ $post_type ] as $module ) {
+				if ( ! empty( $module->child_slug ) ) {
+					$slugs[] = sprintf( '"%1$s":"%2$s"', esc_js( $module->slug ), esc_js( $module->child_slug ) );
+				}
 			}
 		}
 
