@@ -895,8 +895,7 @@ function et_builder_settings_get( $setting, $post_id = '' ) {
 	$has_page   = isset( $page_fields[ $setting ] );
 	$has_global = isset( $builder_fields[ $setting ] );
 
-	$value = $global_value = '';
-	$global_is_default = false;
+	$value = '';
 
 	if ( ! $has_page && ! $has_global ) {
 		return $value;
