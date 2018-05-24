@@ -363,20 +363,16 @@ class ET_Core_HTTPInterface {
 	 * @since    1.1.0
 	 */
 	protected function _log_failed_request() {
-		$details    = print_r( $this, true );
+		ob_start();
+		var_dump( $this );
+		$response_details = ob_get_contents();
+		ob_end_clean();
+
 		$class_name = get_class( $this );
 		$msg_part   = "{$class_name} ERROR :: Remote request failed...\n\n";
-		$msg        = "{$msg_part}Details: {$details}";
-
-		$max_len = @ini_get( 'log_errors_max_len' );
-
-		@ini_set( 'log_errors_max_len', 0 );
+		$msg        = "{$msg_part}Details: {$response_details}";
 
 		ET_Core_Logger::error( $msg );
-
-		if ( $max_len ) {
-			@ini_set( 'log_errors_max_len', $max_len );
-		}
 	}
 
 	/**
