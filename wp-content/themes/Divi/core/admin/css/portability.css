@@ -33,22 +33,17 @@
 
 .et-core-portability-import-placeholder {
 	text-align: center;
-	height: 16px;
-	border: 2px dashed #e6ecf2;
-	border-radius: 3px;
-	color: #a3b0c2;
-	font-weight: 700;
-	text-transform: uppercase;
-	line-height: 16px;
+	height: 26px;
+	border: 2px dashed #E0E5EA;
+	color: #B1B7BD;
+	line-height: 26px;
 	float: left;
 	padding: 5px;
-	font-size: 12px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
+	font-size: 11px;
+	overflow: hidden;
 }
 
-body.rtl .et-core-portability-import-placeholder {
+.rtl .et-core-portability-import-placeholder {
 	float: right;
 }
 
@@ -56,11 +51,11 @@ body.rtl .et-core-portability-import-placeholder {
 	position: absolute;
 	left: 0;
 	top: 0;
-	height: 30px;
+	height: 40px;
 	opacity: 0;
 }
 
-body.rtl .et-core-portability-import-form input[type="file"] {
+.rtl .et-core-portability-import-form input[type="file"] {
 	left: auto;
 	right: 0;
 }
@@ -77,9 +72,8 @@ body.rtl .et-core-portability-import-form input[type="file"] {
 	float: left;
 }
 
-body.rtl .et-core-portability-import-form .et-core-button {
+.rtl .et-core-portability-import-form .et-core-button {
 	float: right;
-	margin-right: 10px;
 }
 
 /*-----------------------------------------------------------------------------
@@ -125,8 +119,6 @@ body.rtl .et-core-portability-import-form .et-core-button {
 	font-size: 16px;
 	content: '\e900';
 	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	font-weight: 400;
 }
 
 .et-core-customize-controls-close[data-et-core-modal*="data-et-core-portability"] {

@@ -18,25 +18,20 @@ abstract class ET_Builder_Module_Settings_Migration {
 
 	public static $last_hook_checked;
 	public static $last_hook_check_decision;
-	public static $max_version = '3.17.3';
+	public static $max_version = '3.2';
 	public static $migrated    = array();
-	public static $migrations = array(
-		'3.0.48'  => 'BackgroundUI',
-		'3.0.72'  => 'Animation',
-		'3.0.74'  => 'OptionsHarmony',
-		'3.0.84'  => 'FullwidthHeader',
-		'3.0.87'  => 'BorderOptions',
-		'3.0.91'  => 'FilterOptions',
-		'3.0.92'  => 'ShopModuleSlugs',
-		'3.0.94'  => 'DropShadowToBoxShadow',
-		'3.0.99'  => 'InnerShadowToBoxShadow',
+	public static $migrations  = array(
+		'3.0.48' => 'BackgroundUI',
+		'3.0.72' => 'Animation',
+		'3.0.74' => 'OptionsHarmony',
+		'3.0.84' => 'FullwidthHeader',
+		'3.0.87' => 'BorderOptions',
+		'3.0.91' => 'FilterOptions',
+		'3.0.92' => 'ShopModuleSlugs',
+		'3.0.94' => 'DropShadowToBoxShadow',
+		'3.0.99' => 'InnerShadowToBoxShadow',
 		'3.0.102' => 'FullwidthHeader2',
-		'3.2'     => 'UIImprovements',
-		'3.4'     => 'EmailOptinContent',
-		'3.6'     => 'ContactFormItemOptionsSerialization',
-		'3.12.3'  => 'TeamMemberIconHover',
-		'3.16'    => 'HoverOptions',
-		'3.17.3'  => 'DiscontinueHtmlEncoding',
+		'3.2'  => 'UIImprovements',
 	);
 
 	public static $migrations_by_version = array();
@@ -101,10 +96,6 @@ abstract class ET_Builder_Module_Settings_Migration {
 
 	abstract public function get_modules();
 
-	public function get_content_migration_modules() {
-		return array();
-	}
-
 	public function handle_field_name_migrations( $fields, $module_slug ) {
 		if ( ! in_array( $module_slug, $this->modules ) ) {
 			return $fields;
@@ -136,8 +127,7 @@ abstract class ET_Builder_Module_Settings_Migration {
 		$class = 'ET_Builder_Module_Settings_Migration';
 
 		add_filter( 'et_pb_module_processed_fields', array( $class, 'maybe_override_processed_fields' ), 10, 2 );
-		add_filter( 'et_pb_module_shortcode_attributes', array( $class, 'maybe_override_shortcode_attributes' ), 10, 5 );
-		add_filter( 'et_pb_module_content', array( $class, 'maybe_override_content' ), 10, 6 );
+		add_filter( 'et_pb_module_shortcode_attributes', array( $class, 'maybe_override_shortcode_attributes' ), 10, 4 );
 	}
 
 	public static function maybe_override_processed_fields( $fields, $module_slug ) {
@@ -156,7 +146,7 @@ abstract class ET_Builder_Module_Settings_Migration {
 		return $fields;
 	}
 
-	public static function maybe_override_shortcode_attributes( $attrs, $unprocessed_attrs, $module_slug, $module_address, $content = '' ) {
+	public static function maybe_override_shortcode_attributes( $attrs, $unprocessed_attrs, $module_slug, $module_address ) {
 		if ( empty( $attrs['_builder_version'] ) ) {
 			$attrs['_builder_version'] = '3.0.47';
 		}
@@ -181,8 +171,6 @@ abstract class ET_Builder_Module_Settings_Migration {
 		}
 
 		foreach ( $migrations as $migration ) {
-			$migrated_attrs_count = 0;
-
 			if ( ! in_array( $module_slug, $migration->modules ) ) {
 				continue;
 			}
@@ -203,65 +191,19 @@ abstract class ET_Builder_Module_Settings_Migration {
 
 					$saved_value = isset( $attrs[ $field_name ] ) ? $attrs[ $field_name ] : '';
 
-					$new_value = $migration->migrate( $field_name, $current_value, $module_slug, $saved_value, $affected_field, $attrs, $content );
+					$new_value = $migration->migrate( $field_name, $current_value, $module_slug, $saved_value, $affected_field, $attrs );
 
 					if ( $new_value !== $saved_value || ( $affected_field !== $field_name && $new_value !== $current_value ) ) {
 						$attrs[ $field_name ] = self::$migrated['value_changes'][ $module_address ][ $field_name ] = $new_value;
-						$migrated_attrs_count++;
 					}
 				}
-			}
-
-			if ( $migrated_attrs_count > 0 ) {
-				$attrs['_builder_version'] = $migration->version;
 			}
 		}
 
 		return $attrs;
 	}
 
-	public static function maybe_override_content( $content, $attrs, $unprocessed_attrs, $module_slug, $module_address, $global_content ) {
-		if ( empty( $attrs['_builder_version'] ) ) {
-			$attrs['_builder_version'] = '3.0.47';
-		}
-
-		if ( ! self::_should_handle_render( $module_slug ) ) {
-			return $content;
-		}
-
-		$migrations = self::get_migrations( $attrs['_builder_version'] );
-
-		foreach ( $migrations as $migration ) {
-			$migrated_content = false;
-
-			if ( ! in_array( $module_slug, $migration->get_content_migration_modules() ) ) {
-				continue;
-			}
-
-			foreach ( $migration->get_content_migration_modules() as $module ) {
-				$new_content = $migration->migrate_content( $module_slug, $attrs, $content );
-
-				if ( $new_content !== $content ) {
-					$migrated_content = true;
-				}
-
-				$content = $new_content;
-			}
-
-			if ( $migrated_content ) {
-				$attrs['_builder_version'] = $migration->version;
-			}
-		}
-
-		return $content;
-	}
-
-	abstract public function migrate( $field_name, $current_value, $module_slug, $saved_value, $saved_field_name, $attrs, $content );
-
-	// this could have been written as abstract, but its not as common so as to be expected to be implemented by every migration
-	public function migrate_content( $module_slug, $attrs, $content ) {
-		return $content;
-	}
+	abstract public function migrate( $field_name, $current_value, $module_slug, $saved_value, $saved_field_name, $attrs );
 
 	public static function _should_handle_render( $slug ) {
 		if ( false === strpos( $slug, 'et_pb' ) ) {

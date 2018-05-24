@@ -18,13 +18,13 @@ class ET_Core_Logger {
 	/**
 	 * Writes a message to the debug log if it hasn't already been written once.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param mixed $message
 	 * @param int   $bt_index
-	 * @param boolean $log_ajax Whether or not to log on AJAX calls.
+	 * @param null  $error_level
 	 */
-	protected static function _maybe_write_log( $message, $bt_index = 4, $log_ajax = true ) {
+	protected static function _maybe_write_log( $message, $bt_index = 4, $error_level = null, $log_ajax = true ) {
 		if ( ! is_scalar( $message ) ) {
 			$message = print_r( $message, true );
 		}
@@ -39,7 +39,7 @@ class ET_Core_Logger {
 		if ( getenv( 'CI' ) || ! in_array( $hash, self::$HISTORY ) ) {
 			self::$HISTORY[] = $hash;
 
-			self::_write_log( $message, $bt_index );
+			self::_write_log( $message, $bt_index, $error_level );
 		}
 	}
 
@@ -48,8 +48,9 @@ class ET_Core_Logger {
 	 *
 	 * @param string $message
 	 * @param int    $bt_index
+	 * @param null   $error_level
 	 */
-	private static function _write_log( $message, $bt_index = 4 ) {
+	private static function _write_log( $message, $bt_index = 4, $error_level = null ) {
 		$message   = trim( $message );
 		$backtrace = debug_backtrace( 1 );
 		$class     = '';
@@ -86,7 +87,11 @@ class ET_Core_Logger {
 
 		$message = " {$file}:{$line}  {$class}{$function}():\n{$message}\n";
 
-		error_log( $message );
+		if ( is_null( $error_level ) || 'on' === @ini_get( 'display_errors' ) ) {
+			error_log( $message );
+		} else {
+			trigger_error( $message, $error_level );
+		}
 	}
 
 	/**
@@ -96,11 +101,10 @@ class ET_Core_Logger {
 	 *
 	 * @param mixed $message
 	 * @param int   $bt_index
-	 * @param boolean $log_ajax Whether or not to log on AJAX calls.
 	 */
 	public static function debug( $message, $bt_index = 4, $log_ajax = true ) {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			self::_maybe_write_log( $message, $bt_index, $log_ajax );
+			self::_maybe_write_log( $message, $bt_index, null, $log_ajax );
 		}
 	}
 
@@ -120,9 +124,10 @@ class ET_Core_Logger {
 	 *
 	 * @param mixed $message
 	 * @param int   $bt_index
+	 * @param int   $error_level
 	 */
-	public static function error( $message, $bt_index = 4 ) {
-		self::_maybe_write_log( $message, $bt_index );
+	public static function error( $message, $bt_index = 4, $error_level = E_USER_WARNING ) {
+		self::_maybe_write_log( $message, $bt_index, $error_level );
 	}
 
 	public static function enable_php_notices() {

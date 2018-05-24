@@ -83,6 +83,14 @@ $options = array (
 				   "desc" => esc_html__( "If you would like to use your own custom logo image click the Upload Image button.", $themename )
 			),
 
+			array( "name" => esc_html__( "Favicon", $themename ),
+				   "id" => $shortname . "_favicon",
+				   "type" => "upload",
+				   "button_text" => esc_html__( "Set As Favicon", $themename ),
+				   "std" => "",
+				   "desc" => esc_html__( "If you would like to use your own custom favicon image click the Upload Image button.", $themename )
+			),
+
 			array( "name" => esc_html__( "Fixed Navigation Bar", $themename ),
 				   "id" => $shortname . "_fixed_nav",
 				   "type" => "checkbox",
@@ -144,7 +152,7 @@ $options = array (
 				"id"                => "et_google_api_settings_api_key",
 				"std"               => "",
 				"type"              => "text",
-				"validation_type"   => "apikey",
+				"validation_type"   => "nohtml",
 				'is_global'         => true,
 				'main_setting_name' => 'et_google_api_settings',
 				'sub_setting_name'  => 'api_key',
@@ -160,17 +168,6 @@ $options = array (
 				"type"              => "checkbox",
 				"std"               => "on",
 				"desc"              => esc_html__( "Disable this option to remove the Google Maps API script from your Divi Builder Pages. This may improve compatibility with third party plugins that also enqueue this script. Please Note: Modules that rely on the Google Maps API in order to function properly, such as the Maps and Fullwidth Maps Modules, will still be available but will not function while this option is disabled (unless you manually add Google Maps API script).", $themename ),
-			),
-
-			array(
-				"name"              => esc_html__( "Use Google Fonts", $themename ),
-				"id"                => "et_use_google_fonts",
-				"main_setting_name" => "et_google_api_settings",
-				"sub_setting_name"  => 'use_google_fonts',
-				'is_global'         => true,
-				"type"              => "checkbox",
-				"std"               => "on",
-				"desc"              => esc_html__( "Disable this option to remove the Google Fonts from your Divi Builder Pages.", $themename ),
 			),
 
 			array( "name" =>esc_html__( "Show Facebook Icon", $themename ),
@@ -927,8 +924,6 @@ $options = array (
 				'main_setting_name' => 'et_automatic_updates_options',
 				'sub_setting_name'  => 'api_key',
 			),
-
-			et_divi_version_rollback()->get_epanel_option(),
 
 		array( "name" => "updates-1",
 			   "type" => "subcontent-end",),

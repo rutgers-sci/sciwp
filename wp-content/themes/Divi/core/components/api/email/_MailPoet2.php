@@ -39,7 +39,7 @@ class ET_Core_API_Email_MailPoet2 extends ET_Core_API_Email_Provider {
 	/**
 	 * @inheritDoc
 	 */
-	public function get_data_keymap( $keymap = array() ) {
+	public function get_data_keymap( $keymap = array(), $custom_fields_key = '' ) {
 		$keymap = array(
 			'list'       => array(
 				'list_id' => 'id',
@@ -52,7 +52,7 @@ class ET_Core_API_Email_MailPoet2 extends ET_Core_API_Email_Provider {
 			),
 		);
 
-		return parent::get_data_keymap( $keymap );
+		return parent::get_data_keymap( $keymap, $custom_fields_key );
 	}
 
 	/**
@@ -85,7 +85,7 @@ class ET_Core_API_Email_MailPoet2 extends ET_Core_API_Email_Provider {
 
 		$this->save_data();
 
-		return array( 'success' => $this->data );
+		return 'success';
 	}
 
 	/**
@@ -98,42 +98,36 @@ class ET_Core_API_Email_MailPoet2 extends ET_Core_API_Email_Provider {
 		}
 
 		global $wpdb;
-		$wpdb->wysija_user_table       = $wpdb->prefix . 'wysija_user';
-		$wpdb->wysija_user_lists_table = $wpdb->prefix . 'wysija_user_list';
+		$user_table       = $wpdb->prefix . 'wysija_user';
+		$user_lists_table = $wpdb->prefix . 'wysija_user_list';
 
 		// get the ID of subscriber if they're in the list already
-		$subscriber_id = $wpdb->get_var( $wpdb->prepare(
-			"SELECT user_id FROM {$wpdb->wysija_user_table} WHERE email = %s",
-			array(
-				et_core_sanitized_previously( $args['email'] ),
-			)
-		) );
+		$sql_user_id        = "SELECT user_id FROM {$user_table} WHERE email = %s";
+		$sql_args           = array( et_sanitized_previously( $args['email'] ) );
+		$subscriber_id      = $wpdb->get_var( $wpdb->prepare( $sql_user_id, $sql_args ) );
 		$already_subscribed = 0;
 
 		// if current email is subscribed, then check whether it subscribed to the current list
 		if ( ! empty( $subscriber_id ) ) {
-			$already_subscribed = (int) $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->wysija_user_lists_table} WHERE user_id = %s AND list_id = %s",
-				array(
-					$subscriber_id,
-					et_core_sanitized_previously( $args['list_id'] ),
-				)
-			) );
-		}
+			$sql_is_subscribed = "SELECT COUNT(*) FROM {$user_lists_table} WHERE user_id = %s AND list_id = %s";
+			$sql_args          = array(
+				$subscriber_id,
+				et_sanitized_previously( $args['list_id'] ),
+			);
 
-		unset( $wpdb->wysija_user_table );
-		unset( $wpdb->wysija_user_list_table );
+			$already_subscribed = (int) $wpdb->get_var( $wpdb->prepare( $sql_is_subscribed, $sql_args ) );
+		}
 
 		// if email is not subscribed to current list, then subscribe.
 		if ( 0 === $already_subscribed ) {
 			$new_user = array(
 				'user'      => array(
-					'email'     => et_core_sanitized_previously( $args['email'] ),
-					'firstname' => et_core_sanitized_previously( $args['name'] ),
-					'lastname'  => et_core_sanitized_previously( $args['last_name'] ),
+					'email'     => et_sanitized_previously( $args['email'] ),
+					'firstname' => et_sanitized_previously( $args['name'] ),
+					'lastname'  => et_sanitized_previously( $args['last_name'] ),
 				),
 				'user_list' => array(
-					'list_ids' => array( et_core_sanitized_previously( $args['list_id'] ) ),
+					'list_ids' => array( et_sanitized_previously( $args['list_id'] ) ),
 				),
 			);
 

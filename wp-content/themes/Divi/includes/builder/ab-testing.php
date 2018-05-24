@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'ET_PB_AB_DB_VERSION' ) ) {
-	define( 'ET_PB_AB_DB_VERSION', '1.1' );
+	define( 'ET_PB_AB_DB_VERSION', 1.0 );
 }
 
 /**
@@ -286,33 +286,32 @@ function et_builder_ab_labels() {
  * @return void
  */
 function et_pb_ab_builder_data() {
-	// Verify nonce
-	if ( ! isset( $_POST['et_pb_ab_nonce'] ) || ! wp_verify_nonce( $_POST['et_pb_ab_nonce'], 'ab_testing_builder_nonce' ) ) {
-		die( -1 );
-	}
-
 	$defaults = array(
-		'et_pb_ab_test_id'  => '',
+		'et_pb_ab_nonce'    => false,
+		'et_pb_ab_test_id'  => false,
 		'et_pb_ab_duration' => 'week',
 	);
 
-	$_post = wp_parse_args( $_POST, $defaults );
+	$post = wp_parse_args( $_POST, $defaults );
 
-	$_post['et_pb_ab_test_id'] = ! empty( $_post['et_pb_ab_test_id'] ) ? intval( $_post['et_pb_ab_test_id'] ) : '';
+	// Verify nonce
+	if ( ! wp_verify_nonce( $post['et_pb_ab_nonce'], 'ab_testing_builder_nonce' ) ) {
+		die( -1 );
+	}
 
 	// Verify user permission
-	if ( empty( $_post['et_pb_ab_test_id'] ) || ! current_user_can( 'edit_post', $_post['et_pb_ab_test_id'] ) || ! et_pb_is_allowed( 'ab_testing' ) ) {
+	if ( ! current_user_can( 'edit_posts' ) || ! et_pb_is_allowed( 'ab_testing' ) ) {
 		die( -1 );
 	}
 
 	// Whitelist the duration value
-	$duration = in_array( $_post['et_pb_ab_duration'], et_pb_ab_get_stats_data_duration() ) ? $_post['et_pb_ab_duration'] : $defaults['et_pb_ab_duration'];
+	$duration = in_array( $post['et_pb_ab_duration'], et_pb_ab_get_stats_data_duration() ) ? $post['et_pb_ab_duration'] : $defaults['et_pb_ab_duration'];
 
 	// Get data
-	$output = et_pb_ab_get_stats_data( intval( $_post['et_pb_ab_test_id'] ), $duration );
+	$output = et_pb_ab_get_stats_data( intval( $post['et_pb_ab_test_id'] ), $duration );
 
 	// Print output
-	die( et_core_esc_previously( wp_json_encode( $output ) ) );
+	die( json_encode( $output ) );
 }
 add_action( 'wp_ajax_et_pb_ab_builder_data', 'et_pb_ab_builder_data' );
 
@@ -453,7 +452,7 @@ function et_pb_ab_get_subjects_ranks( $post_id, $ranking_basis = 'engagements', 
 function et_pb_ab_get_stats_data( $post_id, $duration = 'week', $time = false, $force_update = false, $is_cron_task = false ) {
 	global $wpdb;
 
-	$post_id      = intval( $post_id );
+	$post_id = intval( $post_id );
 	$goal_slug    = et_pb_ab_get_goal_module( $post_id );
 	$rank_metrics = in_array( $goal_slug, et_pb_ab_get_modules_have_conversions() ) ? 'conversions' : 'clicks';
 
@@ -529,10 +528,10 @@ function et_pb_ab_get_stats_data( $post_id, $duration = 'week', $time = false, $
 		return $cached_data;
 	}
 
-	$wpdb->et_divi_ab_testing_stats = $wpdb->prefix . 'et_divi_ab_testing_stats';
+	$table_name = $wpdb->prefix . 'et_divi_ab_testing_stats';
 
 	// do nothing if no stats table exists in current WP
-	if ( ! $wpdb->get_var( "SHOW TABLES LIKE '$wpdb->et_divi_ab_testing_stats'" ) ) {
+	if ( ! $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) == $table_name ) {
 		return false;
 	}
 
@@ -555,7 +554,7 @@ function et_pb_ab_get_stats_data( $post_id, $duration = 'week', $time = false, $
 		case 'all':
 			$date_range_interval = 'week';
 			$query = $wpdb->prepare(
-				"SELECT subject_id, event, YEARWEEK(record_date) AS 'date', COUNT(id) AS 'count' FROM `{$wpdb->et_divi_ab_testing_stats}` WHERE test_id = %d GROUP BY subject_id, YEARWEEK(record_date), event",
+				"SELECT subject_id, event, YEARWEEK(record_date) AS 'date', COUNT(id) AS 'count' FROM {$table_name} WHERE test_id = %d GROUP BY subject_id, YEARWEEK(record_date), event",
 				$post_id
 			);
 			break;
@@ -563,7 +562,7 @@ function et_pb_ab_get_stats_data( $post_id, $duration = 'week', $time = false, $
 		case 'month':
 			$date_range_interval = 'day';
 			$query = $wpdb->prepare(
-				"SELECT subject_id, event, DATE(record_date) AS 'date', COUNT(id) AS 'count' FROM `{$wpdb->et_divi_ab_testing_stats}` WHERE test_id = %d AND record_date <= %s AND record_date > DATE_SUB( %s, INTERVAL 1 MONTH ) GROUP BY subject_id, DAYOFMONTH(record_date), event",
+				"SELECT subject_id, event, DATE(record_date) AS 'date', COUNT(id) AS 'count' FROM {$table_name} WHERE test_id = %d AND record_date <= %s AND record_date > DATE_SUB( %s, INTERVAL 1 MONTH ) GROUP BY subject_id, DAYOFMONTH(record_date), event",
 				$post_id,
 				$time,
 				$time
@@ -573,7 +572,7 @@ function et_pb_ab_get_stats_data( $post_id, $duration = 'week', $time = false, $
 		case 'day':
 			$date_range_interval = 'hour';
 			$query = $wpdb->prepare(
-				"SELECT subject_id, event, DATE_FORMAT(record_date, %s) AS 'date', COUNT(id) AS 'count' FROM `{$wpdb->et_divi_ab_testing_stats}` WHERE test_id = %d AND record_date <= %s AND record_date > DATE_SUB( %s, INTERVAL 1 DAY ) GROUP BY subject_id, HOUR(record_date), event",
+				"SELECT subject_id, event, DATE_FORMAT(record_date, %s) AS 'date', COUNT(id) AS 'count' FROM {$table_name} WHERE test_id = %d AND record_date <= %s AND record_date > DATE_SUB( %s, INTERVAL 1 DAY ) GROUP BY subject_id, HOUR(record_date), event",
 				'%Y-%m-%d %H:00',
 				$post_id,
 				$time,
@@ -584,7 +583,7 @@ function et_pb_ab_get_stats_data( $post_id, $duration = 'week', $time = false, $
 		default:
 			$date_range_interval = 'day';
 			$query = $wpdb->prepare(
-				"SELECT subject_id, event, DATE(record_date) AS 'date', COUNT(id) AS 'count' FROM `{$wpdb->et_divi_ab_testing_stats}` WHERE test_id = %d AND record_date <= %s AND record_date > DATE_SUB( %s, INTERVAL 1 WEEK ) GROUP BY subject_id, DAYOFMONTH(record_date), event",
+				"SELECT subject_id, event, DATE(record_date) AS 'date', COUNT(id) AS 'count' FROM {$table_name} WHERE test_id = %d AND record_date <= %s AND record_date > DATE_SUB( %s, INTERVAL 1 WEEK ) GROUP BY subject_id, DAYOFMONTH(record_date), event",
 				$post_id,
 				$time,
 				$time
@@ -592,10 +591,7 @@ function et_pb_ab_get_stats_data( $post_id, $duration = 'week', $time = false, $
 			break;
 	}
 
-	$results = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- value of $query was prepared in above switch statement.
-
-	unset( $wpdb->et_divi_ab_testing_stats );
-
+	$results = $wpdb->get_results( $query );
 	if ( ! empty( $results ) ) {
 		// Get min and max timestamp based on query result
 		$min_max_date = et_pb_ab_get_min_max_timestamp( $results, $date_range_interval );
@@ -659,7 +655,7 @@ function et_pb_ab_get_stats_data( $post_id, $duration = 'week', $time = false, $
 				$log_date = date( 'YW', strtotime( substr( $log_date, 0, 4 ) . 'W' . substr( $log_date, 4, 2 ) ) );
 			}
 
-			$stats['subjects_logs'][ "subject_{$log->subject_id}" ][ $log->event ][ $log_date ] = $log->count;
+			$stats['subjects_logs'][ "subject_{$log->subject_id}" ][ $log->event ][ $log_date] = $log->count;
 		}
 
 		// Determine logs' totals and run analysis
@@ -761,6 +757,45 @@ function et_pb_ab_get_stats_data_duration() {
 		'month',
 		'all',
 	) );
+}
+
+/**
+ * Get subjects of particular post / AB Testing
+ *
+ * @param int    post id
+ * @param string array|string type of output
+ * @param mixed  string|bool  prefix that should be prepended
+ */
+function et_pb_ab_get_subjects( $post_id, $type = 'array', $prefix = false, $is_cron_task = false ) {
+	$subjects_data = get_post_meta( $post_id, '_et_pb_ab_subjects', true );
+	$fb_enabled = function_exists( 'et_fb_enabled' ) ? et_fb_enabled() : false;
+
+	// Get autosave/draft subjects if post hasn't been published
+	if ( ! $is_cron_task && ! $subjects_data && $fb_enabled && 'publish' !== get_post_status() ) {
+		$subjects_data = get_post_meta( $post_id, '_et_pb_ab_subjects_draft', true );
+	}
+
+	// If user wants string
+	if ( 'string' === $type ) {
+		return $subjects_data;
+	}
+
+	// Convert into array
+	$subjects = explode(',', $subjects_data );
+
+	if ( ! empty( $subjects ) && $prefix ) {
+
+		$prefixed_subjects = array();
+
+		// Loop subject, add prefix
+		foreach ( $subjects as $subject ) {
+			$prefixed_subjects[] = $prefix . (string) $subject;
+		}
+
+		return $prefixed_subjects;
+	}
+
+	return $subjects;
 }
 
 /**
@@ -956,14 +991,14 @@ function et_pb_ab_has_report( $post_id ) {
 		return false;
 	}
 
-	$wpdb->et_divi_ab_testing_stats = $wpdb->prefix . 'et_divi_ab_testing_stats';
+	$table_name = $wpdb->prefix . 'et_divi_ab_testing_stats';
 
-	$result = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM `{$wpdb->et_divi_ab_testing_stats}` WHERE test_id = %d",
+	$query = $wpdb->prepare(
+		"SELECT * FROM {$table_name} WHERE test_id = %d",
 		$post_id
-	) ) ? true : false;
+	);
 
-	unset( $wpdb->et_divi_ab_testing_stats );
+	$result = $wpdb->get_row( $query ) ? true : false;
 
 	return apply_filters( 'et_pb_ab_has_report', $result, $post_id );
 }
@@ -999,9 +1034,7 @@ function et_pb_create_ab_tables() {
 	global $wpdb;
 
 	$stats_table_name = $wpdb->prefix . 'et_divi_ab_testing_stats';
-	$wpdb->et_divi_ab_testing_stats = $stats_table_name;
 	$client_subject_table_name = $wpdb->prefix . 'et_divi_ab_testing_clients';
-	$wpdb->et_divi_ab_testing_clients = $client_subject_table_name;
 
 	/*
 	 * We'll set the default character set and collation for this table.
@@ -1024,30 +1057,27 @@ function et_pb_create_ab_tables() {
 		);
 	}
 
-	$ab_tables_queries = array();
-
-	// Remove client_id column from stats table
-	if ( 0 < $wpdb->query( "SHOW COLUMNS FROM `$wpdb->et_divi_ab_testing_stats` LIKE 'client_id'" ) ) {
-		$wpdb->query( "ALTER TABLE `$wpdb->et_divi_ab_testing_stats` DROP COLUMN client_id" );
-	}
-
-	// Remove client subject table
-	if ( 0 <  $wpdb->query( $wpdb->prepare( "SHOW TABLES LIKE %s", $wpdb->et_divi_ab_testing_clients ) ) ) {
-		$wpdb->query( "DROP TABLE $wpdb->et_divi_ab_testing_clients" );
-	}
-
-	$ab_tables_queries[] = "CREATE TABLE $wpdb->et_divi_ab_testing_stats (
+	$sql_stats = "CREATE TABLE $stats_table_name (
 		id mediumint(9) NOT NULL AUTO_INCREMENT,
 		test_id varchar(20) NOT NULL,
 		subject_id varchar(20) NOT NULL,
 		record_date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 		event varchar(10) NOT NULL,
+		client_id varchar(32) NOT NULL,
+		UNIQUE KEY id (id)
+	) $charset_collate;";
+
+	$sql_client_subject = "CREATE TABLE $client_subject_table_name (
+		id mediumint(9) NOT NULL AUTO_INCREMENT,
+		test_id varchar(20) NOT NULL,
+		subject_id varchar(20) NOT NULL,
+		client_id varchar(32) NOT NULL,
 		UNIQUE KEY id (id)
 	) $charset_collate;";
 
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-	dbDelta( $ab_tables_queries );
+	dbDelta( array( $sql_stats, $sql_client_subject ) );
 
 	$db_settings = array(
 		'db_version' => ET_PB_AB_DB_VERSION,
@@ -1057,9 +1087,6 @@ function et_pb_create_ab_tables() {
 
 	// Register AB Testing cron
 	et_pb_create_ab_cron();
-
-	unset( $wpdb->et_divi_ab_testing_stats );
-	unset( $wpdb->et_divi_ab_testing_clients );
 
 	die( 'success' );
 }
@@ -1203,12 +1230,12 @@ function et_pb_ab_clear_cache() {
 		die( -1 );
 	}
 
-	$test_id = ! empty( $_POST['et_pb_test_id'] ) ? intval( $_POST['et_pb_test_id'] ) : '';
-
 	// Verify user permission
-	if ( empty( $test_id ) || ! current_user_can( 'edit_post', $test_id ) || ! et_pb_is_allowed( 'ab_testing' ) ) {
+	if ( ! current_user_can( 'edit_posts' ) || ! et_pb_is_allowed( 'ab_testing' ) ) {
 		die( -1 );
 	}
+
+	$test_id = intval( $_POST['et_pb_test_id'] );
 
 	et_pb_ab_clear_cache_handler( $test_id );
 
@@ -1221,7 +1248,7 @@ function et_pb_ab_clear_cache() {
 		$output = et_pb_ab_get_stats_data( intval( $_POST['et_pb_test_id'] ), $duration );
 
 		// Print output
-		die( wp_json_encode( $output ) );
+		die( json_encode( $output ) );
 	}
 
 	die( 1 );
@@ -1232,20 +1259,17 @@ add_action( 'wp_ajax_et_pb_ab_clear_cache', 'et_pb_ab_clear_cache' );
 function et_pb_ab_get_all_tests() {
 	global $wpdb;
 
-	$wpdb->et_divi_ab_testing_stats = $wpdb->prefix . 'et_divi_ab_testing_stats';
+	$table_name = $wpdb->prefix . 'et_divi_ab_testing_stats';
 
-	// do nothing if no stats table exists in current WP
-	if ( ! $wpdb->get_var( "SHOW TABLES LIKE '$wpdb->et_divi_ab_testing_stats'" ) ) {
+	if ( ! $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) == $table_name ) {
 		return false;
 	}
 
 	// construct sql query to get all the test ID from db
-	$sql = "SELECT DISTINCT test_id FROM `$wpdb->et_divi_ab_testing_stats`";
+	$sql = "SELECT DISTINCT test_id FROM $table_name";
 
 	// cache the data from conversions table
-	$all_tests = $wpdb->get_results( $sql, ARRAY_A ); // WPCS: unprepared SQL okay, value of $sql was prepared above.
-
-	unset( $wpdb->et_divi_ab_testing_stats );
+	$all_tests = $wpdb->get_results( $sql, ARRAY_A );
 
 	return $all_tests;
 }
@@ -1256,12 +1280,12 @@ function et_pb_ab_clear_stats() {
 		die( -1 );
 	}
 
-	$test_id = ! empty( $_POST['et_pb_test_id'] ) ? intval( $_POST['et_pb_test_id'] ) : '';
-
 	// Verify user permission
-	if ( empty( $test_id ) || ! current_user_can( 'edit_post', $test_id ) || ! et_pb_is_allowed( 'ab_testing' ) ) {
+	if ( ! current_user_can( 'edit_posts' ) || ! et_pb_is_allowed( 'ab_testing' ) ) {
 		die( -1 );
 	}
+
+	$test_id = intval( $_POST['et_pb_test_id'] );
 
 	et_pb_ab_remove_stats( $test_id );
 
@@ -1288,19 +1312,18 @@ function et_pb_ab_remove_stats( $test_id ) {
 		$test_id,
 	);
 
-	$wpdb->et_divi_ab_testing_stats = $wpdb->prefix . 'et_divi_ab_testing_stats';
+	foreach ( array( 'stats', 'clients' ) as $table_suffix ) {
+		$table_name = $wpdb->prefix . 'et_divi_ab_testing_' . $table_suffix;
 
-	// do nothing if no stats table exists in current WP
-	if ( ! $wpdb->get_var( "SHOW TABLES LIKE '$wpdb->et_divi_ab_testing_stats'" ) ) {
-		return false;
+		if ( ! $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) == $table_name ) {
+			continue;
+		}
+
+		// construct sql query to remove value from DB table
+		$sql = "DELETE FROM $table_name WHERE test_id = %d";
+
+		$wpdb->query( $wpdb->prepare( $sql, $sql_args ) );
 	}
-
-	// construct sql query to remove value from DB table
-	$sql = "DELETE FROM `$wpdb->et_divi_ab_testing_stats` WHERE test_id = %d";
-
-	$wpdb->query( $wpdb->prepare( $sql, $sql_args ) ); // WPCS: unprepared SQL okay, value of $sql was prepared above.
-
-	unset( $wpdb->et_divi_ab_testing_stats );
 }
 
 /**
@@ -1330,73 +1353,3 @@ function et_pb_split_track( $atts ) {
 	return $output;
 }
 add_shortcode( 'et_pb_split_track', 'et_pb_split_track' );
-
-/**
- * Initialize AB Testing. Check whether the user has visited the page or not by checking its cookie
- *
- * @since
- *
- * @return void
- */
-function et_pb_ab_init() {
-	global $et_pb_ab_subject;
-
-	// Get post ID
-	$post_id = get_the_ID();
-
-	// Initialize AB Testing if builder and AB Testing is active
-	if ( is_singular() && et_pb_is_pagebuilder_used( $post_id ) && et_is_ab_testing_active() ) {
-		$ab_subjects        = et_pb_ab_get_subjects( $post_id );
-		$ab_hash_key        = defined( 'NONCE_SALT' ) ? NONCE_SALT : 'default-divi-hash-key';
-		$hashed_subject_id  = et_pb_ab_get_visitor_cookie( $post_id, 'view_page' );
-
-		if ( $hashed_subject_id ) {
-			// Compare subjects against hashed subject id found on cookie to verify whether cookie value is valid or not
-			foreach ( $ab_subjects as $ab_subject ) {
-				// Valid subject_id is found
-				if ( hash_hmac( 'md5', $ab_subject, $ab_hash_key ) === $hashed_subject_id ) {
-					$et_pb_ab_subject = $ab_subject;
-
-					// no need to continue
-					break;
-				}
-			}
-
-			// If no valid subject found, get the first one
-			if ( ! $et_pb_ab_subject && isset( $ab_subjects[0] ) ) {
-				$et_pb_ab_subject = $ab_subjects[0];
-			}
-		} else {
-			// First visit. Get next subject on queue
-			$next_subject_index  = get_post_meta( $post_id, '_et_pb_ab_next_subject' , true );
-
-			// Get current subject index based on `_et_pb_ab_next_subject` post meta value
-			$subject_index = false !== $next_subject_index && isset( $ab_subjects[ $next_subject_index ] ) ? (int) $next_subject_index : 0;
-
-			// Get current subject index
-			$et_pb_ab_subject = $ab_subjects[ $subject_index ];
-
-			// Hash the subject
-			$hashed_subject_id = hash_hmac( 'md5', $et_pb_ab_subject, $ab_hash_key );
-
-			// Set cookie for returning visit
-			et_pb_ab_set_visitor_cookie( $post_id, 'view_page', $hashed_subject_id );
-
-			// Bump subject index and save on post meta for next visitor
-			et_pb_ab_increment_current_ab_module_id( $post_id );
-
-			// log the view_page event right away
-			$is_et_fb_enabled = function_exists( 'et_fb_enabled' ) && et_fb_enabled();
-
-			if ( ! is_admin() && ! $is_et_fb_enabled ) {
-				et_pb_add_stats_record( array(
-						'test_id'     => $post_id,
-						'subject_id'  => $et_pb_ab_subject,
-						'record_type' => 'view_page',
-					)
-				);
-			}
-		}
-	}
-}
-add_action( 'wp', 'et_pb_ab_init' );

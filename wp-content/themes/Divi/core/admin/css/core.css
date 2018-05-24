@@ -98,13 +98,14 @@
 .et-core-form input[type="url"],
 .et-core-form select,
 .et-core-form textarea {
-	border-radius: 3px;
-	background: #f1f5f9;
-	padding: 7px 10px;
-	color: #4c5866;
-	height: 30px;
+	border-radius: 4px;
+	background: #F1F5F9;
+	padding: 13px;
+	font-size: 14px;
+	color: #32373C;
+	height: 40px;
 	font-family: 'Open Sans', sans-serif;
-	font-size: 13px;
+	font-size: 14px;
 	width: 100%;
 }
 
@@ -113,7 +114,7 @@
 }
 
 .et-core-form input[type]:focus {
-	background: #e6ecf2;
+	background: #E0E5EA;
 }
 
 .et-core-form input[type=checkbox] {
@@ -141,14 +142,14 @@ body button.et-core-button {
 	float: left;
 	box-sizing: border-box;
 	color: #FFF;
-	background-color: #4c5866;
+	background-color: #32373C;
 	padding: 0 20px;
 	margin: 0;
 	font-size: 12px !important;
-	font-weight: 700;
+	font-weight: 600;
 	font-family: inherit;
-	line-height: 30px;
-	height: 30px;
+	line-height: 40px;
+	height: 40px;
 	margin-right: 0;
 	margin-left: 7px;
 	cursor: pointer;
@@ -167,8 +168,8 @@ body button.et-core-button {
 	font-family: 'Open Sans', sans-serif !important;
 }
 
-body.rtl.et-db:not(.et-fb-no-rtl) .et-core-button,
-body.rtl.et-db:not(.et-fb-no-rtl) button.et-core-button {
+.rtl:not(.et-fb-no-rtl) .et-core-button,
+body.rtl:not(.et-fb-no-rtl) button.et-core-button {
 	margin-right: 7px;
 	margin-left: 0;
 }
@@ -206,16 +207,10 @@ body.rtl.et-db:not(.et-fb-no-rtl) button.et-core-button {
 	background: -webkit-radial-gradient(center, ellipse cover, rgba(255,255,255,1) 20%,rgba(255,255,255,0.7) 100%);
 	background: radial-gradient(ellipse at center, rgba(255,255,255,1) 20%,rgba(255,255,255,0.7) 100%);
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#ffffff',GradientType=1 );
-	z-index: 10000000;
+	z-index: 1000000000;
 	-moz-transition: opacity .5s .2s;
 	-webkit-transition: opacity .5s .2s;
 	transition: opacity .5s .2s;
-}
-
-.et-core-modal-overlay--library {
-	/* 100025 = Library Modal z-index */
-	z-index: 100024;
-	animation: et-core-fade-in .5s linear;
 }
 
 .et-core-modal-overlay.et-core-active {
@@ -248,16 +243,10 @@ body.rtl.et-db:not(.et-fb-no-rtl) button.et-core-button {
 	-moz-box-shadow: 0px 0px 100px rgba(0, 160, 210, 0.20);
 	-webkit-box-shadow: 0px 0px 100px rgba(0, 160, 210, 0.20);
 	box-shadow: 0px 0px 100px rgba(0, 160, 210, 0.20);
-	border-radius: 3px;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
 	overflow: hidden;
-}
-
-.et-core-modal,
-.et-core-modal * {
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
 }
 
 .et-core-modal-overlay.et-core-active .et-core-modal {
@@ -273,17 +262,17 @@ body.rtl.et-db:not(.et-fb-no-rtl) button.et-core-button {
 }
 
 .et-core-modal-header {
-	background-color: #6c2eb9;
+	background-color: rgb(108, 46, 185);
 	margin: 0;
-	padding: 21px 40px 20px 26px;
+	padding: 21px 40px 20px;
 	box-sizing: border-box;
 	display: block;
 }
 
 .et-core-modal .et-core-modal-title {
-	font-weight: 600;
-	font-size: 18px;
-	line-height: 17px;
+	font-weight: 300;
+	font-size: 22px;
+	line-height: 27px;
 	color: rgb(255, 255, 255);
 	margin: 0px;
 	padding: 0;
@@ -295,8 +284,11 @@ body.rtl.et-db:not(.et-fb-no-rtl) button.et-core-button {
 	font-weight: 600;
 }
 
-.et-core-modal-close,
-.et-core-modal-close:hover {
+.et_pb_pagebuilder_layout .et-core-modal .et-core-modal-title {
+	font-weight: 500;
+}
+
+.et-core-modal-close {
 	text-decoration: none;
 	font-size: 23px;
 	color: #fff;
@@ -306,24 +298,23 @@ body.rtl.et-db:not(.et-fb-no-rtl) button.et-core-button {
 	top: 0;
 	right: 0;
 	z-index: 10;
-	padding: 17px 17px 18px
+	padding: 22px 22px 23px;
+	background-color: #622aa9;
+	-webkit-transition: background .5s;
+	transition: background .5s;
 }
 
-body.rtl .et-core-modal-close,
-body.rtl .et-core-modal-close:hover {
-	top: 0;
+.rtl:not(.et-fb-no-rtl) .et-core-modal-close {
 	right: auto;
 	left: 0;
 }
 
-.et-core-modal-close:focus {
+.et-core-modal-close:hover,
+.et-core-modal-close:focus,
+.et-core-modal-close:active {
+	background-color: #552592;
 	color: #fff;
 	box-shadow: none;
-}
-
-body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-close {
-	right: auto;
-	left: 0;
 }
 
 .et-core-modal-close:before {
@@ -331,7 +322,6 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-close {
 	font-weight: 800;
 	content: '\4d';
 	speak: none;
-	color: #fff;
 	font-variant: normal;
 	text-transform: none;
 	line-height: 1;
@@ -341,33 +331,21 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-close {
 
 .et-core-modal-temp-content,
 .et-core-modal-content {
-	padding: 30px;
+	padding: 40px;
 	overflow: scroll;
 	position: absolute;
-	top: 58px;
-    bottom: 25px;
+	top: 67px;
+    bottom: 50px;
 	width: 100%;
 	box-sizing: border-box;
-	color: #4c5866;
-	font-weight: 600;
-	font-size: 13px;
+	color: #32373c;
+	font-size: 14px;
 	line-height: 1.5em;
-}
-
-.et-core-modal-temp-content p:first-of-type,
-.et-core-modal-content p:first-of-type {
-	margin-top: 0 !important;
-	padding-top: 0 !important;
-}
-
-.et-core-modal-temp-content p:last-of-type,
-.et-core-modal-content p:last-of-type {
-	margin-bottom: 0 !important;
-	padding-bottom: 0 !important;
+	font-size: 14px;
 }
 
 .et-core-modal-tabs-enabled .et-core-modal-content {
-	top: 98px;
+	top: 128px;
 }
 
 .et-core-modal-disabled-scrollbar .et-core-modal {
@@ -380,12 +358,7 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-close {
 	top: 0 !important;
 	position: relative;
 	overflow: hidden;
-	padding-bottom: 70px;
-}
-
-.et-core-modal-actionless.et-core-modal-disabled-scrollbar .et-core-modal-content,
-.et-core-modal-actionless.et-core-modal-disabled-scrollbar .et-core-modal-temp-content {
-	padding-bottom: 40px;
+	padding-bottom: 107px;
 }
 
 .et-core-modal-content::-webkit-scrollbar {
@@ -414,7 +387,7 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-close {
 	background: #f05555 !important;
 	font-weight: 600;
 	text-transform: uppercase;
-	border-radius: 3px;
+	border-radius: 4px;
 	font-size: 12px;
 	color: #fff !important;
 	padding: 10px 20px;
@@ -465,11 +438,11 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-close {
 	right: 0;
 }
 
-body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-two-buttons .et-core-modal-action {
+.rtl:not(.et-fb-no-rtl) .et-core-modal-two-buttons .et-core-modal-action {
 	right: 0;
 }
 
-body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-two-buttons .et-core-modal-action:last-child {
+.rtl:not(.et-fb-no-rtl) .et-core-modal-two-buttons .et-core-modal-action:last-child {
 	right: auto;
 	left: 0;
 }
@@ -477,7 +450,7 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-two-buttons .et-core-modal-acti
 .et-core-modal-temp-content h3,
 .et-core-modal-content h3 {
 	color: #32373c;
-	font-size: 14px;
+	font-size: 16px;
 }
 
 .et-core-modal-remove-temp-content,
@@ -490,12 +463,12 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-two-buttons .et-core-modal-acti
 .et-core-modal-action {
 	display: block;
 	color: white;
-	font-size: 14px;
-	line-height: 40px;
+	font-size: 18px;
+	line-height: 68px;
 	width: 100%;
 	border: none;
 	font-family: 'Open Sans', sans-serif;
-	font-weight: 700;
+	font-weight: 600;
 	box-sizing: border-box;
 	text-align: center;
 	margin: 0;
@@ -565,15 +538,15 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-modal-two-buttons .et-core-modal-acti
 	float: left;
 	display: inline-block;
 	font-family: 'Open Sans', sans-serif;
-	font-size: 14px;
-	font-weight: 600;
+	font-size: 18px;
+	font-weight: 400;
 	margin: 0;
 	border: none;
 	background: none;
 }
 
-body.rtl.et-db:not(.et-fb-no-rtl) .et-core-tabs li,
-body.rtl.et-db:not(.et-fb-no-rtl) .et-core-tabs li.ui-state-default {
+.rtl:not(.et-fb-no-rtl) .et-core-tabs li,
+.rtl:not(.et-fb-no-rtl) .et-core-tabs li.ui-state-default {
 	float: right;
 }
 
@@ -582,18 +555,15 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-tabs li.ui-state-default {
 	color: #fff;
 }
 
+.et-core-tabs a:hover,
 .et-core-tabs li.ui-state-active a {
 	background-color: #8F42ED;
-}
-
-.et-core-tabs a:hover {
-	background-color: #7435c1;
 }
 
 .et-core-tabs a {
 	box-sizing: border-box;
 	color: white;
-	padding: 11px 26px;
+	padding: 18px 40px 17px;
 	display: inline-block;
 	transition: all 0.3s;
 	text-decoration: none;
@@ -652,7 +622,6 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-tabs li.ui-state-default {
 	font-family: 'ETmodules';
 	font-weight: 600;
 	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
 	font-size: 30px;
 	line-height: 53px;
 }
@@ -684,7 +653,7 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-tabs li.ui-state-default {
 	margin-bottom: 15px;
 	background: #F1F5F9;
 	line-height: 20px;
-	border-radius: 3px;
+	border-radius: 4px;
 }
 
 * + .et-core-progress {
@@ -714,7 +683,7 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-tabs li.ui-state-default {
 	font-size: 12px;
 	color: #fff;
 	text-align: center;
-	border-radius: 3px;
+	border-radius: 4px;
 	background: #00c3aa;
 }
 

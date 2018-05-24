@@ -70,8 +70,7 @@ var options = defaultOptions;
  */
 function initTest() {
 
-    // Disable keyboard in VB/BFB
-    var disableKeyboard = document.body.classList.contains('et-fb');
+    var disableKeyboard = false;
 
     // disable keyboard support if anything above requested it
     if (disableKeyboard) {
@@ -273,17 +272,12 @@ function wheel(event) {
 
     var target = event.target;
     var overflowing = overflowingAncestor(target);
-    var isVBTopWindowScroll = document.documentElement.className.split(' ').filter(function(className) {
-        return className === 'et-fb-preview--tablet' || className === 'et-fb-preview--phone' || className === 'et-fb-preview--zoom';
-    }).length > 0;
-
 
     // use default if there's no overflowing
     // element or default action is prevented
     if (!overflowing || event.defaultPrevented ||
         isNodeName(activeElement, "embed") ||
-       (isNodeName(target, "embed") && /\.pdf/i.test(target.src)) ||
-       isVBTopWindowScroll) {
+       (isNodeName(target, "embed") && /\.pdf/i.test(target.src))) {
         return true;
     }
 

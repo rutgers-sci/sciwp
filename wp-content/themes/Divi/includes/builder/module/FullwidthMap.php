@@ -3,7 +3,6 @@
 class ET_Builder_Module_Fullwidth_Map extends ET_Builder_Module {
 	function init() {
 		$this->name            = esc_html__( 'Fullwidth Map', 'et_builder' );
-		$this->plural          = esc_html__( 'Fullwidth Maps', 'et_builder' );
 		$this->slug            = 'et_pb_fullwidth_map';
 		$this->vb_support      = 'on';
 		$this->fullwidth       = true;
@@ -30,7 +29,7 @@ class ET_Builder_Module_Fullwidth_Map extends ET_Builder_Module {
 			'box_shadow'            => array(
 				'default' => array(
 					'css' => array(
-						'overlay' => 'inset',
+						'custom_style' => true,
 					),
 				),
 			),

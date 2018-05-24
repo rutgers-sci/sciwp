@@ -266,15 +266,6 @@
 				self.close();
 			});
 		},
-
-		close: function() {
-			this._super();
-			var self = this;
-
-			if ($.isFunction(self.options.onClose)) {
-				self.options.onClose.call(this);
-			}
-		},
 	});
 
 	/**

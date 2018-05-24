@@ -12,18 +12,17 @@
 		$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? esc_html__( 'Adsense', 'Divi' ) : esc_html( $instance['title'] ) );
 		$adsenseCode = empty( $instance['adsenseCode'] ) ? '' : $instance['adsenseCode'];
 
-		echo et_core_intentionally_unescaped( $before_widget, 'html' );
+		echo $before_widget;
 
-		if ( $title ) {
-			echo et_core_intentionally_unescaped( $before_title . $title . $after_title, 'html' );
-		}
+		if ( $title )
+			echo $before_title . $title . $after_title;
 		?>
 		<div style="overflow: hidden;">
-			<?php echo et_core_intentionally_unescaped( $adsenseCode, 'html' ); ?>
+			<?php echo $adsenseCode; ?>
 			<div class="clearfix"></div>
 		</div> <!-- end adsense -->
 	<?php
-		echo et_core_intentionally_unescaped( $after_widget, 'html' );
+		echo $after_widget;
 	}
 
 	/*Saves the settings. */
@@ -40,13 +39,13 @@
 		//Defaults
 		$instance = wp_parse_args( (array) $instance, array( 'title' => esc_html__( 'Adsense', 'Divi' ), 'adsenseCode'=>'' ) );
 
-		$title = $instance['title'];
-		$adsenseCode = $instance['adsenseCode'];
+		$title = esc_attr( $instance['title'] );
+		$adsenseCode = esc_textarea( $instance['adsenseCode'] );
 
 		# Title
-		echo '<p><label for="' . esc_attr( $this->get_field_id('title') ) . '">' . esc_html__( 'Title', 'Divi' ) . ':' . '</label><input class="widefat" id="' . esc_attr( $this->get_field_id('title') ) . '" name="' . esc_attr( $this->get_field_name('title') ) . '" type="text" value="' . esc_attr( $title ) . '" /></p>';
+		echo '<p><label for="' . $this->get_field_id('title') . '">' . esc_html__( 'Title', 'Divi' ) . ':' . '</label><input class="widefat" id="' . $this->get_field_id('title') . '" name="' . $this->get_field_name('title') . '" type="text" value="' . $title . '" /></p>';
 		# Adsense Code
-		echo '<p><label for="' . esc_attr( $this->get_field_id('adsenseCode') ) . '">' . esc_html__( 'Adsense Code', 'Divi' ) . ':' . '</label><textarea cols="20" rows="12" class="widefat" id="' . esc_attr( $this->get_field_id('adsenseCode') ) . '" name="' . esc_attr( $this->get_field_name('adsenseCode') ) . '" >' . esc_textarea( $adsenseCode ) . '</textarea></p>';
+		echo '<p><label for="' . $this->get_field_id('adsenseCode') . '">' . esc_html__( 'Adsense Code', 'Divi' ) . ':' . '</label><textarea cols="20" rows="12" class="widefat" id="' . $this->get_field_id('adsenseCode') . '" name="' . $this->get_field_name('adsenseCode') . '" >'. $adsenseCode .'</textarea></p>';
 	}
 
 }// end AdsenseWidget class

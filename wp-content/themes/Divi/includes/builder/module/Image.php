@@ -3,7 +3,6 @@
 class ET_Builder_Module_Image extends ET_Builder_Module {
 	function init() {
 		$this->name       = esc_html__( 'Image', 'et_builder' );
-		$this->plural     = esc_html__( 'Images', 'et_builder' );
 		$this->slug       = 'et_pb_image';
 		$this->vb_support = 'on';
 
@@ -57,8 +56,8 @@ class ET_Builder_Module_Image extends ET_Builder_Module {
 			'box_shadow'            => array(
 				'default' => array(
 					'css' => array(
-						'main'    => '%%order_class%% .et_pb_image_wrap',
-						'overlay' => 'inset',
+						'main'         => '%%order_class%% .et_pb_image_wrap',
+						'custom_style' => true,
 					),
 				),
 			),
@@ -72,7 +71,6 @@ class ET_Builder_Module_Image extends ET_Builder_Module {
 			'fonts'                 => false,
 			'text'                  => false,
 			'button'                => false,
-			'link_options'          => false,
 		);
 
 		$this->help_videos = array(
@@ -98,7 +96,6 @@ class ET_Builder_Module_Image extends ET_Builder_Module {
 				),
 				'description'        => esc_html__( 'Upload your desired image, or type in the URL to the image you would like to display.', 'et_builder' ),
 				'toggle_slug'        => 'main_content',
-				'dynamic_content'    => 'image',
 			),
 			'alt' => array(
 				'label'           => esc_html__( 'Image Alternative Text', 'et_builder' ),
@@ -111,7 +108,6 @@ class ET_Builder_Module_Image extends ET_Builder_Module {
 				'description'     => esc_html__( 'This defines the HTML ALT text. A short description of your image can be placed here.', 'et_builder' ),
 				'tab_slug'        => 'custom_css',
 				'toggle_slug'     => 'attributes',
-				'dynamic_content' => 'text',
 			),
 			'title_text' => array(
 				'label'           => esc_html__( 'Image Title Text', 'et_builder' ),
@@ -124,7 +120,6 @@ class ET_Builder_Module_Image extends ET_Builder_Module {
 				'description'     => esc_html__( 'This defines the HTML Title text.', 'et_builder' ),
 				'tab_slug'        => 'custom_css',
 				'toggle_slug'     => 'attributes',
-				'dynamic_content' => 'text',
 			),
 			'show_in_lightbox' => array(
 				'label'             => esc_html__( 'Open in Lightbox', 'et_builder' ),
@@ -144,7 +139,7 @@ class ET_Builder_Module_Image extends ET_Builder_Module {
 				'description'       => esc_html__( 'Here you can choose whether or not the image should open in Lightbox. Note: if you select to open the image in Lightbox, url options below will be ignored.', 'et_builder' ),
 			),
 			'url' => array(
-				'label'           => esc_html__( 'Image Link URL', 'et_builder' ),
+				'label'           => esc_html__( 'Link URL', 'et_builder' ),
 				'type'            => 'text',
 				'option_category' => 'basic_option',
 				'depends_show_if' => 'off',
@@ -153,10 +148,9 @@ class ET_Builder_Module_Image extends ET_Builder_Module {
 				),
 				'description'     => esc_html__( 'If you would like your image to be a link, input your destination URL here. No link will be created if this field is left blank.', 'et_builder' ),
 				'toggle_slug'     => 'link',
-				'dynamic_content' => 'url',
 			),
 			'url_new_window' => array(
-				'label'             => esc_html__( 'Image Link Target', 'et_builder' ),
+				'label'             => esc_html__( 'Url Opens', 'et_builder' ),
 				'type'              => 'select',
 				'option_category'   => 'configuration',
 				'options'           => array(
@@ -293,7 +287,6 @@ class ET_Builder_Module_Image extends ET_Builder_Module {
 		$hover_icon              = $this->props['hover_icon'];
 		$use_overlay             = $this->props['use_overlay'];
 		$animation_style         = $this->props['animation_style'];
-		$box_shadow_style        = $this->props['box_shadow_style'];
 
 		$video_background          = $this->video_background();
 		$parallax_image_background = $this->get_parallax_image_background();
@@ -380,22 +373,12 @@ class ET_Builder_Module_Image extends ET_Builder_Module {
 			) );
 		}
 
-		$box_shadow_overlay_wrap_class = 'none' !== $box_shadow_style
-			? 'has-box-shadow-overlay'
-			: '';
-
-		$box_shadow_overlay_element = 'none' !== $box_shadow_style
-			? '<div class="box-shadow-overlay"></div>'
-			: '';
-
 		$output = sprintf(
-			'<span class="et_pb_image_wrap %5$s">%6$s<img src="%1$s" alt="%2$s"%3$s />%4$s</span>',
+			'<span class="et_pb_image_wrap"><img src="%1$s" alt="%2$s"%3$s />%4$s</span>',
 			esc_attr( $src ),
 			esc_attr( $alt ),
 			( '' !== $title_text ? sprintf( ' title="%1$s"', esc_attr( $title_text ) ) : '' ),
-			'on' === $is_overlay_applied ? $overlay_output : '',
-			$box_shadow_overlay_wrap_class,
-			$box_shadow_overlay_element
+			'on' === $is_overlay_applied ? $overlay_output : ''
 		);
 
 		if ( 'on' === $show_in_lightbox ) {
