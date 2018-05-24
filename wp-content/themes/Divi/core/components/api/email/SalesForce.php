@@ -27,11 +27,6 @@ class ET_Core_API_Email_SalesForce extends ET_Core_API_Email_Provider {
 	/**
 	 * @inheritDoc
 	 */
-	public $custom_fields_scope = 'account';
-
-	/**
-	 * @inheritDoc
-	 */
 	public $name = 'SalesForce';
 
 	/**
@@ -62,26 +57,6 @@ class ET_Core_API_Email_SalesForce extends ET_Core_API_Email_Provider {
 		$this->_set_base_url();
 	}
 
-	protected function _fetch_custom_fields( $list_id = '', $list = array() ) {
-		static $fields = null;
-
-		$this->response_data_key = 'fields';
-
-		$this->prepare_request( "{$this->BASE_URL}/services/data/v39.0/sobjects/Lead/describe" );
-
-		if ( is_null( $fields ) ) {
-			$fields = parent::_fetch_custom_fields( $list_id, $list );
-
-			foreach ( $fields as $index => $field ) {
-				if ( ! $field['custom'] ) {
-					unset( $fields[ $index ] );
-				}
-			}
-		}
-
-		return $fields;
-	}
-
 	/**
 	 * @return string
 	 */
@@ -94,33 +69,6 @@ class ET_Core_API_Email_SalesForce extends ET_Core_API_Email_Provider {
 		$this->prepare_request( $url );
 
 		return parent::fetch_subscriber_lists();
-	}
-
-	protected function _process_custom_fields( $args ) {
-		if ( ! isset( $args['custom_fields'] ) ) {
-			return $args;
-		}
-
-		$fields = $args['custom_fields'];
-
-		unset( $args['custom_fields'] );
-
-		foreach ( $fields as $field_id => $value ) {
-			if ( is_array( $value ) && $value ) {
-				// This is a multiple choice field (eg. checkbox, radio, select)
-				$value = array_values( $value );
-
-				if ( 'checkbox' === $this->data['custom_fields'][ $field_id ]['type'] ) {
-					$value = implode( ';', $value );
-				} else {
-					$value = array_pop( $value );
-				}
-			}
-
-			self::$_->array_set( $args, "custom_fields.{$field_id}", $value );
-		}
-
-		return $args;
 	}
 
 	public function _set_base_url() {
@@ -177,7 +125,6 @@ class ET_Core_API_Email_SalesForce extends ET_Core_API_Email_Provider {
 		} else if ( isset( $this->data['organization_id'] ) && '' !== $this->data['organization_id'] ) {
 			// Simple
 			$this->data['is_authorized'] = 'true';
-			$this->data['lists']         = array( array( 'list_id' => 0, 'name' => 'WebToLead', 'subscribers_count' => 0 ) );
 
 			$this->save_data();
 
@@ -191,40 +138,23 @@ class ET_Core_API_Email_SalesForce extends ET_Core_API_Email_Provider {
 	/**
 	 * @inheritDoc
 	 */
-	public function get_data_keymap( $keymap = array() ) {
+	public function get_data_keymap( $keymap = array(), $custom_fields_key = '' ) {
+		$custom_fields_key = 'custom_fields';
+
 		$keymap = array(
-			'list'              => array(
+			'list'       => array(
 				'list_id'           => 'Id',
 				'name'              => 'Name',
 				'subscribers_count' => 'NumberOfLeads',
 			),
-			'subscriber'        => array(
-				'name'          => 'FirstName',
-				'last_name'     => 'LastName',
-				'email'         => 'Email',
-				'custom_fields' => 'custom_fields',
-			),
-			'custom_field'      => array(
-				'field_id' => 'name',
-				'name'     => 'label',
-				'type'     => 'type',
-				'options'  => 'valueSet',
-			),
-			'custom_field_type' => array(
-				// Us => Them
-				'input'               => 'Text',
-				'textarea'            => 'TextArea',
-				'checkbox'            => 'MultiselectPicklist',
-				'select'              => 'Picklist',
-				// Them => Us
-				'Text'                => 'input',
-				'TextArea'            => 'textarea',
-				'MultiselectPicklist' => 'checkbox',
-				'Picklist'            => 'select',
+			'subscriber' => array(
+				'name'      => 'FirstName',
+				'last_name' => 'LastName',
+				'email'     => 'Email',
 			),
 		);
 
-		return parent::get_data_keymap( $keymap );
+		return parent::get_data_keymap( $keymap, $custom_fields_key );
 	}
 
 	public function get_subscriber( $email ) {
@@ -260,11 +190,7 @@ class ET_Core_API_Email_SalesForce extends ET_Core_API_Email_Provider {
 		if ( ! $subscriber_id ) {
 			$url                = "{$this->BASE_URL}/services/data/v39.0/sobjects/Lead";
 			$content            = $this->transform_data_to_provider_format( $args, 'subscriber' );
-			$content            = $this->_process_custom_fields( $content );
-			$content            = array_merge( $content, $content['custom_fields'] );
 			$content['Company'] = 'Bloom';
-
-			unset( $content['custom_fields'] );
 
 			$this->prepare_request( $url, 'POST', false, json_encode( $content ), true );
 
@@ -309,9 +235,7 @@ class ET_Core_API_Email_SalesForce extends ET_Core_API_Email_Provider {
 		}
 
 		// Define SalesForce web-to-lead endpoint
-		$url  = "https://www.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8";
-		$args = $this->transform_data_to_provider_format( $args, 'subscriber' );
-		$args = $this->_process_custom_fields( $args );
+		$url = "https://www.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8";
 
 		// Prepare arguments for web-to-lead POST
 		$form_args = array(
@@ -328,10 +252,6 @@ class ET_Core_API_Email_SalesForce extends ET_Core_API_Email_Provider {
 
 		if ( '' !== $args['last_name'] ) {
 			$form_args['body']['last_name'] = sanitize_text_field( $args['last_name'] );
-		}
-
-		if ( isset( $args['custom_fields'] ) ) {
-			$form_args = array_merge( $form_args, $args['custom_fields'] );
 		}
 
 		// Post to SalesForce web-to-lead endpoint

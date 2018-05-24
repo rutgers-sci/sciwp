@@ -60,19 +60,13 @@ class ET_Core_API_Email_Aweber extends ET_Core_API_Email_Provider {
 	public $uses_oauth = true;
 
 	/**
-	 * ET_Core_API_Email_Aweber constructor.
+	 * ET_Core_API_Aweber constructor.
 	 *
 	 * @inheritDoc
 	 */
 	public function __construct( $owner, $account_name = '', $api_key = '' ) {
 		parent::__construct( $owner, $account_name, $api_key );
 		$this->accounts_url = "{$this->BASE_URL}/accounts";
-	}
-
-	protected function _fetch_custom_fields( $list_id = '', $list = array() ) {
-		$this->prepare_request( $list['custom_fields_collection_link'] );
-
-		return parent::_fetch_custom_fields( $list_id, $list );
 	}
 
 	protected function _get_lists_collection_url() {
@@ -93,44 +87,10 @@ class ET_Core_API_Email_Aweber extends ET_Core_API_Email_Provider {
 		return ( count( $values ) === 6 ) ? $values : null;
 	}
 
-	protected function _process_custom_fields( $args ) {
-		if ( ! isset( $args['custom_fields'] ) ) {
-			return $args;
-		}
-
-		$fields = $args['custom_fields'];
-
-		unset( $args['custom_fields'] );
-
-		foreach ( $fields as $field_id => $value ) {
-			if ( is_array( $value ) && $value ) {
-				// This is a multiple choice field (eg. checkbox, radio, select)
-				$value = array_values( $value );
-
-				if ( count( $value ) > 1 ) {
-					$value = implode( ',', $value );
-				} else {
-					$value = array_pop( $value );
-				}
-			}
-
-			$list_id    = $args['list_id'];
-			$field_name = self::$_->array_get( $this->data, "lists.{$list_id}.custom_fields.{$field_id}.name" );
-
-			self::$_->array_set( $args, "custom_fields.{$field_name}", $value );
-		}
-
-		return $args;
-	}
-
 	/**
 	 * Uses the app's authorization code to get an access token
 	 */
 	public function authenticate() {
-		if ( empty( $this->data['api_key'] ) ) {
-			return false;
-		}
-
 		$key_parts = self::_parse_ID( $this->data['api_key'] );
 
 		if ( null === $key_parts ) {
@@ -178,29 +138,26 @@ class ET_Core_API_Email_Aweber extends ET_Core_API_Email_Provider {
 	/**
 	 * @inheritDoc
 	 */
-	public function get_data_keymap( $keymap = array() ) {
+	public function get_data_keymap( $keymap = array(), $custom_fields_key = '' ) {
+		$custom_fields_key = 'custom_fields';
+
 		$keymap = array(
-			'list'         => array(
+			'list'       => array(
 				'list_id'           => 'id',
 				'name'              => 'name',
 				'subscribers_count' => 'total_subscribers',
 			),
-			'subscriber'   => array(
-				'name'          => 'name',
-				'email'         => 'email',
-				'ad_tracking'   => 'ad_tracking',
-				'custom_fields' => 'custom_fields',
+			'subscriber' => array(
+				'name'        => 'name',
+				'email'       => 'email',
+				'ad_tracking' => 'ad_tracking',
 			),
-			'error'        => array(
+			'error'      => array(
 				'error_message' => 'error.message',
-			),
-			'custom_field' => array(
-				'field_id' => 'id',
-				'name'     => 'name',
 			),
 		);
 
-		return parent::get_data_keymap( $keymap );
+		return parent::get_data_keymap( $keymap, $custom_fields_key );
 	}
 
 	/**
@@ -210,10 +167,6 @@ class ET_Core_API_Email_Aweber extends ET_Core_API_Email_Provider {
 		$needs_to_authenticate = ! $this->is_authenticated() || ! $this->_initialize_oauth_helper();
 
 		if ( $needs_to_authenticate && ! $this->authenticate() ) {
-			if ( empty( $this->response->DATA ) ) {
-				return '';
-			}
-
 			$this->response->DATA = json_decode( $this->response->DATA, true );
 			return $this->get_error_message();
 		}
@@ -234,15 +187,13 @@ class ET_Core_API_Email_Aweber extends ET_Core_API_Email_Provider {
 	 * @inheritDoc
 	 */
 	public function subscribe( $args, $url = '' ) {
-		$lists_url  = $this->_get_lists_collection_url();
-		$url        = "{$lists_url}/{$args['list_id']}/subscribers";
-		$ip_address = 'true' === self::$_->array_get( $args, 'ip_address', 'true' );
+		$lists_url = $this->_get_lists_collection_url();
+		$url       = "{$lists_url}/{$args['list_id']}/subscribers";
 
-		$params = $this->_process_custom_fields( $args );
-		$params = $this->transform_data_to_provider_format( $params, 'subscriber' );
+		$params = $this->transform_data_to_provider_format( $args, 'subscriber' );
 		$params = array_merge( $params, array(
 			'ws.op'      => 'create',
-			'ip_address' => $ip_address ? et_core_get_ip_address() : '0.0.0.0',
+			'ip_address' => et_core_get_ip_address(),
 			'misc_notes' => $this->SUBSCRIBED_VIA,
 		) );
 

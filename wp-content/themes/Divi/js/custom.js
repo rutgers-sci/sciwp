@@ -20,7 +20,7 @@
 		$et_main_content_first_row_meta_wrapper = $et_main_content_first_row.find('.et_post_meta_wrapper:first'),
 		$et_main_content_first_row_meta_wrapper_title = $et_main_content_first_row_meta_wrapper.find( 'h1.entry-title' ),
 		$et_main_content_first_row_content = $et_main_content_first_row.find('.entry-content:first'),
-		$et_single_post = $( 'body.single' ),
+		$et_single_post = $( 'body.single-post' ),
 		$et_window = $(window),
 		etRecalculateOffset = false,
 		et_header_height,
@@ -34,15 +34,8 @@
 		et_is_touch_device = 'ontouchstart' in window || navigator.maxTouchPoints,
 		$et_top_cart = $('#et-secondary-menu a.et-cart-info');
 
-	function et_preload_image( src, callback ) {
-		var img = new Image();
-		img.onLoad = callback;
-		img.onload = callback;
-		img.src = src;
-	}
-
 	// We need to check first to see if we are on a woocommerce single product.
-	if ( $(".woocommerce .woocommerce-product-gallery").length > 0 ) {
+	if ( $("body").hasClass("woocommerce") && $("body").hasClass("single-product") && $(".woocommerce-product-gallery").length > 0 ) {
 		// get the gallery container.
 		var gal = $(".woocommerce-product-gallery")[0];
 
@@ -1247,7 +1240,9 @@
 		if ( $('#logo').length ) {
 			// Wait until logo is loaded before performing logo dimension fix
 			// This comes handy when the page is heavy due to the use of images or other assets
-			et_preload_image( $('#logo').attr('src'), et_define_logo_dimension );
+			$('#logo').attr( 'src', $('#logo').attr('src') ).load( function(){
+				et_define_logo_dimension();
+			} );
 		}
 
 		// Set width for adsense in footer widget
