@@ -114,7 +114,7 @@
 		/**
 		 * Filters the HTML output for the top header.
 		 *
-		 * @since 3.10
+		 * @since ??
 		 *
 		 * @param string $top_header
 		 */
@@ -216,7 +216,7 @@
 		/**
 		 * Filters the HTML output for the slide header.
 		 *
-		 * @since 3.10
+		 * @since ??
 		 *
 		 * @param string $top_header
 		 */
@@ -246,7 +246,7 @@
 				/**
 				 * Filters the HTML output for the logo container.
 				 *
-				 * @since 3.10
+				 * @since ??
 				 *
 				 * @param string $logo_container
 				 */
@@ -331,7 +331,7 @@
 		/**
 		 * Filters the HTML output for the main header.
 		 *
-		 * @since 3.10
+		 * @since ??
 		 *
 		 * @param string $main_header
 		 */
@@ -342,6 +342,6 @@
 		/**
 		 * Fires after the header, before the main content is output.
 		 *
-		 * @since 3.10
+		 * @since ??
 		 */
 		do_action( 'et_before_main_content' );
