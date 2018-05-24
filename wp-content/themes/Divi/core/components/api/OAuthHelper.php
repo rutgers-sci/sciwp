@@ -132,7 +132,7 @@ class ET_Core_API_OAuthHelper {
 	protected function _prepare_oauth_request( $request ) {
 		$parameters = array();
 
-		if ( is_array( $request->BODY ) && $request->BODY && ! $request->JSON_BODY ) {
+		if ( is_array( $request->BODY ) && ! empty( $request->BODY ) ) {
 			$parameters = $request->BODY;
 		}
 
@@ -150,7 +150,7 @@ class ET_Core_API_OAuthHelper {
 			$request->URL = $oauth_request->to_url();
 		} else if ( 'POST' === $request->METHOD ) {
 			$request->URL  = $request->JSON_BODY ? $oauth_request->to_url() : $oauth_request->get_normalized_http_url();
-			$request->BODY = $request->JSON_BODY  ? json_encode( $request->BODY ) : $oauth_request->to_post_data();
+			$request->BODY = $oauth_request->to_post_data( $request->JSON_BODY );
 		}
 
 		return $request;
@@ -186,24 +186,17 @@ class ET_Core_API_OAuthHelper {
 			return;
 		}
 
-		list( $_, $name, $account, $nonce ) = explode( '|', sanitize_text_field( rawurldecode( $_GET['state'] ) ) );
+		list( $_, $name, $account ) = explode( '|', rawurldecode( $_GET['state'] ) );
 
-		if ( ! $name || ! $account || ! $nonce ) {
+		if ( '' === $name || '' === $account ) {
 			return;
 		}
 
-		$_GET['nonce'] = $nonce;
-
-		et_core_security_check( 'manage_options', 'et_core_api_service_oauth2', 'nonce', '_GET' );
-
 		$providers = et_core_api_email_providers();
+		$provider  = $providers->get( $name, $account, 'ET_Core' );
 
-		if ( ! $providers->account_exists( $name, $account ) ) {
-			et_core_die();
-		}
-
-		if ( ! $provider = $providers->get( $name, $account, 'ET_Core' ) ) {
-			et_core_die();
+		if ( false === $provider ) {
+			return;
 		}
 
 		$result = $provider->fetch_subscriber_lists();
