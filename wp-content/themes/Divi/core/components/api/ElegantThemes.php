@@ -4,7 +4,7 @@ if ( ! class_exists( 'ET_Core_API_ElegantThemes' ) ):
 /**
  * Handles communication with the main ET API.
  *
- * @since 3.10
+ * @since ??
  *
  * @private
  *
@@ -35,7 +35,7 @@ class ET_Core_API_ElegantThemes {
 	/**
 	 * ET_Core_API_Client constructor.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param string $username
 	 * @param string $api_key
@@ -49,7 +49,7 @@ class ET_Core_API_ElegantThemes {
 	/**
 	 * Decorate a payload array with common data.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param array $payload
 	 *
@@ -70,7 +70,7 @@ class ET_Core_API_ElegantThemes {
 	/**
 	 * Decorate request options array with common options.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param array $options
 	 *
@@ -90,7 +90,7 @@ class ET_Core_API_ElegantThemes {
 	/**
 	 * Parse a response from the API.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param array|WP_Error $response
 	 *
@@ -122,7 +122,7 @@ class ET_Core_API_ElegantThemes {
 	/**
 	 * Get the full API endpoint.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param string $endpoint "api" or "api_downloads"
 	 *
@@ -142,7 +142,7 @@ class ET_Core_API_ElegantThemes {
 	/**
 	 * Submit a GET request to the API.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param array $payload
 	 * @param string $endpoint
@@ -162,7 +162,7 @@ class ET_Core_API_ElegantThemes {
 	/**
 	 * Submit a POST request to the API.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param array $payload
 	 * @param string $endpoint
@@ -183,7 +183,7 @@ class ET_Core_API_ElegantThemes {
 	/**
 	 * Check if a product is available.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param string $product_name
 	 * @param string $version
@@ -229,7 +229,7 @@ class ET_Core_API_ElegantThemes {
 	/**
 	 * Get a product download url for a specific version, if available.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param string $product_name
 	 * @param string $version
