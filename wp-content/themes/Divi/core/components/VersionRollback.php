@@ -4,7 +4,7 @@ if ( ! class_exists( 'ET_Core_VersionRollback' ) ):
 /**
  * Handles version rollback.
  *
- * @since 3.10
+ * @since ??
  *
  * @private
  *
@@ -56,7 +56,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * ET_Core_VersionRollback constructor.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param string $product_name
 	 * @param string $product_shortname
@@ -78,7 +78,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Enqueue assets.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 */
 	public function assets() {
 		wp_enqueue_style( 'et-core-version-rollback', ET_CORE_URL . 'admin/css/version-rollback.css', array(
@@ -100,7 +100,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Get previous installed version, if any.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return string
 	 */
@@ -111,7 +111,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Set previous installed version.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param string $version
 	 *
@@ -124,7 +124,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Get latest installed version, if any.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return string
 	 */
@@ -135,7 +135,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Set latest installed version.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param string $version
 	 *
@@ -148,7 +148,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Check if the product has already been rolled back.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return bool
 	 */
@@ -159,7 +159,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Get unique ajax action.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return string
 	 */
@@ -170,7 +170,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Enable update rollback.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return void
 	 */
@@ -194,22 +194,24 @@ class ET_Core_VersionRollback {
 	/**
 	 * Handle REST API requests to rollback.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return void
 	 */
 	public function ajax_rollback() {
-		if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( $_GET['nonce'], $this->_get_ajax_action() ) ) {
-			wp_send_json_error( array(
-				'errorCode' => 'et_unknown',
-				'error'     => esc_html__( 'Security check failed. Please refresh and try again.', 'et-core' ),
-			), 400 );
-		}
+		$nonce = isset( $_GET['nonce'] ) ? $_GET['nonce'] : '';
 
 		if ( ! current_user_can( 'install_themes' ) ) {
 			wp_send_json_error( array(
 				'errorCode' => 'et_unknown',
 				'error'     => esc_html__( 'You don\'t have sufficient permissions to access this page.', 'et-core' ),
+			), 400 );
+		}
+
+		if ( ! wp_verify_nonce( $nonce, $this->_get_ajax_action() ) ) {
+			wp_send_json_error( array(
+				'errorCode' => 'et_unknown',
+				'error'     => esc_html__( 'Security check failed. Please refresh and try again.', 'et-core' ),
 			), 400 );
 		}
 
@@ -270,7 +272,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Execute a version rollback.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return bool|WP_Error
 	 */
@@ -289,11 +291,9 @@ class ET_Core_VersionRollback {
 		$download_url = $api->get_download_url( $this->product_name, $previous_version );
 
 		// Buffer and discard output as upgrader classes still output content even if the upgrader skin is silent.
-		$buffer_started = ob_start();
+		ob_start();
 		$result = $this->_install_theme( $download_url );
-		if ( $buffer_started ) {
-			ob_end_clean();
-		}
+		ob_end_clean();
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -314,7 +314,7 @@ class ET_Core_VersionRollback {
 	 *
 	 * @see Theme_Upgrader::install() @ WordPress 4.9.4
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @param string $package
 	 *
@@ -367,7 +367,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Get update documentation url for the product.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return string
 	 */
@@ -378,7 +378,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Return ePanel option.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return array
 	 */
@@ -395,7 +395,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Render ePanel option.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return void
 	 */
@@ -422,7 +422,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Render ePanel warning modal when no previous supported version has been used.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return void
 	 */
@@ -442,7 +442,7 @@ class ET_Core_VersionRollback {
 							<?php
 							printf(
 								esc_html__( 'The previously used version of %1$s does not support version rollback.', 'et-core' ),
-								esc_html( $this->product_name )
+								$this->product_name
 							);
 							?>
 						</p>
@@ -456,7 +456,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Render ePanel confirmation modal for rollback.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return void
 	 */
@@ -513,7 +513,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Render ePanel warning modal when a rollback has already been done.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return void
 	 */
@@ -560,7 +560,7 @@ class ET_Core_VersionRollback {
 	/**
 	 * Store latest and previous installed version.
 	 *
-	 * @since 3.10
+	 * @since ??
 	 *
 	 * @return void;
 	 */
