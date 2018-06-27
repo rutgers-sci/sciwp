@@ -162,13 +162,7 @@
 					newImg.src = element.attr( 'src' );
 
 					$( newImg ).on( 'load.twentysixteen', function() {
-						if ( newImg.width >= 840 ) {
-
-							// Check if an image in an image block has a width attribute; if its value is less than 840, return.
-							if ( '.wp-block-image img' === param && element.is( '[width]' ) && element.attr( 'width' ) < 840 ) {
-								return;
-							}
-
+						if ( newImg.width >= 840  ) {
 							element.addClass( 'below-entry-meta' );
 
 							if ( caption.hasClass( 'wp-caption' ) ) {
