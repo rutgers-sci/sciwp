@@ -127,7 +127,10 @@ function et_fb_backend_helpers() {
 		$layout_scope = et_fb_get_layout_term_slug( $post_id, 'scope' );
 	}
 
-	$google_fonts = array_merge( array( 'Default' => array() ), et_builder_get_google_fonts() );
+	$use_google_fonts = et_core_use_google_fonts();
+	$websafe_fonts = et_builder_get_websafe_fonts();
+	$default_fonts_set = array_merge( array( 'Default' => array() ), $websafe_fonts );
+	$google_fonts = $use_google_fonts ? array_merge( $default_fonts_set, et_builder_get_google_fonts() ) : $default_fonts_set;
 	$custom_user_fonts = et_builder_get_custom_fonts();
 	$current_user = wp_get_current_user();
 	$current_url  = ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
@@ -204,6 +207,44 @@ function et_fb_backend_helpers() {
 		),
 		'et_account'                   => $et_account,
 		'productTourStatus'            => et_builder_is_product_tour_enabled() ? 'on' : 'off',
+		'pageCreationOptions'          => array(
+			'build_from_scratch'    => array(
+				'className'       => 'accent-blue',
+				'imgSrc'          => 'scratch.png',
+				'imgSrcHover'     => 'scratch.gif',
+				'titleText'       => esc_html__( 'Build From Scratch', 'et_builder' ),
+				'descriptionText' => esc_html__( 'Build your page from the ground up. Don’t worry, you can access our premade layouts at any time.', 'et_builder' ),
+				'buttonText'      => esc_html__( 'Start Building', 'et_builder' ),
+				'permission'      => array( 'add_module' ),
+			),
+			'use_existing_content'  => array(
+				'className'       => 'accent-blue',
+				'imgSrc'          => 'existing.png',
+				'imgSrcHover'     => 'existing.gif',
+				'titleText'       => esc_html__( 'Use Existing Content', 'et_builder' ),
+				'descriptionText' => esc_html__( 'Use the Divi Builder while retaining your existing page content.', 'et_builder' ),
+				'buttonText'      => esc_html__( 'Start Building', 'et_builder' ),
+				'permission'      => array( 'edit_module' ),
+			),
+			'choose_premade_layout' => array(
+				'className'       => 'accent-purple',
+				'imgSrc'          => 'premade.png',
+				'imgSrcHover'     => 'premade.gif',
+				'titleText'       => esc_html__( 'Choose a premade Layout' ),
+				'descriptionText' => esc_html__( 'Choose from hundreds of world-class premade layouts or start from any of your existing saved layouts.', 'et_builder' ),
+				'buttonText'      => esc_html__( 'Browse Layouts', 'et_builder' ),
+				'permission'      => array( 'load_layout' ),
+			),
+			'clone_existing_page'   => array(
+				'className'       => 'accent-green',
+				'imgSrc'          => 'clone.png',
+				'imgSrcHover'     => 'clone.gif',
+				'titleText'       => esc_html__( 'Clone Existing page', 'et_builder' ),
+				'descriptionText' => esc_html__( 'Jump start your layout design by duplicating another page that you’ve already built.', 'et_builder' ),
+				'buttonText'      => esc_html__( 'Choose Page', 'et_builder' ),
+				'permission'      => array( 'clone_page' ),
+			),
+		),
 		'dividers'                     => ET_Builder_Module_Fields_Factory::get( 'Divider' )->dividers,
 		'moduleParentShortcodes'       => ET_Builder_Element::get_parent_slugs_regex( $post_type ),
 		'moduleChildShortcodes'        => ET_Builder_Element::get_child_slugs_regex( $post_type ),
@@ -242,8 +283,10 @@ function et_fb_backend_helpers() {
 		 */
 		'getTaxonomyLabels'            => apply_filters( 'et_fb_taxonomy_labels', et_fb_get_taxonomy_labels() ),
 		'googleAPIKey'                 => et_pb_is_allowed( 'theme_options' ) ? get_option( 'et_google_api_settings' ) : '',
+		'useGoogleFonts'               => $use_google_fonts,
 		'googleFontsList'              => array_keys( $google_fonts ),
 		'googleFonts'                  => $google_fonts,
+		'websafeFonts'                 => $websafe_fonts,
 		'customFonts'                  => $custom_user_fonts,
 		'removedFonts'                 => et_builder_old_fonts_mapping(),
 		'allFontWeights'               => et_builder_get_font_weight_list(),
@@ -284,6 +327,14 @@ function et_fb_backend_helpers() {
 		'pageSettingsFields'           => ET_Builder_Settings::get_fields(),
 		'pageSettingsValues'           => ET_Builder_Settings::get_values(),
 		'abTestingSubjects'            => false !== ( $all_subjects_raw = get_post_meta( $post_id, '_et_pb_ab_subjects' , true ) ) ? explode( ',', $all_subjects_raw ) : array(),
+		'searchFilterItems'            => array(
+			'show_only' => array(
+				'styles_modified'   => esc_html__( 'Modified Styles', 'et_builder' ),
+				'styles_responsive' => esc_html__( 'Responsive Styles', 'et_builder' ),
+				// 'styles_hover'      => esc_html__( 'Hover Styles', 'et_builder' ), // TODO Uncomment this once the hover options feature has been released.
+				'active_content'    => esc_html__( 'Active Content', 'et_builder' ),
+			),
+		),
 		'defaults'                     => array(
 			'et_pb_accordion_item'    => array(
 				'title'   => $modules_defaults['title'],
@@ -315,8 +366,8 @@ function et_fb_backend_helpers() {
 				'number' => $modules_defaults['number'],
 			),
 			'et_pb_signup'            => array(
-				'title'   => $modules_defaults['title'],
-				'content' => $modules_defaults['body'],
+				'title'       => $modules_defaults['title'],
+				'description' => $modules_defaults['body'],
 			),
 			'et_pb_image'             => array(
 				'src' => $modules_defaults['image']['landscape'],
@@ -417,6 +468,8 @@ function et_fb_backend_helpers() {
 		),
 		'saveModuleLibraryCategories'  => et_fb_prepare_library_cats(),
 		'emailNameFieldOnlyProviders'  => array_keys( ET_Builder_Module_Signup::providers()->names_by_slug( 'all', 'name_field_only' ) ),
+		'emailPredefinedCustomFields'  => ET_Core_API_Email_Providers::instance()->custom_fields_data(),
+		'emailCustomFieldProviders'    => array_keys( ET_Builder_Module_Signup::providers()->names_by_slug( 'all', 'custom_fields' ) ),
 		'columnSettingFields'          => array(
 			'general' => array(
 				'bg_img_%s' => array(
@@ -1203,10 +1256,12 @@ function et_fb_backend_helpers() {
 			'disableGlobal'   => esc_html__( 'Disable Global', 'et_builder' ),
 			'collapse'        => esc_html__( 'Collapse', 'et_builder' ),
 			'expand'          => esc_html__( 'Expand', 'et_builder' ),
+			'stylesModified'  => esc_html__( 'View Modified Style', 'et_builder' ),
 			'toggle'          => esc_html__( 'Toggle', 'et_builder' ),
 			'tab'             => esc_html__( 'Tab', 'et_builder' ),
 			'option'          => esc_html__( 'Option', 'et_builder' ),
 			'item'            => esc_html__( 'Item', 'et_builder' ),
+			'go_to_option'    => esc_html__( 'Go To Option', 'et_builder' ),
 		),
 		'tooltips'            => array(
 			'insertModule'     => esc_html__( 'Insert Module', 'et_builder' ),
@@ -1281,7 +1336,11 @@ function et_fb_backend_helpers() {
 				'tabs'    => ET_Builder_Settings::get_tabs(),
 				'toggles' => ET_Builder_Settings::get_toggles(),
 			),
-			'searchOptions' => esc_html__( 'Search Options', 'et_builder' ),
+			'searchOptions'         => esc_html__( 'Search Options', 'et_builder' ),
+			'filter'                => esc_html__( 'Filter', 'et_builder' ),
+			'show_only'             => esc_html__( 'Show Only', 'et_builder' ),
+			'filterNotice'          => esc_html__( 'No options exist for this search query. Click here to clear your search filters.', 'et_builder' ),
+			'filterNoticeClickable' => esc_html__( 'Click here', 'et_builder' ),
 		),
 		'selectControl' => array(
 			'typeToSearch' => esc_html__( 'Start Typing', 'et_builder' ),
@@ -1362,14 +1421,15 @@ function et_fb_backend_helpers() {
 			'modal' => array(
 				'title'  => esc_html__( 'Builder Settings', 'et_builder' ),
 				'labels' => array(
-					'toolbar'           => esc_html__( 'Customize Builder Settings Toolbar', 'et_builder' ),
-					'view_mode'         => esc_html__( 'Builder Default Interaction Mode', 'et_builder' ),
-					'history'           => esc_html__( 'History State Interval', 'et_builder' ),
-					'modal_position'    => esc_html__( 'Settings Modal Default Position', 'et_builder' ),
-					'animation'         => esc_html__( 'Builder Interface Animations', 'et_builder' ),
-					'disabled_modules'  => esc_html__( 'Show Disabled Modules At 50% Opacity', 'et_builder' ),
-					'group_settings'    => esc_html__( 'Group Settings Into Closed Toggles', 'et_builder' ),
-					'dummy_content'     => esc_html__( 'Add Placeholder Content To New Modules', 'et_builder' ),
+					'toolbar'            => esc_html__( 'Customize Builder Settings Toolbar', 'et_builder' ),
+					'view_mode'          => esc_html__( 'Builder Default Interaction Mode', 'et_builder' ),
+					'history'            => esc_html__( 'History State Interval', 'et_builder' ),
+					'modal_position'     => esc_html__( 'Settings Modal Default Position', 'et_builder' ),
+					'animation'          => esc_html__( 'Builder Interface Animations', 'et_builder' ),
+					'disabled_modules'   => esc_html__( 'Show Disabled Modules At 50% Opacity', 'et_builder' ),
+					'group_settings'     => esc_html__( 'Group Settings Into Closed Toggles', 'et_builder' ),
+					'dummy_content'      => esc_html__( 'Add Placeholder Content To New Modules', 'et_builder' ),
+					'page_creation_flow' => esc_html__( 'Page Creation Flow', 'et_builder' ),
 				),
 				'view_mode_select' => array(
                     '0' => esc_html__( 'Hover Mode' , 'et_builder' ),
@@ -1408,6 +1468,12 @@ function et_fb_backend_helpers() {
 				'enable_dummy_content' => array(
 					'on'   => esc_html__( 'On', 'et_builder' ),
 					'off'  => esc_html__( 'Off', 'et_builder' ),
+				),
+				'page_creation_flow_select' => array(
+					'0' => esc_html__( 'Give Me A Choice', 'et_builder' ),
+					'1' => esc_html__( 'Build From Scratch', 'et_builder' ),
+					'2' => esc_html__( 'Load Premade Layout', 'et_builder' ),
+					'3' => esc_html__( 'Clone Existing Page', 'et_builder' ),
 				),
 			),
 		),
