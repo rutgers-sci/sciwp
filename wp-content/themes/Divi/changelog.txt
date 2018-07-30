@@ -1,3 +1,84 @@
+version 3.11 ( updated 07-26-2018 )
+- Added a new option, Find & Replace, to right click menus on individual options.
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/helpers.php
+	* includes/builder/functions.php
+
+version 3.10.2 ( updated 07-23-2018 )
+- Fixed a jQuery error that occurred in the VB when various third party plugins were installed.
+- Fixed 1/4 column rows with gutter widths of 1 having unwanted margin bottom on mobile.
+- Fixed the issue where padding was not removed when Use Background Color option was disabled in Login Module.
+- Fixed PHP notice that was occurring since introduction of rollback feature.
+- Fixed custom code color picker not appearing in the Visual Builder settings.
+- Fixed gutter width issues on mobile that occurred due to CSS priority changes in the previous Divi feature release.
+- Fixed website content width option in Customizer not taking effect when boxed layout is enabled.
+    * core/components/VersionRollback.php
+    * includes/builder/frontend-builder/bundle.js
+    * functions.php
+	* style.css
+
+version 3.10.1 ( updated 07-16-2018 )
+- Fixed Visual Builder responsive preview in the TwentySeventeen theme.
+- Fixed TinyMCE dropdowns not being visible in Visual Builder modals.
+- Fixed section padding not taking effect on custom post types.
+- Fixed column margin regression for pages in Visual Builder.
+- Fixed button hover interaction in Visual Builder.
+- Added in the ability to copy, paste and reset individual Text module heading levels.
+	* includes/builder/frontend-builder/assets/css/responsive-preview.css
+	* includes/builder/frontend-builder/bundle.js
+
+version 3.10 ( updated 07-12-2018 )
+- Created a system for enabling the Divi Builder on custom post types.
+- Automatically enabled the Divi Builder on popular post types that we have tested.
+- Updated MailChimp API wrapper to properly handle resubscribing a previously unsubscribed and/or deleted subscriber.
+- Fixed the issue where "Use Custom Styles for Button" option was disabled after pasting any button custom style options.
+- Fixed the issue where "Use Custom Styles for Button" option was disabled after resetting any button custom style options.
+- Fixed incorrect ability to add new row/module even when the parent module is locked in VB Click View.
+- Fixed issues with some styles are not working in Divi Builder Plugin because of error in minification function.
+- Removed favicon option from epanel.
+- Added checkerboard pattern to palette and currently selected color swatches in to Divi Color Manager.
+- Reverted back the visual appearance of color picker launcher when no color/default is selected.
+	* core/components/PageResource.php
+	* core/components/api/email/MailChimp.php
+	* core/components/data/Utils.php
+	* core/functions.php
+	* core/ui/components/controls/sortable-list/sortable-list.scss
+	* css/main-styles.css
+	* css/style-header.css
+	* epanel/core_functions.php
+	* epanel/css/panel.css
+	* epanel/js/functions-init.js
+	* functions.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/class-et-builder-settings.php
+	* includes/builder/core.php
+	* includes/builder/framework.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/helpers.php
+	* includes/builder/frontend-builder/webpack.config.js
+	* includes/builder/frontend-builder/webpack.production.config.js
+	* includes/builder/functions.php
+	* includes/builder/module/Toggle.php
+	* includes/builder/plugin-compat/easy-digital-downloads.php
+	* includes/builder/plugin-compat/eventon.php
+	* includes/builder/plugin-compat/events-manager.php
+	* includes/builder/plugin-compat/the-events-calendar.php
+	* includes/builder/plugin-compat/woocommerce.php
+	* includes/builder/scripts/builder.js
+	* includes/builder/scripts/frontend-builder-scripts.js
+	* includes/builder/styles/frontend-builder-global-style.css
+	* includes/builder/styles/frontend-builder-shared-conditional-style.css
+	* includes/builder/styles/frontend-builder-shared-style.css
+	* includes/builder/styles/frontend-builder-style.css
+	* includes/builder/styles/preview.css
+	* includes/builder/template-preview.php
+	* js/custom.js
+	* js/theme-customizer.js
+	* options_divi.php
+	* sidebar.php
+	* single-project.php
+	* single.php
+
 version 3.9 ( updated 06-28-2018 )
 - Added new color manager to the Visual Builder, including new recent colors and suggested colors systems.
 	* includes/builder/frontend-builder/helpers.php
