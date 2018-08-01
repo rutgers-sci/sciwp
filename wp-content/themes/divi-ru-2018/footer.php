@@ -41,14 +41,18 @@ if ( ! is_page_template( 'page-template-blank.php' ) ) : ?>
 					 <div class="footer_outer clearfix">
     <div class="footcontainer">
 <div class="footright">
+<div class="scifooter">
 <div><strong>Connect With Us</strong></div>
 
 <div class="social"><a href="http://www.facebook.com/RutgersCommInfo"><i class="fa fa-facebook-square">&nbsp;</i></a><a href="http://twitter.com/RutgersCommInfo"><i class="fa fa-twitter">&nbsp;</i></a><a href="http://www.youtube.com/RutgersCommInfo"><i class="fa fa-youtube-square">&nbsp;</i></a><a href="https://www.linkedin.com/company/rutgers-university-school-of-communication-and-information"><i class="fa fa-linkedin-square">&nbsp;</i></a><a href="http://www.instagram.com/rutgerscomminfo"><i class="fa fa-instagram">&nbsp;</i></a><a href="http://plus.google.com/+RutgersComminfo"><i class="fa fa-google-plus-square">&nbsp;</i></a></div>
 </div>
-
-<div class="footleft"><strong>Rutgers School of Communication and Information</strong><br />
+</div>
+<div class="footleft">
+<div class="scifooter">
+<strong>Rutgers School of Communication and Information</strong><br />
 4 Huntington St. · New Brunswick, NJ · 08901<br />
 848-932-7500</div>
+</div>
 </div>
 
     
