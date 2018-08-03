@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # sciwp
 Custom Upstream for Rutgers SC&amp;I WordPress sites
 =======
@@ -35,3 +36,7 @@ If you would like to keep a separate set of configuration for local development,
 ![alt](http://i.imgur.com/fzIeQBP.png, '')
 
 >>>>>>> pantheon-wordpress/master
+=======
+# sciwp
+Custom Upstream for Rutgers SC&amp;I WordPress sites
+>>>>>>> wp-core-upd
