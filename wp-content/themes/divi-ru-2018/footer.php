@@ -44,7 +44,7 @@ if ( ! is_page_template( 'page-template-blank.php' ) ) : ?>
 <div class="scifooter">
 <div><strong>Connect With Us</strong></div>
 
-<div class="social"><a href="http://www.facebook.com/RutgersCommInfo"><i class="fa fa-facebook-square">&nbsp;</i></a><a href="http://twitter.com/RutgersCommInfo"><i class="fa fa-twitter">&nbsp;</i></a><a href="http://www.youtube.com/RutgersCommInfo"><i class="fa fa-youtube-square">&nbsp;</i></a><a href="https://www.linkedin.com/company/rutgers-university-school-of-communication-and-information"><i class="fa fa-linkedin-square">&nbsp;</i></a><a href="http://www.instagram.com/rutgerscomminfo"><i class="fa fa-instagram">&nbsp;</i></a><a href="http://plus.google.com/+RutgersComminfo"><i class="fa fa-google-plus-square">&nbsp;</i></a></div>
+<div class="social"><a href="http://www.facebook.com/RutgersCommInfo"><i class="fa fa-facebook-square">&nbsp;</i></a><a href="http://twitter.com/RutgersCommInfo"><i class="fa fa-twitter">&nbsp;</i></a><a href="http://www.youtube.com/RutgersCommInfo"><i class="fa fa-youtube-square">&nbsp;</i></a><a href="https://www.linkedin.com/company/rutgers-university-school-of-communication-and-information"><i class="fa fa-linkedin-square">&nbsp;</i></a><a href="http://www.instagram.com/rutgerscomminfo"><i class="fa fa-instagram">&nbsp;</i></a></div>
 </div>
 </div>
 <div class="footleft">
