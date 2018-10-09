@@ -2,7 +2,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '3.15' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '3.16.1' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -2354,8 +2354,40 @@ function et_pb_edit_export_query_filter( $query ) {
 
 function et_pb_setup_theme(){
 	add_action( 'add_meta_boxes', 'et_pb_add_custom_box', 10, 2 );
+	add_action( 'add_meta_boxes', 'et_builder_prioritize_meta_box', 999999 );
 }
 add_action( 'init', 'et_pb_setup_theme', 11 );
+
+/**
+ * Forcefully prioritize the Divi Builder metabox to be at the top.
+ * User drag&drop metabox order customizations are still supported.
+ * Required since not all plugins properly register their metaboxes in the add_meta_boxes hook.
+ *
+ * @since ??
+ *
+ * @return void
+ */
+function et_builder_prioritize_meta_box() {
+	global $wp_meta_boxes;
+
+	foreach ( $wp_meta_boxes as $page => $contexts ) {
+		foreach ( $contexts as $context => $priorities ) {
+			foreach ( $priorities as $priority => $boxes ) {
+				if ( ! isset( $boxes[ ET_BUILDER_LAYOUT_POST_TYPE ] ) ) {
+					continue;
+				}
+
+				$divi = $boxes[ ET_BUILDER_LAYOUT_POST_TYPE ];
+				unset( $boxes[ ET_BUILDER_LAYOUT_POST_TYPE ] );
+
+				$wp_meta_boxes[ $page ][ $context ][ $priority ] = array_merge(
+					array( ET_BUILDER_LAYOUT_POST_TYPE => $divi ),
+					$boxes
+				);
+			}
+		}
+	}
+}
 
 /**
 * The page builders require the WP Heartbeat script in order to function. We ensure the heartbeat
@@ -3112,7 +3144,7 @@ function et_pb_add_builder_page_js_css(){
 		'default_initial_text_module'              => apply_filters( 'et_builder_default_initial_text_module', 'et_pb_text' ),
 		'section_only_row_dragged_away'            => esc_html__( 'The section should have at least one row.', 'et_builder' ),
 		'fullwidth_module_dragged_away'            => esc_html__( 'Fullwidth module can\'t be used outside of the Fullwidth Section.', 'et_builder' ),
-		'stop_dropping_3_col_row'                  => esc_html__( '3 column row can\'t be used in this column.', 'et_builder' ),
+		'stop_dropping_3_col_row'                  => esc_html__( "This number of columns can't be used on this row.", 'et_builder' ),
 		'preview_image'                            => esc_html__( 'Preview', 'et_builder' ),
 		'empty_admin_label'                        => esc_html__( 'Module', 'et_builder' ),
 		'video_module_image_error'                 => esc_html__( 'Still images cannot be generated from this video service and/or this video format', 'et_builder' ),
@@ -3623,7 +3655,7 @@ function et_builder_get_columns() {
 function et_builder_get_columns_layout() {
 	$layout_columns =
 		'<% if ( typeof et_pb_specialty !== \'undefined\' && et_pb_specialty === \'on\' ) { %>
-			<li data-layout="1_2,1_2" data-specialty="1,0" data-specialty_columns="2">
+			<li data-layout="1_2,1_2" data-specialty="1,0" data-specialty_columns="3">
 				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_3_variations">
 					<div class="et_pb_variation et_pb_variation_full"></div>
 					<div class="et_pb_variation_row">
@@ -3639,7 +3671,7 @@ function et_builder_get_columns_layout() {
 				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_specialty_column"></div>
 			</li>
 
-			<li data-layout="1_2,1_2" data-specialty="0,1" data-specialty_columns="2">
+			<li data-layout="1_2,1_2" data-specialty="0,1" data-specialty_columns="3">
 				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_specialty_column"></div>
 
 				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_3_variations">
@@ -3688,7 +3720,7 @@ function et_builder_get_columns_layout() {
 				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
 			</li>
 
-			<li data-layout="1_4,1_2,1_4" data-specialty="0,1,0" data-specialty_columns="2">
+			<li data-layout="1_4,1_2,1_4" data-specialty="0,1,0" data-specialty_columns="3">
 				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
 				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_3_variations">
 					<div class="et_pb_variation et_pb_variation_full"></div>
@@ -3705,7 +3737,7 @@ function et_builder_get_columns_layout() {
 				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
 			</li>
 
-			<li data-layout="1_2,1_4,1_4" data-specialty="1,0,0" data-specialty_columns="2">
+			<li data-layout="1_2,1_4,1_4" data-specialty="1,0,0" data-specialty_columns="3">
 				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_3_variations">
 					<div class="et_pb_variation et_pb_variation_full"></div>
 					<div class="et_pb_variation_row">
@@ -3722,7 +3754,7 @@ function et_builder_get_columns_layout() {
 				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
 			</li>
 
-			<li data-layout="1_4,1_4,1_2" data-specialty="0,0,1" data-specialty_columns="2">
+			<li data-layout="1_4,1_4,1_2" data-specialty="0,0,1" data-specialty_columns="3">
 				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
 				<div class="et_pb_layout_column et_pb_column_layout_1_4 et_pb_specialty_column"></div>
 				<div class="et_pb_layout_column et_pb_column_layout_1_2 et_pb_variations et_pb_3_variations">
@@ -3739,7 +3771,7 @@ function et_builder_get_columns_layout() {
 				</div>
 			</li>
 
-			<li data-layout="1_3,2_3" data-specialty="0,1" data-specialty_columns="2">
+			<li data-layout="1_3,2_3" data-specialty="0,1" data-specialty_columns="4">
 				<div class="et_pb_layout_column et_pb_column_layout_1_3 et_pb_specialty_column"></div>
 				<div class="et_pb_layout_column et_pb_column_layout_2_3 et_pb_variations et_pb_3_variations">
 					<div class="et_pb_variation et_pb_variation_full"></div>
@@ -3756,7 +3788,7 @@ function et_builder_get_columns_layout() {
 				</div>
 			</li>
 
-			<li data-layout="2_3,1_3" data-specialty="1,0" data-specialty_columns="2">
+			<li data-layout="2_3,1_3" data-specialty="1,0" data-specialty_columns="4">
 				<div class="et_pb_layout_column et_pb_column_layout_2_3 et_pb_variations et_pb_3_variations">
 					<div class="et_pb_variation et_pb_variation_full"></div>
 					<div class="et_pb_variation_row">
@@ -5497,7 +5529,7 @@ function et_pb_pagebuilder_meta_box() {
 
 	printf(
 		'<script type="text/template" id="et-builder-mobile-options-tabs-template">
-			<div class="et_pb_mobile_settings_tabs">
+			<div class="et_pb_mobile_settings_tabs et_pb_tabs_mobile">
 				<a href="#" class="et_pb_mobile_settings_tab et_pb_mobile_settings_active_tab" data-settings_tab="desktop">
 					%1$s
 				</a>
@@ -5512,6 +5544,53 @@ function et_pb_pagebuilder_meta_box() {
 		esc_html__( 'Desktop', 'et_builder' ),
 		esc_html__( 'Tablet', 'et_builder' ),
 		esc_html__( 'Smartphone', 'et_builder' )
+	);
+
+	printf(
+		'<script type="text/template" id="et-builder-hover-options-tabs-template">
+			<div class="et_pb_mobile_settings_tabs et_pb_tabs_hover et_pb_tabs_hover_only">
+				<a href="#" class="et_pb_mobile_settings_tab et_pb_mobile_settings_active_tab et_pb_hover" data-settings_tab="default">
+					%1$s
+				</a>
+				<a href="#" class="et_pb_mobile_settings_tab et_pb_hover" data-settings_tab="hover">
+					%2$s
+				</a>
+			</div>
+		</script>',
+		esc_html__( 'Default', 'et_builder' ),
+		esc_html__( 'Hover', 'et_builder' )
+	);
+
+	printf(
+		'<script type="text/template" id="et-builder-mobile-hover-options-tabs-template">
+			<div class="et_pb_mobile_settings_tabs et_pb_tabs_mobile et_pb_tabs_hover">
+				<a href="#" class="et_pb_mobile_settings_tab et_pb_mobile_settings_active_tab" data-settings_tab="desktop">
+					%1$s
+				</a>
+				<a href="#" class="et_pb_mobile_settings_tab et_pb_hover" data-settings_tab="hover">
+					%2$s
+				</a>
+				<a href="#" class="et_pb_mobile_settings_tab et_pb_mobile" data-settings_tab="tablet">
+					%3$s
+				</a>
+				<a href="#" class="et_pb_mobile_settings_tab et_pb_mobile" data-settings_tab="phone">
+					%4$s
+				</a>
+			</div>
+		</script>',
+		esc_html__( 'Desktop', 'et_builder' ),
+		esc_html__( 'Hover', 'et_builder' ),
+		esc_html__( 'Tablet', 'et_builder' ),
+		esc_html__( 'Smartphone', 'et_builder' )
+	);
+
+	printf(
+		'<script type="text/template" id="et-builder-hover-icon-template"><span class="et-pb-hover-settings-toggle" data-id="placeholder">
+			 <svg width="18" height="18" viewBox="-2 -3 16 16">
+			     <path d="M8.69 9.43l2.22-.84a.5.5 0 0 0 .19-.8L5.22 1.28A.7.7 0 0 0 4 1.75v8.73a.5.5 0 0 0 .68.47l2.14-.81 1 2.42a1 1 0 1 0 1.86-.75z"></path>
+			 </svg>
+			 <input type="hidden" id="placeholder"/>
+			 </span></script>'
 	);
 
 	printf(
@@ -7623,6 +7702,7 @@ function et_fb_retrieve_builder_data() {
 	$fields_data['customTabsFields'] = ET_Builder_Element::get_settings_modal_tabs_fields( $post_type );
 	$fields_data['customLayoutsTabs'] = ET_Builder_Library::builder_library_modal_custom_tabs( $post_type );
 	$fields_data['moduleItemsConfig'] = ET_Builder_Element::get_module_items_configs( $post_type );
+	$fields_data['moduleTransitions'] = ET_Builder_Element::get_modules_transitions( $post_type );
 	$fields_data['contact_form_input_defaults'] = et_fb_process_shortcode( sprintf(
 		'[et_pb_contact_field field_title="%1$s" field_type="input" field_id="Name" required_mark="on" fullwidth_field="off" /][et_pb_contact_field field_title="%2$s" field_type="email" field_id="Email" required_mark="on" fullwidth_field="off" /][et_pb_contact_field field_title="%3$s" field_type="text" field_id="Message" required_mark="on" fullwidth_field="on" /]',
 		esc_attr__( 'Name', 'et_builder' ),
@@ -7984,13 +8064,38 @@ function et_fb_process_shortcode( $content, $parent_address = '', $global_parent
 			$output = call_user_func( $shortcode_tags[$tag], $attr, null, $tag );
 		}
 
-		$_matches[] = $output;
+		$_matches[] = et_fb_add_additional_attrs( $attr, $output );
 	}
 
 	// Turn off the flag since the shortcode object is done being built.
 	et_fb_reset_shortcode_object_processing();
 
 	return $_matches;
+}
+
+// Whitelist any additional attributes
+function et_fb_add_additional_attrs( $processed_attrs, $output ) {
+	if ( ! isset( $output['attrs'] ) ) {
+		return $output;
+	}
+
+	// A list of all the attributes that are already returned after the shortcode is processed
+	$safe_attrs           = array_keys( $output['attrs'] );
+	$whitelisted_attrs    = array();
+
+	foreach ( $processed_attrs as $attr => $value ) {
+		if ( ! preg_match( '~_hover(_enabled)?$~', $attr ) ) {
+			continue;
+		}
+
+		$whitelisted_attrs[$attr] = $value;
+	}
+
+	if ( $whitelisted_attrs ) {
+		$output['attrs'] = array_merge( $output['attrs'], $whitelisted_attrs );
+	}
+
+	return $output;
 }
 
 /**
@@ -8757,5 +8862,26 @@ function et_builder_get_active_plugins() {
 	}
 
 	return apply_filters( 'et_builder_get_active_plugins', $active_plugins );
+}
+endif;
+
+if ( ! function_exists( 'et_has_hover_enabled' ) ) :
+function et_has_hover_enabled( $props ) {
+	$et_has_hover_enabled = false;
+	$prop_names = array_keys( $props );
+	$suffix = et_pb_hover_options()->get_enabled_suffix();
+	foreach ( $prop_names as $prop_name ) {
+		if ( preg_match( "~{$suffix}$~", $prop_name ) && 'on' === $props[ $prop_name ] ) {
+			$et_has_hover_enabled = true;
+			break;
+		}
+	}
+	return $et_has_hover_enabled;
+}
+endif;
+
+if ( ! function_exists( 'et_builder_is_hover_enabled' ) ) :
+function et_builder_is_hover_enabled( $setting, $props ) {
+	return et_pb_hover_options()->is_enabled( $setting, $props );
 }
 endif;
