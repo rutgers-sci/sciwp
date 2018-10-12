@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Compatibility for the Advanced Custom Fields plugin.
  *
- * @since 3.17.2
+ * @since ??
  *
  * @link https://www.advancedcustomfields.com/
  */
@@ -15,35 +15,17 @@ class ET_Builder_Plugin_Compat_Advanced_Custom_Fields extends ET_Builder_Plugin_
 	/**
 	 * Constructor.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 */
 	public function __construct() {
-		$this->plugin_id = $this->_get_plugin_id();
+		$this->plugin_id = 'advanced-custom-fields/acf.php';
 		$this->init_hooks();
-	}
-
-	/**
-	 * Get the currently activated ACF plugin id as the FREE and PRO versions are separate plugins.
-	 *
-	 * @since ??
-	 *
-	 * @return string
-	 */
-	protected function _get_plugin_id() {
-		if ( ! function_exists( 'is_plugin_active' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
-
-		$pro  = 'advanced-custom-fields-pro/acf.php';
-		$free = 'advanced-custom-fields/acf.php';
-
-		return is_plugin_active( $pro ) ? $pro : $free;
 	}
 
 	/**
 	 * Hook methods to WordPress.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @return void
 	 */
@@ -60,7 +42,7 @@ class ET_Builder_Plugin_Compat_Advanced_Custom_Fields extends ET_Builder_Plugin_
 	/**
 	 * Format ACF meta values accordingly.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @param string $meta_value
 	 * @param string $meta_key
@@ -89,7 +71,7 @@ class ET_Builder_Plugin_Compat_Advanced_Custom_Fields extends ET_Builder_Plugin_
 	/**
 	 * Format ACF dynamic content field.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @param array<string, array> $custom_fields
 	 * @param int   $post_id
@@ -190,7 +172,7 @@ class ET_Builder_Plugin_Compat_Advanced_Custom_Fields extends ET_Builder_Plugin_
 		}
 
 		// Value escaping left to the user to decide since some fields hold rich content.
-		$value = et_core_esc_previously( $value );
+		$value = et_esc_previously( $value );
 
 		return $value;
 	}

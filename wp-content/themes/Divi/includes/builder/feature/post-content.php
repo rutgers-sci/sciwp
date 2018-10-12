@@ -2,7 +2,7 @@
 /**
  * Handle ajax requests to resolve post content.
  *
- * @since 3.17.2
+ * @since ??
  *
  * @return void
  */
@@ -42,7 +42,7 @@ add_action( 'wp_ajax_et_builder_resolve_post_content', 'et_builder_ajax_resolve_
 /**
  * List terms for a given post.
  *
- * @since 3.17.2
+ * @since ??
  *
  * @param array $terms
  * @param boolean $link
@@ -60,7 +60,7 @@ function et_builder_list_terms( $terms, $link = true, $separator = ' | ' ) {
 			$label = sprintf(
 				'<a href="%1$s">%2$s</a>',
 				esc_url( get_term_link( $term ) ),
-				et_core_esc_previously( $label )
+				et_esc_previously( $label )
 			);
 		}
 

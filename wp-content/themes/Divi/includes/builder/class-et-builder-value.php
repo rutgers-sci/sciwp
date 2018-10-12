@@ -4,13 +4,13 @@
  * Represent a simple value or a dynamic one.
  * Used for module attributes and content.
  *
- * @since 3.17.2
+ * @since ??
  */
 class ET_Builder_Value {
 	/**
 	 * Flag whether the value is static or dynamic.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @var bool
 	 */
@@ -19,7 +19,7 @@ class ET_Builder_Value {
 	/**
 	 * Value content. Represents the dynamic content type when dynamic.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @var string
 	 */
@@ -28,7 +28,7 @@ class ET_Builder_Value {
 	/**
 	 * Array of dynamic content settings.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @var array<string, mixed>
 	 */
@@ -37,7 +37,7 @@ class ET_Builder_Value {
 	/**
 	 * ET_Builder_Value constructor.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @param boolean $dynamic
 	 * @param string $content
@@ -52,7 +52,7 @@ class ET_Builder_Value {
 	/**
 	 * Check if the value is dynamic or not.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @return bool
 	 */
@@ -63,7 +63,7 @@ class ET_Builder_Value {
 	/**
 	 * Get the resolved content.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @param integer $post_id
 	 *
@@ -80,7 +80,7 @@ class ET_Builder_Value {
 	/**
 	 * Get the static content or a serialized representation of the dynamic one.
 	 *
-	 * @since 3.17.2
+	 * @since ??
 	 *
 	 * @return string
 	 */
