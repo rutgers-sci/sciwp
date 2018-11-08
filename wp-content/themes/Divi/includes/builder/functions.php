@@ -2,7 +2,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '3.17.4' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '3.17.6' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -3215,6 +3215,7 @@ function et_pb_add_builder_page_js_css(){
 		'et_builder_modules_with_children'         => ET_Builder_Element::get_slugs_with_children( $post_type ),
 		'et_builder_modules_featured_image_background' => ET_Builder_Element::get_featured_image_background_modules( $post_type ),
 		'et_builder_templates_amount'              => ET_BUILDER_AJAX_TEMPLATES_AMOUNT,
+		'et_builder_edit_global_library'           => et_pb_is_allowed( 'edit_global_library' ),
 		'default_initial_column_type'              => apply_filters( 'et_builder_default_initial_column_type', '4_4' ),
 		'default_initial_text_module'              => apply_filters( 'et_builder_default_initial_text_module', 'et_pb_text' ),
 		'section_only_row_dragged_away'            => esc_html__( 'The section should have at least one row.', 'et_builder' ),
