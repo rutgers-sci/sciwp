@@ -32,19 +32,11 @@ class ET_Builder_Plugin_Compat_Smush extends ET_Builder_Plugin_Compat_Base {
 		if ( ! $this->get_plugin_version() ) {
 			return;
 		}
+		add_filter( 'wp_smush_enqueue', array( $this, 'wp_smush_enqueue' ) );
+	}
 
-		$enabled = array(
-			// phpcs:disable WordPress.Security.NonceVerification.NoNonceVerification
-			'vb'  => et_()->array_get( $_GET, 'et_fb' ),
-			'bfb' => et_()->array_get( $_GET, 'et_bfb' ),
-			// phpcs:enable
-		);
-
-		if ( $enabled['vb'] || $enabled['bfb'] ) {
-			// Plugin's `enqueue` function will cause a PHP notice unless
-			// early exit is forced using the following custom filter
-			add_filter( 'wp_smush_enqueue', '__return_false' );
-		}
+	public function wp_smush_enqueue() {
+		return function_exists( 'current_screen' );
 	}
 }
 
