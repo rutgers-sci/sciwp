@@ -6368,6 +6368,8 @@ function et_divi_add_customizer_css() {
 				max-width: <?php echo esc_html( $content_width ); ?>px;
 			}
 			.et_boxed_layout #page-container,
+			.et_boxed_layout.et_non_fixed_nav.et_transparent_nav #page-container #top-header,
+			.et_boxed_layout.et_non_fixed_nav.et_transparent_nav #page-container #main-header,
 			.et_fixed_nav.et_boxed_layout #page-container #top-header,
 			.et_fixed_nav.et_boxed_layout #page-container #main-header,
 			.et_boxed_layout #page-container .container,
@@ -6942,7 +6944,6 @@ function et_divi_add_customizer_css() {
 		@media only screen and ( min-width: 981px ) {
 			<?php if ( 4 !== $section_padding ) { ?>
 				<?php echo $css( '.et_pb_section', false ); ?> { padding: <?php echo esc_html( $section_padding ); ?>% 0; }
-				<?php echo $css( '.et_pb_section.et_pb_section_first', false ); ?> { padding-top: inherit; }
 				<?php echo $css( '.et_pb_fullwidth_section', false ); ?> { padding: 0; }
 			<?php } ?>
 			<?php if ( 2 !== $row_padding ) { ?>
@@ -7044,7 +7045,6 @@ function et_divi_add_customizer_css() {
 			<?php echo $css( '.et_pb_row', false ); ?> { padding: <?php echo esc_html( intval( $large_content_width * $row_padding / 100 ) ); ?>px 0; }
 			<?php echo $css( '.et_pb_section', false ); ?> { padding: <?php echo esc_html( intval( $large_content_width * $section_padding / 100 ) ); ?>px 0; }
 			.single.et_pb_pagebuilder_layout.et_full_width_page .et_post_meta_wrapper { padding-top: <?php echo esc_html( intval( $large_content_width * $row_padding / 100 * 3 ) ); ?>px; }
-			<?php echo $css( '.et_pb_section.et_pb_section_first', false ); ?> { padding-top: inherit; }
 			<?php echo $css( '.et_pb_fullwidth_section', false ); ?> { padding: 0; }
 		}
 
@@ -7196,9 +7196,6 @@ function et_divi_add_customizer_css() {
 				<?php echo $css( '.et_pb_section', false ); ?> {
 					padding: <?php echo esc_html( $tablet_section_height ); ?>px 0;
 				}
-				<?php echo $css( '.et_pb_section.et_pb_section_first', false ); ?> {
-					padding-top: inherit;
-				}
 				<?php echo $css( '.et_pb_section.et_pb_fullwidth_section', false ); ?> {
 					padding: 0;
 				}
@@ -7289,9 +7286,6 @@ function et_divi_add_customizer_css() {
 			<?php if ( 50 !== $phone_section_height && $tablet_section_height !== $phone_section_height ) { ?>
 				<?php echo $css( '.et_pb_section', false ); ?> {
 					padding: <?php echo esc_html( $phone_section_height ); ?>px 0;
-				}
-				<?php echo $css( '.et_pb_section.et_pb_section_first', false ); ?> {
-					padding-top: inherit;
 				}
 				<?php echo $css( '.et_pb_section.et_pb_fullwidth_section', false ); ?> {
 					padding: 0;
@@ -7536,14 +7530,16 @@ function et_divi_add_customizer_css() {
 					'selector' 	=> '.et_pb_testimonial_portrait, .et_pb_testimonial_portrait:before',
 				),
 				array(
-					'type' 		=> 'width',
-					'key' 		=> 'portrait_width',
-					'selector' 	=> '.et_pb_testimonial_portrait',
+					'type'      => 'width',
+					'key'       => 'portrait_width',
+					'selector'  => '.et_pb_testimonial_portrait',
+					'important' => true,
 				),
 				array(
-					'type' 		=> 'height',
-					'key' 		=> 'portrait_height',
-					'selector' 	=> '.et_pb_testimonial_portrait',
+					'type'      => 'height',
+					'key'       => 'portrait_height',
+					'selector'  => '.et_pb_testimonial_portrait',
+					'important' => true,
 				),
 				array(
 					'type' 		=> 'font-style',
@@ -8478,11 +8474,11 @@ function et_pb_print_module_styles_css( $section = '', $settings = array() ) {
 						break;
 
 					case 'width':
-						printf( "%s { width: %spx; }\n", esc_html( $selector ), esc_html( $value ) );
+						printf( "%s { width: %spx%s; }\n", esc_html( $selector ), esc_html( $value ), $important );
 						break;
 
 					case 'height':
-						printf( "%s { height: %spx; }\n", esc_html( $selector ), esc_html( $value ) );
+						printf( "%s { height: %spx%s; }\n", esc_html( $selector ), esc_html( $value ), $important );
 						break;
 
 					case 'padding':
