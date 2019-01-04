@@ -2,7 +2,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '3.18.7' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '3.19.3' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -742,7 +742,7 @@ function et_fb_conditional_tag_params() {
 		'is_user_logged_in'           => is_user_logged_in(),
 		'et_is_ab_testing_active'     => et_is_ab_testing_active() ? 'yes' : 'no',
 		'is_wrapped_styles'           => et_builder_has_limitation( 'use_wrapped_styles' ),
-		'is_gutenberg'                => et_is_gutenberg_active(),
+		'is_gutenberg'                => et_core_is_gutenberg_active(),
 		'is_custom_post_type'         => et_builder_is_post_type_custom( $post_type ),
 		'is_rich_editor'              => user_can_richedit(),
 	);
@@ -787,6 +787,22 @@ function _et_fb_get_app_preferences_defaults() {
 		'page_creation_flow'     => array(
 			'type'    => 'string',
 			'default' => 'default',
+		),
+		'quick_actions_always_start_with' => array(
+			'type'    => 'string',
+			'default' => 'nothing',
+		),
+		'quick_actions_show_recent_queries' => array(
+			'type'    => 'string',
+			'default' => 'off',
+		),
+		'quick_actions_recent_queries' => array(
+			'type'    => 'string',
+			'default' => '',
+		),
+		'quick_actions_recent_category' => array(
+			'type'    => 'string',
+			'default' => '',
 		),
 		'modal_preference'       => array(
 			'type'    => 'string',
@@ -1332,28 +1348,29 @@ function et_fb_ajax_save() {
 		wp_send_json_error();
 	}
 
-	$shortcode_data = json_decode( stripslashes( $_POST['modules'] ), true );
-	$layout_type = '';
+	$update = false;
 
-	if ( isset( $_POST['layout_type'] ) ) {
-		$layout_type = sanitize_text_field( $_POST['layout_type'] );
+	$layout_type = isset( $_POST['layout_type'] ) ? sanitize_text_field( $_POST['layout_type'] ) : '';
+
+	if ( ! isset( $_POST['skip_post_update'] ) ) {
+		$shortcode_data = json_decode( stripslashes( $_POST['modules'] ), true );
+	
+		if ( ! $built_for_type = get_post_meta( $post_id, '_et_pb_built_for_post_type', true ) ) {
+			update_post_meta( $post_id, '_et_pb_built_for_post_type', 'page' );
+		}
+	
+		$post_content = et_fb_process_to_shortcode( $shortcode_data, $_POST['options'], $layout_type );
+	
+		// Store a copy of the sanitized post content in case wpkses alters it since that
+		// would cause our check at the end of this function to fail.
+		$sanitized_content = sanitize_post_field( 'post_content', $post_content, $post_id, 'db' );
+	
+		$update = wp_update_post( array(
+			'ID'           => $post_id,
+			'post_content' => $post_content,
+			'post_status'  => sanitize_text_field( $_POST['options']['status'] ),
+		) );
 	}
-
-	if ( ! $built_for_type = get_post_meta( $post_id, '_et_pb_built_for_post_type', true ) ) {
-		update_post_meta( $post_id, '_et_pb_built_for_post_type', 'page' );
-	}
-
-	$post_content = et_fb_process_to_shortcode( $shortcode_data, $_POST['options'], $layout_type );
-
-	// Store a copy of the sanitized post content in case wpkses alters it since that
-	// would cause our check at the end of this function to fail.
-	$sanitized_content = sanitize_post_field( 'post_content', $post_content, $post_id, 'db' );
-
-	$update = wp_update_post( array(
-		'ID'           => $post_id,
-		'post_content' => $post_content,
-		'post_status'  => esc_attr( $_POST['options']['status'] ),
-	) );
 
 	// update Global modules with selective sync
 	if ( 'module' === $layout_type && isset( $_POST['unsyncedGlobalSettings'] ) && 'none' !== $_POST['unsyncedGlobalSettings'] ) {
@@ -1437,6 +1454,8 @@ function et_fb_ajax_save() {
 			'status'            => get_post_status( $update ),
 			'save_verification' => apply_filters( 'et_fb_ajax_save_verification_result', $saved_verification ),
 		) );
+	} else if( isset( $_POST['skip_post_update'] ) ) {
+		wp_send_json_success();
 	} else {
 		wp_send_json_error();
 	}
@@ -2891,7 +2910,7 @@ function et_pb_after_main_editor( $post ) {
 }
 
 function et_pb_setup_main_editor() {
-	if ( ! et_is_gutenberg_enabled() ) {
+	if ( ! et_core_is_gutenberg_enabled() ) {
 		add_action( 'edit_form_after_title', 'et_pb_before_main_editor' );
 		add_action( 'edit_form_after_editor', 'et_pb_after_main_editor' );
 	}
@@ -2925,7 +2944,7 @@ function et_pb_admin_scripts_styles( $hook ) {
 	}
 
 	// Do not enqueue BB assets if GB is active on this page
-	if ( et_is_gutenberg_enabled() ) {
+	if ( et_core_is_gutenberg_enabled() ) {
 		return;
 	}
 
@@ -3718,7 +3737,7 @@ function et_pb_hidden_meta_boxes( $hidden ) {
 function et_pb_add_custom_box( $post_type, $post ) {
 	add_action( 'admin_enqueue_scripts', 'et_pb_metabox_scripts', 99 );
 	// Do not add BB metabox if GB is active on this page
-	if ( et_is_gutenberg_enabled() ) {
+	if ( et_core_is_gutenberg_enabled() ) {
 		return;
 	}
 
@@ -8022,19 +8041,16 @@ endif;
 /**
  * Is Gutenberg active?
  *
+ * @deprecated See {@see et_core_is_gutenberg_active()}
+ *
+ * @since 3.19.2 Renamed and moved to core.
+ * @since 3.18
+ *
  * @return bool  True - if the plugin is active
  */
 if ( ! function_exists( 'et_is_gutenberg_active' ) ) :
 function et_is_gutenberg_active() {
-	global $wp_version;
-
-	static $has_wp5_plus = null;
-
-	if ( is_null( $has_wp5_plus ) ) {
-		$has_wp5_plus = version_compare( $wp_version, '5.0-alpha1', '>=' );
-	}
-
-	return $has_wp5_plus || function_exists( 'is_gutenberg_page' );
+	return et_core_is_gutenberg_active();
 }
 endif;
 
@@ -8042,15 +8058,16 @@ endif;
  * Is Gutenberg active and enabled for the current post
  * WP 5.0 WARNING - don't use before global post has been set
  *
+ * @deprecated See {@see et_core_is_gutenberg_enabled()}
+ *
+ * @since 3.19.2 Renamed and moved to core.
+ * @since 3.18
+ *
  * @return bool  True - if the plugin is active and enabled.
  */
 if ( ! function_exists( 'et_is_gutenberg_enabled' ) ) :
 function et_is_gutenberg_enabled() {
-	if ( function_exists( 'is_gutenberg_page' ) ) {
-		return et_is_gutenberg_active() && is_gutenberg_page() && has_filter( 'replace_editor', 'gutenberg_init' );
-	}
-
-	return et_is_gutenberg_active() && function_exists( 'use_block_editor_for_post' ) && use_block_editor_for_post( null );
+	return et_core_is_gutenberg_enabled();
 }
 endif;
 
@@ -8702,11 +8719,12 @@ function et_fb_process_shortcode( $content, $parent_address = '', $global_parent
 
 	// Find all registered tag names in $content.
 	preg_match_all( '@\[([^<>&/\[\]\x00-\x20=]++)@', $content, $matches );
-	$tagnames = array_intersect( array_keys( $shortcode_tags ), $matches[1] );
+	// Only need unique tag names
+	$unique_matches = array_unique( $matches[1] );
 
-	$pattern = get_shortcode_regex( $matches[1] );
-
-	$content = preg_match_all("/$pattern/", $content, $matches, PREG_SET_ORDER);
+	$tagnames       = array_intersect( array_keys( $shortcode_tags ), $unique_matches );
+	$pattern        = get_shortcode_regex( $unique_matches );
+	$content        = preg_match_all( "/$pattern/", $content, $matches, PREG_SET_ORDER );
 
 	$_matches = array();
 	$_index = 0;
@@ -9188,7 +9206,7 @@ function et_builder_get_shortcuts( $on = 'fb' ) {
 				),
 			),
 			'module_lock' => array(
-				'kbd'  => array( 'l' ),
+				'kbd'  => array( 'super', 'l' ),
 				'desc' => esc_html__( 'Lock Module', 'et_builder' ),
 				'on' => array(
 					'fb',
@@ -9196,7 +9214,7 @@ function et_builder_get_shortcuts( $on = 'fb' ) {
 				),
 			),
 			'module_disable' => array(
-				'kbd'  => array( 'd' ),
+				'kbd'  => array( 'super', 'd' ),
 				'desc' => esc_html__( 'Disable Module', 'et_builder' ),
 				'on' => array(
 					'fb',
@@ -9382,6 +9400,13 @@ function et_builder_get_shortcuts( $on = 'fb' ) {
 			'toggle_snap' => array(
 				'kbd'  => array( 'super', array( 'left', 'right' ) ),
 				'desc' => esc_html__( 'Snap Modal Left / Right', 'et_builder' ),
+				'on' => array(
+					'fb',
+				),
+			),
+			'quick_actions' => array(
+				'kbd'  => array( 'shift', 'space' ),
+				'desc' => esc_html__( 'Quick Actions', 'et_builder' ),
 				'on' => array(
 					'fb',
 				),
