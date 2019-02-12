@@ -147,6 +147,7 @@ function et_fb_get_dynamic_backend_helpers() {
 	);
 
 	$helpers = array(
+		'site_url'                     => get_site_url(),
 		'debug'                        => defined( 'ET_DEBUG' ) && ET_DEBUG,
 		'postId'                       => $post_id,
 		'postTitle'                    => $post_title,
@@ -278,7 +279,6 @@ function et_fb_get_static_backend_helpers($post_type) {
 	 * @var array $helpers
 	 */
 	$helpers = array(
-		'site_url'                     => get_site_url(),
 		'blog_id'                      => get_current_blog_id(),
 		'autosaveInterval'             => et_builder_autosave_interval(),
 		'isCustomPostType'             => et_builder_is_post_type_custom( $post_type ) ? 'yes' : 'no',
@@ -320,7 +320,7 @@ function et_fb_get_static_backend_helpers($post_type) {
 				'className'       => 'accent-purple',
 				'imgSrc'          => 'premade.png',
 				'imgSrcHover'     => 'premade.gif',
-				'titleText'       => esc_html__( 'Choose a premade Layout' ),
+				'titleText'       => esc_html__( 'Choose a premade Layout', 'et_builder' ),
 				'descriptionText' => esc_html__( 'Choose from hundreds of world-class premade layouts or start from any of your existing saved layouts.', 'et_builder' ),
 				'buttonText'      => esc_html__( 'Browse Layouts', 'et_builder' ),
 				'permission'      => array( 'load_layout' ),
@@ -1932,7 +1932,12 @@ function et_fb_get_static_backend_helpers($post_type) {
 function et_fb_get_asset_helpers( $content, $post_type ) {
 	return sprintf(
 		'window.ETBuilderBackend = jQuery.extend(true, %s, window.ETBuilderBackendDynamic)',
-		json_encode( et_fb_get_static_backend_helpers( $post_type ) )
+		str_replace(
+			// Remove protocol from local urls so that http and https generated content is the same.
+			str_replace( '/', '\/', get_site_url() ),
+			str_replace( '/', '\/', preg_replace( '#^\w+:#', '', get_site_url() ) ),
+			json_encode( et_fb_get_static_backend_helpers( $post_type ) )
+		)
 	);
 }
 add_filter( 'et_fb_get_asset_helpers', 'et_fb_get_asset_helpers', 10, 2 );
@@ -1979,7 +1984,7 @@ function et_fb_fix_plugin_conflicts() {
 	// Disable Autoptimize plugin
 	remove_action( 'init', 'autoptimize_start_buffering', -1 );
 	remove_action( 'template_redirect', 'autoptimize_start_buffering', 2 );
-	
+
 	// Disable WP Super Cache when loading Divi Builder
 	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
 		define( 'DONOTCACHEPAGE', true );
@@ -1991,15 +1996,23 @@ endif;
  * Convert string to camel case format.
  *
  * @param string $string Original string data.
- * @param bool $separator String separator.
+ * @param array  $noStrip Additional regex pattern exclusion.
  *
  * @return string
  */
 if ( ! function_exists( 'et_fb_camel_case' ) ) :
-	function et_fb_camel_case( $string, $separator = '-' ) {
-		$strings = explode( $separator, strtolower( $string ) );
+	function et_fb_camel_case( $string, $noStrip = array() ) {
+		$words = preg_split( '/[^a-zA-Z0-9' . implode( '', $noStrip ) . ']+/i', strtolower( $string ) );
 
-		return lcfirst( implode( '', array_map( 'ucwords', $strings ) ) );
+		if ( count( $words ) === 1 ) {
+			return $words[0];
+		}
+
+		$camel_cased = implode( '', array_map( 'ucwords', $words ) );
+
+		$camel_cased[0] = strtolower( $camel_cased[0] );
+
+		return $camel_cased;
 	}
 endif;
 

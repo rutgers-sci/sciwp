@@ -2,7 +2,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '3.19.5' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '3.19.14' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -744,7 +744,7 @@ function et_fb_conditional_tag_params() {
 		'is_wrapped_styles'           => et_builder_has_limitation( 'use_wrapped_styles' ),
 		'is_gutenberg'                => et_core_is_gutenberg_active(),
 		'is_custom_post_type'         => et_builder_is_post_type_custom( $post_type ),
-		'is_rich_editor'              => user_can_richedit(),
+		'is_rich_editor'              => 'false' === apply_filters( 'user_can_richedit', get_user_option( 'rich_editing' ) ) ? 'no' : 'yes',
 	);
 
 	return apply_filters( 'et_fb_conditional_tag_params', $conditional_tags );
@@ -930,7 +930,13 @@ function et_fb_unsynced_preferences() {
 
 function et_fb_app_preferences() {
 	$app_preferences = et_fb_app_preferences_settings();
-	$limited_prefix = et_builder_is_limited_mode() ? 'limited_' : '';
+	if (et_is_builder_plugin_active()) {
+		// Since Divi Builder Plugin is always 'limited', need to use a different
+		// condition to prefix the options when BFB is used.
+		$limited_prefix = et_builder_bfb_enabled() ? 'limited_' : '';
+	} else {
+		$limited_prefix = et_builder_is_limited_mode() ? 'limited_' : '';
+	}
 
 	foreach ( $app_preferences as $preference_key => $preference ) {
 		$option_name = 'et_fb_pref_' . $preference_key;
@@ -1015,6 +1021,7 @@ function et_fb_current_page_params() {
 		'commentsCount'            => esc_html( $comment_count ),
 		'paged'                    => is_front_page() ? $et_paged : $paged,
 		'post_modified'            => isset( $post->ID ) ? esc_attr( $post->post_modified ) : '',
+		'lang'                     => get_locale(),
 	);
 
 	return apply_filters( 'et_fb_current_page_params', $current_page );
@@ -2677,7 +2684,7 @@ function et_builder_maybe_ensure_heartbeat_script() {
 
 	if ( ! $heartbeat_okay ) {
 		$heartbeat_src = "/wp-includes/js/heartbeat{$suffix}.js";
-		wp_enqueue_script( 'heartbeat', $heartbeat_src, array( 'jquery' ), false, true );
+		wp_enqueue_script( 'heartbeat', $heartbeat_src, array( 'jquery', 'wp-hooks' ), false, true );
 		wp_localize_script( 'heartbeat', 'heartbeatSettings', apply_filters( 'heartbeat_settings', array() ) );
 	}
 
@@ -2908,7 +2915,7 @@ function et_pb_before_main_editor( $post ) {
 		);
 
 		// add in the visual builder button only on appropriate post types
-		if ( et_pb_is_allowed( 'use_visual_builder' ) && ! et_is_extra_library_layout( $post->ID ) ) {
+		if ( et_builder_fb_enabled_for_post( $post->ID ) && et_pb_is_allowed( 'use_visual_builder' ) && ! et_is_extra_library_layout( $post->ID ) ) {
 			$buttons .= sprintf('<a href="%1$s" id="et_pb_fb_cta" class="button button-primary button-large%3$s%4$s">%2$s</a>',
 				esc_url( et_fb_get_vb_url() ),
 				esc_html__( 'Build On The Front End', 'et_builder' ),
@@ -8614,7 +8621,12 @@ add_action( 'wp_ajax_et_fb_retrieve_builder_data', 'et_fb_retrieve_builder_data'
 function et_fb_get_asset_definitions( $content, $post_type ) {
 	return sprintf(
 		'window.ETBuilderBackend = jQuery.extend(true, %s, window.ETBuilderBackend)',
-		json_encode( et_fb_get_builder_definitions( $post_type ) )
+		str_replace(
+			// Remove protocol from local urls so that http and https generated content is the same.
+			str_replace( '/', '\/', get_site_url() ),
+			str_replace( '/', '\/', preg_replace( '#^\w+:#', '', get_site_url() ) ),
+			json_encode( et_fb_get_builder_definitions( $post_type ) )
+		)
 	);
 }
 add_filter( 'et_fb_get_asset_definitions', 'et_fb_get_asset_definitions', 10, 2 );
@@ -9064,26 +9076,32 @@ function et_fb_reset_shortcode_object_processing() {
 add_action( 'et_fb_enqueue_assets', 'et_fb_backend_helpers' );
 
 if ( ! function_exists( 'et_builder_maybe_flush_rewrite_rules' ) ) :
-function et_builder_maybe_flush_rewrite_rules( $setting_name ) {
-	if ( et_get_option( $setting_name ) ) {
+function et_builder_maybe_flush_rewrite_rules( $setting_name, $value = 'done' ) {
+	$string_value = (string) $value;
+	$saved_value = et_get_option( $setting_name );
+
+	if ( $saved_value && $saved_value === $string_value ) {
 		return;
 	}
 
 	flush_rewrite_rules();
 
-	et_update_option( $setting_name, 'done' );
+	et_update_option( $setting_name, $string_value );
 }
 endif;
 
 /**
- * Flush rewrite rules to fix the issue Layouts, not being visible on front-end,
+ * Flush rewrite rules to fix the issue Layouts, not being visible on front-end and visual builder,
  * if pretty permalinks were enabled
  * @return void
  */
-function et_pb_maybe_flush_3_0_rewrite_rules() {
-	et_builder_maybe_flush_rewrite_rules( '3_0_flush_rewrite_rules_' . ET_BUILDER_PRODUCT_VERSION );
+function et_pb_maybe_flush_rewrite_rules_library() {
+	// Run flush rewrite only when et_pb_layout post type registered.
+	if ( post_type_exists( 'et_pb_layout' ) ) {
+		et_builder_maybe_flush_rewrite_rules( 'et_flush_rewrite_rules_library', ET_BUILDER_PRODUCT_VERSION );
+	}
 }
-add_action( 'init', 'et_pb_maybe_flush_3_0_rewrite_rules', 9 );
+add_action( 'init', 'et_pb_maybe_flush_rewrite_rules_library', 9 );
 
 /**
  * Get list of shortcut available on BB and FB

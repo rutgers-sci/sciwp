@@ -227,6 +227,50 @@ function et_builder_get_default_post_types() {
  * @return array<string>
  */
 function et_builder_get_third_party_post_types() {
+	$third_party_post_types = array();
+
+	// WooCommerce (https://wordpress.org/plugins/woocommerce/):
+	if ( class_exists( 'WooCommerce' ) ) {
+		$third_party_post_types[] = 'product';
+	}
+
+	// The Events Calendar (https://wordpress.org/plugins/the-events-calendar/):
+	if ( class_exists( 'Tribe__Events__Main' ) ) {
+		$third_party_post_types[] = 'tribe_events';
+	}
+
+	// Popup Maker (https://wordpress.org/plugins/popup-maker/):
+	if ( class_exists( 'Popup_Maker' ) ) {
+		$third_party_post_types[] = 'popup';
+	}
+
+	// All-in-One Event Calendar (https://wordpress.org/plugins/all-in-one-event-calendar/):
+	if ( function_exists( 'ai1ec_initiate_constants' ) ) {
+		$third_party_post_types[] = 'ai1ec_event';
+	}
+
+	// Events Manager (https://wordpress.org/plugins/events-manager/):
+	if ( function_exists( 'em_plugins_loaded' ) ) {
+		$third_party_post_types[] = 'event';
+		$third_party_post_types[] = 'location';
+	}
+
+	// Portfolio Post Type (https://wordpress.org/plugins/portfolio-post-type/):
+	if ( function_exists( 'portfolio_post_type_init' ) ) {
+		$third_party_post_types[] = 'portfolio';
+	}
+
+	// LifterLMS (https://wordpress.org/plugins/lifterlms/):
+	if ( class_exists( 'LifterLMS' ) ) {
+		$third_party_post_types[] = 'course';
+	}
+
+	// LearnDash (https://www.learndash.com/wordpress-course-plugin-features/):
+	if ( class_exists( 'Semper_Fi_Module' ) ) {
+		$third_party_post_types[] = 'sfwd-courses';
+		$third_party_post_types[] = 'sfwd-lessons';
+	}
+
 	/**
 	 * Array of third-party registered post types that should have support enabled by default.
 	 *
@@ -234,33 +278,35 @@ function et_builder_get_third_party_post_types() {
 	 *
 	 * @param array<string>
 	 */
-	return apply_filters( 'et_builder_third_party_post_types', array(
-		// WooCommerce (https://wordpress.org/plugins/woocommerce/):
-		'product',
+	return apply_filters( 'et_builder_third_party_post_types', $third_party_post_types );
+}
 
-		// The Events Calendar (https://wordpress.org/plugins/the-events-calendar/):
-		'tribe_events',
+/**
+ * Look for builder's registered third party post type that isn't publicly queryable
+ *
+ * @since 3.19.9
+ *
+ * @return array
+ */
+function et_builder_get_third_party_unqueryable_post_types() {
+	// Save the value in static variable so if post type's publicly_queryable is modified due to current
+	// request is BFB request, this function still return correct value
+	static $unqueryable_post_types = array();
 
-		// Popup Maker (https://wordpress.org/plugins/popup-maker/):
-		'popup',
+	if ( empty( $unqueryable_post_types ) ) {
+		// Get third party's unqueryable post types only as default post types have been handled properly
+		$valid_third_party_post_types = array_diff(
+			et_builder_get_builder_post_types(),
+			et_builder_get_default_post_types()
+		);
 
-		// All-in-One Event Calendar (https://wordpress.org/plugins/all-in-one-event-calendar/):
-		'ai1ec_event',
+		$unqueryable_post_types = array_intersect(
+			$valid_third_party_post_types,
+			get_post_types( array('publicly_queryable' => false ) )
+		);
+	}
 
-		// Events Manager (https://wordpress.org/plugins/events-manager/):
-		'event',
-		'location',
-
-		// Portfolio Post Type (https://wordpress.org/plugins/portfolio-post-type/):
-		'portfolio',
-
-		// LifterLMS (https://wordpress.org/plugins/lifterlms/):
-		'course',
-
-		// LearnDash (https://www.learndash.com/wordpress-course-plugin-features/):
-		'sfwd-courses',
-		'sfwd-lessons',
-	) );
+	return apply_filters( 'et_builder_get_third_party_unqueryable_post_types', $unqueryable_post_types );
 }
 
 /**
@@ -271,22 +317,27 @@ function et_builder_get_third_party_post_types() {
  * @return array
  */
 function et_get_registered_post_type_options( $usort = false ) {
-	$blacklist      = et_builder_get_blacklisted_post_types();
+	static $post_type_options = null;
 
-	// Extra and Library layouts shouldn't appear in Theme Options as configurable post types.
-	$blacklist      = array_merge( $blacklist, array( 'et_pb_layout', 'layout' ) );
-	$raw_post_types = get_post_types( array(
-		'show_ui' => true,
-	), 'objects' );
+	if ( ! is_null( $post_type_options ) ) {
+		return $post_type_options;
+	}
+
+	$blacklist      = et_builder_get_blacklisted_post_types();
+	$whitelist      = et_builder_get_third_party_post_types();
+	$raw_post_types = get_post_types( array( 'show_ui' => true ), 'objects' );
 	$post_types     = array();
 
-	foreach ( $raw_post_types as $post_type ) {
-		$is_explicitly_supported = in_array( $post_type->name, et_builder_get_third_party_post_types() );
-		$is_blacklisted          = in_array( $post_type->name, $blacklist );
-		$supports_editor         = post_type_supports( $post_type->name, 'editor' );
-		$is_public               = et_builder_is_post_type_public( $post_type->name );
+	// Extra and Library layouts shouldn't appear in Theme Options as configurable post types.
+	$blacklist = array_merge( $blacklist, array( 'et_pb_layout', 'layout' ) );
 
-		if ( ! $is_explicitly_supported && ( $is_blacklisted || ! $supports_editor || ! $is_public ) ) {
+	foreach ( $raw_post_types as $post_type ) {
+		$is_whitelisted  = in_array( $post_type->name, $whitelist );
+		$is_blacklisted  = in_array( $post_type->name, $blacklist );
+		$supports_editor = post_type_supports( $post_type->name, 'editor' );
+		$is_public       = et_builder_is_post_type_public( $post_type->name );
+
+		if ( ! $is_whitelisted && ( $is_blacklisted || ! $supports_editor || ! $is_public ) ) {
 			continue;
 		}
 
@@ -397,7 +448,7 @@ function et_builder_get_enabled_builder_post_types() {
 	$filtered = array();
 
 	foreach ( $options as $post_type => $state ) {
-		if ( 'on' === $state && ! in_array( $post_type, et_builder_get_blacklisted_post_types() ) ) {
+		if ( 'on' === $state && in_array( $post_type, array_keys( et_get_registered_post_type_options() ) ) && ! in_array( $post_type, et_builder_get_blacklisted_post_types() ) ) {
 			$filtered[] = $post_type;
 		}
 	}
@@ -2116,6 +2167,7 @@ function et_builder_email_get_fields_from_post_data( $provider_slug ) {
 
 	$fields = ET_Core_API_Email_Providers::instance()->account_fields( $provider_slug );
 	$result = array();
+	$protocol = is_ssl() ? 'https' : 'http';
 
 	if ( ! $fields ) {
 		// If there are no fields to check then the check passes.
@@ -2125,8 +2177,17 @@ function et_builder_email_get_fields_from_post_data( $provider_slug ) {
 	foreach ( $fields as $field_name => $field_info ) {
 		$key = "et_{$provider_slug}_{$field_name}";
 
-		if ( empty( $_POST[$key] ) && ! isset( $field_info['not_required'] ) ) {
-			return false;
+		if ( empty( $_POST[$key] ) ) {
+			$required = true;
+
+			if ( isset( $field_info['required'] ) ) {
+				// Field can be required only when https or http
+				$required = $field_info['required'] === $protocol;
+			}
+
+			if ( $required && ! isset( $field_info['not_required'] ) ) {
+				return false;
+			}
 		}
 
 		$result[ $field_name ] = sanitize_text_field( $_POST[ $key ] );
@@ -2360,7 +2421,7 @@ function et_pb_submit_subscribe_form() {
 		et_core_die( esc_html__( 'Please input a valid email address.', 'et_builder' ) );
 	}
 
-	if ( empty( $args['list_id'] ) ) {
+	if ( '' === (string) $args['list_id'] ) {
 		et_core_die( esc_html__( 'Configuration Error: No list has been selected for this form.', 'et_builder' ) );
 	}
 
@@ -2575,35 +2636,6 @@ if ( ! function_exists( 'et_is_yoast_seo_plugin_active' ) ) :
 		return class_exists( 'WPSEO_Options' );
 	}
 endif;
-
-/**
- * Ajax callback used by BB to render builder shortcode content for use by
- * Yoast to generate a preview description.
- *
- * @return void
- */
-function et_pb_yoast_execute_content_shortcodes() {
-	if ( ! wp_verify_nonce( $_POST['et_admin_load_nonce'], 'et_admin_load_nonce' ) ) {
-		die( -1 );
-	}
-
-	if ( ! current_user_can( 'edit_posts' ) ) {
-		die( -1 );
-	}
-
-	// this is only for yoast support
-	if ( et_is_yoast_seo_plugin_active() ) {
-		die( -1 );
-	}
-
-	$unprocessed_data = str_replace( '\\', '', $_POST['et_pb_unprocessed_data'] );
-
-	// Remove any non-builder shortcodes, since were just trying to generate a yoast preview description here. We just need Yoast to be able to pick up a few sentences.
-	$unprocessed_data = et_pb_enforce_builder_shortcode( $unprocessed_data );
-
-	die( et_core_intentionally_unescaped( do_shortcode( $unprocessed_data ), 'html' ) );
-}
-add_action( 'wp_ajax_et_pb_yoast_execute_content_shortcodes', 'et_pb_yoast_execute_content_shortcodes' );
 
 /**
  * Remove all non-builder shortcodes from builder built post content.
@@ -4169,7 +4201,7 @@ function et_fb_get_posts_list() {
 			'id'    => $post->ID,
 			'title' => $post->post_title,
 			'link'  => array(
-				'vb'  => et_fb_get_vb_url( $post->ID ),
+				'vb'  => et_fb_get_vb_url( get_permalink( $post->ID ) ),
 				'bfb' => add_query_arg( array( 'post' => $post->ID, 'action' => 'edit', 'classic-editor' => '1' ),  admin_url( 'post.php' ) ),
 			),
 		);
@@ -4488,6 +4520,33 @@ if ( ! function_exists( 'et_fb_get_builder_url' ) ) :
 			'et_bfb'    => 'bfb' === $builder ? '1' : false,
 			'PageSpeed' => 'off',
 		);
+
+		// Additional info need to be appended via query strings if current request is used to get
+		// BFB URL and the given page's custom post type has its publicly_queryable setting is set
+		// to false. These additional information is be used to deterimined whether the BFB page
+		// request needs to modify its global $query and rewrite_rule configuration so correct BFB
+		// page can be rendered for valid user
+		if ( 'bfb' === $builder && ! $url ) {
+			$post_id   = get_the_ID();
+			$post_type = get_post_type();
+
+			// 'page' and 'et_pb_layout' are not queryable so post type needs to be checked against
+			// third party post types first to avoid false positive for these default post types
+			$is_third_party_post_type = in_array( $post_type, et_builder_get_third_party_post_types() );
+			$is_unqueryable           = $is_third_party_post_type && in_array(
+				$post_type,
+				get_post_types( array( 'publicly_queryable' => false ) )
+			);
+
+			// These post id & post type query strings should only be added if current post type
+			// has false publicly_queryable setting
+			if ( $post_id && $post_type && is_user_logged_in() && $is_unqueryable  ) {
+				$args['et_post_id']         = $post_id;
+				$args['et_post_id_nonce']   = wp_create_nonce( 'et_post_id_' . $post_id );
+				$args['et_post_type']       = $post_type;
+				$args['et_post_type_nonce'] = wp_create_nonce( 'et_post_type_' . $post_type );
+			}
+		}
 
 		return add_query_arg( $args, et_fb_prepare_ssl_link( $url ? $url : get_the_permalink() ) );
 	}
@@ -5255,17 +5314,25 @@ function et_fb_dynamic_asset_exists( $prefix, $post_type = false ) {
 
 	$uploads = wp_upload_dir();
 	$prefix  = esc_attr( $prefix );
-	$files   = glob( sprintf( '%s/%s-%s-*.js', ET_Core_PageResource::get_cache_directory(), $prefix, $post_type ) );
+	$cache   = sprintf( '%s/%s', ET_Core_PageResource::get_cache_directory(), get_locale() );
+	$files   = glob( sprintf( '%s/%s-%s-*.js', $cache, $prefix, $post_type ) );
 
 	return is_array( $files ) && count( $files ) > 0;
 }
 
 if ( ! function_exists( 'et_fb_delete_builder_assets' ) ):
 function et_fb_delete_builder_assets() {
-	if ( $files = glob( sprintf( '%s/*.js', ET_Core_PageResource::get_cache_directory() ) ) ) {
-		foreach ( $files as $file ) {
-			@unlink( $file );
-		}
+	$cache = ET_Core_PageResource::get_cache_directory();
+
+	// Old cache location, make sure we clean that one too
+	$old_files = glob( sprintf( '%s/*.js', $cache ) );
+	$old_files = is_array( $old_files ) ? $old_files : array();
+	// New, per language location
+	$new_files = glob( sprintf( '%s/*/*.js', $cache ) );
+	$new_files = is_array( $new_files ) ? $new_files : array();
+
+	foreach ( array_merge( $old_files, $new_files ) as $file ) {
+		@unlink( $file );
 	}
 }
 endif;
