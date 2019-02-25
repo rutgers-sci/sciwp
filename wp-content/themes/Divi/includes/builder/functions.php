@@ -2,7 +2,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '3.19.14' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '3.19.17' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -20,6 +20,18 @@ if ( ! defined( 'ET_BUILDER_DIR_RESOLVED_PATH' ) ) {
 // When set to true, the builder will use the new loading method
 if ( ! defined( 'ET_BUILDER_CACHE_ASSETS' ) ) {
 	define( 'ET_BUILDER_CACHE_ASSETS', ! isset( $_REQUEST['nocache'] ) );
+}
+
+if ( ! defined( 'ET_BUILDER_JSON_ENCODE_OPTIONS' ) ) {
+	define( 'ET_BUILDER_JSON_ENCODE_OPTIONS', 0 );
+}
+
+if ( ! defined( 'ET_BUILDER_KEEP_OLDEST_CACHED_ASSETS' ) ) {
+	define( 'ET_BUILDER_KEEP_OLDEST_CACHED_ASSETS', false );
+}
+
+if ( ! defined( 'ET_BUILDER_PURGE_OLD_CACHED_ASSETS' ) ) {
+	define( 'ET_BUILDER_PURGE_OLD_CACHED_ASSETS', true );
 }
 
 $et_fonts_queue = array();
@@ -2613,8 +2625,15 @@ function et_builder_override_meta_boxes_order( $value ) {
 function et_builder_prioritize_meta_box() {
 	global $wp_meta_boxes;
 
+	$screen = get_current_screen();
+
+	// Only prioritize Divi Builder metabox if current post type has Divi Builder enabled
+	if ( ! in_array( $screen->post_type, et_builder_get_enabled_builder_post_types() ) ) {
+		return;
+	}
+
 	// Get custom order
-	$page        = get_current_screen()->id;
+	$page        = $screen->id;
 	$option_name = "meta-box-order_$page";
 	$custom      = get_user_option( $option_name );
 
@@ -2684,7 +2703,9 @@ function et_builder_maybe_ensure_heartbeat_script() {
 
 	if ( ! $heartbeat_okay ) {
 		$heartbeat_src = "/wp-includes/js/heartbeat{$suffix}.js";
-		wp_enqueue_script( 'heartbeat', $heartbeat_src, array( 'jquery', 'wp-hooks' ), false, true );
+		// wp-hooks was introduced in WP 5.0
+		$deps = wp_script_is( 'wp-hooks', 'registered' ) ? array( 'jquery', 'wp-hooks' ) : array( 'jquery' );
+		wp_enqueue_script( 'heartbeat', $heartbeat_src, $deps, false, true );
 		wp_localize_script( 'heartbeat', 'heartbeatSettings', apply_filters( 'heartbeat_settings', array() ) );
 	}
 
@@ -3335,6 +3356,9 @@ function et_bfb_enqueue_scripts() {
 
 	// Load timepicker script on admin page in case of BFB to make it work with modals loaded on WP admin DOM
 	wp_enqueue_script( 'et_bfb_admin_date_addon_js', ET_BUILDER_URI . '/scripts/ext/jquery-ui-timepicker-addon.js', array( $jQuery_ui ), ET_BUILDER_PRODUCT_VERSION, true );
+	
+	// Load google maps script on admin page in case of BFB to make it work with modals loaded on WP admin DOM
+	wp_enqueue_script( 'et_bfb_google_maps_api', esc_url( add_query_arg( array( 'key' => et_pb_get_google_api_key(), 'callback' => 'initMap' ), is_ssl() ? 'https://maps.googleapis.com/maps/api/js' : 'http://maps.googleapis.com/maps/api/js' ) ), array(), '3', true );
 
 	wp_enqueue_script( 'et_pb_media_library', ET_BUILDER_URI . '/scripts/ext/media-library.js', array( 'media-editor' ), ET_BUILDER_PRODUCT_VERSION, true );
 	wp_enqueue_script( 'et_bfb_admin_js', ET_BUILDER_URI . '/scripts/bfb_admin_script.js', array( 'jquery', 'et_pb_media_library' ), ET_BUILDER_PRODUCT_VERSION, true );
@@ -3945,6 +3969,7 @@ if ( ! function_exists( 'et_pb_load_global_module' ) ) {
 
 				if ( '' !== $row_type && 'et_pb_row_inner' === $row_type ) {
 					$global_shortcode = str_replace( 'et_pb_row', 'et_pb_row_inner', $global_shortcode );
+					$global_shortcode = str_replace( 'et_pb_column', 'et_pb_column_inner', $global_shortcode );
 				}
 			}
 		}
@@ -3992,7 +4017,7 @@ if ( ! function_exists( 'et_pb_remove_shortcode_content' ) ) {
 }
 
 if ( ! function_exists( 'et_pb_get_global_module_content' ) ) {
-	function et_pb_get_global_module_content( $content, $shortcode_name ) {
+	function et_pb_get_global_module_content( $content, $shortcode_name, $for_inner_row = false ) {
 		// Do not apply autop to code modules.
 		if (in_array( $shortcode_name, array( 'et_pb_code', 'et_pb_fullwidth_code' ) ) ) {
 			return et_pb_extract_shortcode_content( $content, $shortcode_name );
@@ -4000,6 +4025,12 @@ if ( ! function_exists( 'et_pb_get_global_module_content' ) ) {
 		
 		$original_code_modules = array();
 		$shortcode_content = et_pb_extract_shortcode_content( $content, $shortcode_name );
+
+		// Getting content for Global row when it's turned to inner row in specialty section
+		// Need to make sure it wrapped in et_pb_column_inner, not et_pb_column
+		if ( $for_inner_row && false === strpos( $shortcode_content, '[et_pb_column_inner' ) ) {
+			$shortcode_content = str_replace( 'et_pb_column', 'et_pb_column_inner', $shortcode_content );
+		}
 
 		// Get all the code and fullwidth code modules from content
 		preg_match_all('/(\[et_pb(_fullwidth_code|_code).+?\[\/et_pb(_fullwidth_code|_code)\])/s', $shortcode_content, $original_code_modules);
@@ -8617,16 +8648,24 @@ function et_fb_retrieve_builder_data() {
 }
 add_action( 'wp_ajax_et_fb_retrieve_builder_data', 'et_fb_retrieve_builder_data' );
 
+// Replaces site_url in a json string with its protocol-less version
+function et_fb_remove_site_url_protocol( $json ) {
+	$no_proto = str_replace( '/', '\/', preg_replace( '#^\w+:#', '', get_site_url() ) );
+	return strtr(
+		$json,
+		array(
+			"https:$no_proto" => $no_proto,
+			"http:$no_proto"  => $no_proto,
+		)
+	);
+}
+
 // Used to update the content of the cached definitions js file.
 function et_fb_get_asset_definitions( $content, $post_type ) {
+	$definitions = et_fb_get_builder_definitions( $post_type );
 	return sprintf(
 		'window.ETBuilderBackend = jQuery.extend(true, %s, window.ETBuilderBackend)',
-		str_replace(
-			// Remove protocol from local urls so that http and https generated content is the same.
-			str_replace( '/', '\/', get_site_url() ),
-			str_replace( '/', '\/', preg_replace( '#^\w+:#', '', get_site_url() ) ),
-			json_encode( et_fb_get_builder_definitions( $post_type ) )
-		)
+		et_fb_remove_site_url_protocol( json_encode( $definitions, ET_BUILDER_JSON_ENCODE_OPTIONS ) )
 	);
 }
 add_filter( 'et_fb_get_asset_definitions', 'et_fb_get_asset_definitions', 10, 2 );
@@ -8811,7 +8850,7 @@ function et_fb_get_product_tour_text( $post_id ) {
  *  - It tracks the inner `index` / `_i` of each child shortcode to the passed content, which is used in the address creation as well
  *  - It uses and passes `$address` & `$parent_address`, which are used by FB app
  */
-function et_fb_process_shortcode( $content, $parent_address = '', $global_parent = '', $global_parent_type = '' ) {
+function et_fb_process_shortcode( $content, $parent_address = '', $global_parent = '', $global_parent_type = '', $parent_type = '' ) {
 	global $shortcode_tags, $fb_processing_counter;
 
 	if ( false === strpos( $content, '[' ) ) {
@@ -8880,7 +8919,7 @@ function et_fb_process_shortcode( $content, $parent_address = '', $global_parent
 		$GLOBALS['et_fb_processing_shortcode_object'] = true;
 
 		if ( isset( $match[5] ) ) {
-			$output = call_user_func( $shortcode_tags[$tag], $attr, $match[5], $tag, $parent_address, $global_parent, $global_parent_type );
+			$output = call_user_func( $shortcode_tags[$tag], $attr, $match[5], $tag, $parent_address, $global_parent, $global_parent_type, $parent_type );
 		} else {
 			// self-closing tag
 			$output = call_user_func( $shortcode_tags[$tag], $attr, null, $tag );
