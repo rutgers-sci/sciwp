@@ -136,7 +136,7 @@ function et_add_epanel() {
 		}
 	}
 
-	$core_page = add_theme_page( $themename . ' ' . esc_html__( 'Options', $themename ), $themename . ' ' . esc_html__( 'Theme Options', $themename ), 'switch_themes', basename( __FILE__ ), 'et_build_epanel' );
+	$core_page = add_theme_page( $themename . ' ' . esc_html__( 'Options', $themename ), $themename . ' ' . esc_html__( 'Theme Options', $themename ), 'edit_theme_options', basename( __FILE__ ), 'et_build_epanel' );
 
 	add_action( "admin_print_scripts-{$core_page}", 'et_epanel_admin_js' );
 	add_action( "admin_head-{$core_page}", 'et_epanel_css_admin' );
@@ -728,7 +728,7 @@ if ( ! function_exists( 'epanel_save_data' ) ) {
 
 		et_core_nonce_verified_previously();
 
-		if ( ! current_user_can( 'switch_themes' ) ) {
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
 			die('-1');
 		}
 

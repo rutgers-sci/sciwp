@@ -1,3 +1,27 @@
+version 3.21.1 ( updated 03-21-2019 )
+- Fixed Google Map marker info window not being show when its content was empty.
+- Fixed z-index default value.
+- Fixed a compatibility issue with Visual Builder and MU Domain Mapping Plugin.
+- Fixed js error when trying to open Builder Settings in Category Builder.
+- Fixed abnormal transform scale behavior after linking and unlinking.
+- Fixed a compatibility issue with PilotPress Plugin.
+- Fixed a PHP warning occurring in some cases.
+- Fixes Save To Library tooltip which is initiated via right click menu retains its position on visible viewport window when the window is scrolled on Visual Builder's wireframe and desktop modes.
+- Fixed a bug where the ET Support User account was unable to access Theme Options unless Full Admin Privileges were enabled.
+- Fixed access to WooCommerce settings by ET Support User account when Remote Access is active.
+- Fixed an issue with Smoothscroll and latest Chrome.
+	* core/components/SupportCenter.php
+	* epanel/core_functions.php
+	* functions.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/class-et-builder-settings.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/functions.php
+	* includes/builder/module/MapItem.php
+	* includes/builder/plugin-compat/pilotpress.php
+	* includes/builder/plugin-compat/wordpress-mu-domain-mapping.php
+	* js/smoothscroll.js
+
 version 3.21 ( updated 03-14-2019 )
 - Added CSS transform options to all sections, rows, and modules, allowing users to scale, rotate, skew, and offset the position of any element.
 - Fixed copy/paste altering the wrong setting under some circumstances.

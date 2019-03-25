@@ -1532,7 +1532,7 @@ class ET_Builder_Element {
 	 * @since 3.17.2
 	 *
 	 * @param  array  $original_attrs List of attributes
-	 * 
+	 *
 	 * @return array                  Processed attributes with resolved dynamic values.
 	 */
 	function process_dynamic_attrs( $original_attrs ) {
@@ -4574,7 +4574,7 @@ class ET_Builder_Element {
 				'step' => 1,
 			),
 			'option_category'  => 'layout',
-			'default'          => '0',
+			'default'          => '',
 			'default_on_child' => true,
 			'tab_slug'         => 'custom_css',
 			'toggle_slug'      => 'visibility',
@@ -7143,7 +7143,7 @@ class ET_Builder_Element {
 				// Since we are using a hidden field to manage the value, we need to clear the data-affects attribute so that
 				// it doesn't appear on both the `$field` AND the hidden field. This should probably be done for all of these
 				// field types but don't want to risk breaking anything :-/
-				$attributes = preg_replace( '/data-affects="[\w\s-,]*"/', 'data-affects=""', $attributes );
+				$attributes = preg_replace( '/data-affects="[\w\s,-]*"/', 'data-affects=""', $attributes );
 			}
 		}
 
@@ -9685,7 +9685,7 @@ class ET_Builder_Element {
 		$isHoverEnabled      = $hover->is_enabled( $setting, $this->props, '' );
 		$isResponsiveEnabled = isset( $this->props["${setting}_last_edited"] )
 							   && et_pb_get_responsive_status( $this->props["${setting}_last_edited"] );
-		$settingDefault      = '0';
+		$settingDefault      = '';
 		$views               = array( 'desktop' );
 
 		if ( $isHoverEnabled ) {
@@ -9715,7 +9715,8 @@ class ET_Builder_Element {
 				$suffix      = '_phone';
 			}
 
-			$optionValue = isset( $this->props[ $setting . $suffix ] ) && ! empty( $this->props[ $setting . $suffix ] ) ?
+			$optionValue = isset( $this->props[ $setting . $suffix ] )
+						   && ( ! empty( $this->props[ $setting . $suffix ] ) || $this->props[ $setting . $suffix ] === '0' ) ?
 				$this->props[ $setting . $suffix ] : $settingDefault;
 
 			$defaultValue = $settingDefault;

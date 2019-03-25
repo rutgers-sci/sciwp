@@ -2,7 +2,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '3.21' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '3.21.1' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -2982,7 +2982,7 @@ function et_pb_before_main_editor( $post ) {
 		<input type="hidden" autocomplete="off" id="_et_pb_ab_stats_refresh_interval" name="et_pb_ab_stats_refresh_interval" value="<?php echo esc_attr( $_et_builder_ab_stats_refresh_interval ); ?>">
 		<input type="hidden" autocomplete="off" id="et_pb_ab_subjects" name="et_pb_ab_subjects" value="<?php echo esc_attr( $_et_builder_ab_subjects ); ?>">
 		<input type="hidden" autocomplete="off" id="et_pb_ab_goal_module" name="et_pb_ab_goal_module" value="<?php echo esc_attr( $_et_builder_ab_goal_module ); ?>">
-		<?php et_builder_fb_enabled_for_post( $post->ID ) ? et_pb_builder_settings_hidden_inputs( $post->ID ) : false; ?>
+		<?php et_pb_builder_settings_hidden_inputs( $post->ID ); ?>
 		<?php et_pb_builder_global_library_inputs( $post->ID ); ?>
 
 		<textarea id="et_pb_old_content" name="et_pb_old_content"><?php echo esc_attr( get_post_meta( $post->ID, '_et_pb_old_content', true ) ); ?></textarea>
@@ -6688,6 +6688,10 @@ function et_pb_get_builder_settings_fields( $options ) {
  * @return void
  */
 function et_pb_builder_settings_hidden_inputs( $post_id ) {
+	if ( ! class_exists( 'ET_Builder_Settings' ) ) {
+		return false;
+	}
+
 	$settings = ET_Builder_Settings::get_fields();
 	$defaults = et_pb_get_builder_settings_configuration_default();
 

@@ -1010,6 +1010,7 @@ class ET_Builder_Settings {
 			'background'            => esc_html__( 'Background', 'et_builder' ),
 			'color_palette'         => esc_html__( 'Color Palette', 'et_builder' ),
 			'custom_css'            => esc_html__( 'Custom CSS', 'et_builder' ),
+			'enable_bfb'            => esc_html__( 'Enable The Latest Divi Builder Experience', 'et_builder' ),
 			'enable_classic_editor' => esc_html__( 'Enable Classic Editor', 'et_builder' ),
 			'performance'           => esc_html__( 'Performance', 'et_builder' ),
 			'product_tour'          => esc_html__( 'Product Tour', 'et_builder' ),

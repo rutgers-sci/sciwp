@@ -1392,6 +1392,8 @@ class ET_Support_Center {
 				'read_private_products'     => true,
 				'read_product'              => true,
 				'upload_files'              => true,
+				// WooCommerce Capabilities
+				'manage_woocommerce'        => true,
 			)
 		);
 
@@ -1454,6 +1456,8 @@ class ET_Support_Center {
 				'update_plugins'            => true,
 				'update_themes'             => true,
 				'upload_files'              => true,
+				// WooCommerce Capabilities
+				'manage_woocommerce'        => true,
 			)
 		);
 	}

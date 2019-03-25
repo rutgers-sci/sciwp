@@ -9292,7 +9292,7 @@ function et_divi_output_content_wrapper_end() {
 }
 
 function et_add_divi_menu() {
-	$core_page = add_menu_page( 'Divi', 'Divi', 'switch_themes', 'et_divi_options', 'et_build_epanel' );
+	$core_page = add_menu_page( 'Divi', 'Divi', 'edit_theme_options', 'et_divi_options', 'et_build_epanel' );
 
 	// Add Theme Options menu only if it's enabled for current user
 	if ( et_pb_is_allowed( 'theme_options' ) ) {
