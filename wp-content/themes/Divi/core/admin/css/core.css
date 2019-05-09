@@ -10,7 +10,8 @@
 	5.1 Secondary Tabs
   6.0 Loader
   7.0 Progress Bar
-  6.0 Animations
+  7.1 Pending AJAX Request
+  8.0 Animations
 ------------------------------------------------------------------------------*/
 
 /*-----------------------------------------------------------------------------
@@ -771,6 +772,59 @@ body.rtl.et-db:not(.et-fb-no-rtl) .et-core-tabs li.ui-state-default {
 	100% {
 		background-position: 30px 0;
 	}
+}
+
+/*-----------------------------------------------------------------------------
+  7.1 - Pending AJAX Request
+------------------------------------------------------------------------------*/
+#et-ajax-saving {
+	display: none;
+	transition: background, box-shadow 0.3s;
+	box-shadow: rgba(0, 139, 219, 0.247059) 0 0 60px;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	width: 50px;
+	height: 50px;
+	background: rgb(255, 255, 255);
+	border-radius: 50px;
+	margin: -25px 0 0 -25px;
+	z-index: 999999;
+	text-align: center;
+}
+
+#et-ajax-saving img {
+	margin: 9px;
+}
+
+#et-ajax-saving.success-animation {
+	background-color: rgb(169, 233, 0);
+	box-shadow: rgba(0, 0, 0, 0) 0 0 40px;
+	opacity: 1;
+	animation: et-core-bounce-in 1s;
+}
+
+#et-ajax-saving.success-animation:before {
+	background: none;
+	font-family: 'etbuilder';
+	speak: none;
+	font-weight: normal;
+	font-variant: normal;
+	text-transform: none;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	content: "N";
+	color: rgb(255, 255, 255);
+	font-size: 22px;
+	line-height: 50px;
+}
+
+#et-ajax-saving.et_loading:before {
+	display: none;
+}
+
+#et-ajax-saving.success-animation img {
+	display: none;
 }
 
 /*-----------------------------------------------------------------------------

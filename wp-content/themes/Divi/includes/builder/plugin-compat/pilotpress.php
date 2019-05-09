@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Plugin compatibility for PilotPress Views
  *
- * @since ??
+ * @since 3.21.1
  *
  * @link https://wordpress.org/plugins/pilotpress/
  */

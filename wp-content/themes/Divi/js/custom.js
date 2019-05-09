@@ -945,8 +945,12 @@ var isBuilder = 'object' === typeof window.ET_Builder;
 				}
 			}
 
-			if ( $('p.demo_store').length ) {
-				$('#footer-bottom').css('margin-bottom' , $('p.demo_store').innerHeight());
+			if ( $('p.demo_store').length && $('p.demo_store').is(':visible') ) {
+				$('#footer-bottom').css('margin-bottom', $('p.demo_store').innerHeight());
+
+				$('.woocommerce-store-notice__dismiss-link').click(function() {
+					$('#footer-bottom').css('margin-bottom', '');
+				});
 			}
 
 			if ( $.fn.waypoint ) {
