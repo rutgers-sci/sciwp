@@ -404,6 +404,11 @@ class ET_Builder_Element {
 
 			if ( 'child' === $this->type ) {
 				self::$child_modules[ $post_type ][ $this->slug ] = $this;
+				if ( isset( $this->additional_shortcode_slugs ) ) {
+					foreach( $this->additional_shortcode_slugs as $additional_slug ) {
+						self::$child_modules[ $post_type ][ $additional_slug ] = $this;
+					}
+				}
 			} else {
 				self::$parent_modules[ $post_type ][ $this->slug ] = $this;
 			}
@@ -1886,14 +1891,14 @@ class ET_Builder_Element {
 		}
 
 		// Animation Styles.
-		$animation_style            = isset( $this->props['animation_style'] ) ? $this->props['animation_style'] : false;
-		$animation_repeat           = isset( $this->props['animation_repeat'] ) ? $this->props['animation_repeat'] : 'once';
-		$animation_direction        = isset( $this->props['animation_direction'] ) ? $this->props['animation_direction'] : 'center';
-		$animation_duration         = isset( $this->props['animation_duration'] ) ? $this->props['animation_duration'] : '500ms';
-		$animation_delay            = isset( $this->props['animation_delay'] ) ? $this->props['animation_delay'] : '0ms';
-		$animation_intensity        = isset( $this->props["animation_intensity_{$animation_style }"] ) ? $this->props["animation_intensity_{$animation_style }"] : '50%';
-		$animation_starting_opacity = isset( $this->props['animation_starting_opacity'] ) ? $this->props['animation_starting_opacity'] : '0%';
-		$animation_speed_curve      = isset( $this->props['animation_speed_curve'] ) ? $this->props['animation_speed_curve'] : 'ease-in-out';
+		$animation_style            = isset( $this->props['animation_style'] ) && '' !== $this->props['animation_style'] ? $this->props['animation_style'] : false;
+		$animation_repeat           = isset( $this->props['animation_repeat'] ) && '' !== $this->props['animation_repeat'] ? $this->props['animation_repeat'] : 'once';
+		$animation_direction        = isset( $this->props['animation_direction'] ) && '' !== $this->props['animation_direction'] ? $this->props['animation_direction'] : 'center';
+		$animation_duration         = isset( $this->props['animation_duration'] ) && '' !== $this->props['animation_duration'] ? $this->props['animation_duration'] : '500ms';
+		$animation_delay            = isset( $this->props['animation_delay'] ) && '' !== $this->props['animation_delay'] ? $this->props['animation_delay'] : '0ms';
+		$animation_intensity        = isset( $this->props["animation_intensity_{$animation_style }"] ) && '' !== $this->props["animation_intensity_{$animation_style }"] ? $this->props["animation_intensity_{$animation_style }"] : '50%';
+		$animation_starting_opacity = isset( $this->props['animation_starting_opacity'] ) && '' !== $this->props['animation_starting_opacity'] ? $this->props['animation_starting_opacity'] : '0%';
+		$animation_speed_curve      = isset( $this->props['animation_speed_curve'] ) && '' !== $this->props['animation_speed_curve'] ? $this->props['animation_speed_curve'] : 'ease-in-out';
 
 		// Animation style and direction values for Tablet & Phone. Basically, style for tablet and
 		// phone are same with the desktop because we only edit responsive settings for the affected
@@ -4623,7 +4628,8 @@ class ET_Builder_Element {
 
 		$classname = get_class( $this );
 
-		if ( isset( $this->type ) && 'child' === $this->type ) {
+		// Child modules do not support the Animation settings except for Columns.
+		if ( isset( $this->type ) && 'child' === $this->type && !in_array( $this->slug, array( 'et_pb_column', 'et_pb_column_inner' ) ) ) {
 			return;
 		}
 
@@ -5198,9 +5204,17 @@ class ET_Builder_Element {
 	}
 
 	private function _add_additional_z_index_fields() {
+		// Default z-index for modules is ''
+		$default_z_index = '';
 
-		if ( 'child' === $this->type ) {
-			// Disable z-index support for child modules
+		// Columns are an exception where the default z-index is 9 so that the gear button
+		// in VB that opens the settings modal for the module is actually clickable
+		if ( 'et_pb_column' === $this->slug ) {
+			$default_z_index = '9';
+		}
+
+		if ( 'child' === $this->type && !in_array( $this->slug, array( 'et_pb_column', 'et_pb_column_inner' ) ) ) {
+			// Disable z-index support for child modules except for the Columns
 			return;
 		}
 
@@ -5217,7 +5231,7 @@ class ET_Builder_Element {
 				'step' => 1,
 			),
 			'option_category'  => 'layout',
-			'default'          => '',
+			'default'          => $default_z_index,
 			'default_on_child' => true,
 			'tab_slug'         => 'custom_css',
 			'toggle_slug'      => 'visibility',
@@ -6392,7 +6406,11 @@ class ET_Builder_Element {
 				$url_label    = esc_html__( 'Row Link URL', 'et_builder' );
 				$target_label = esc_html__( 'Row Link Target', 'et_builder' );
 				break;
-
+			case 'et_pb_column':
+			case 'et_pb_column_inner':
+				$url_label    = esc_html__( 'Column Link URL', 'et_builder' );
+				$target_label = esc_html__( 'Column Link Target', 'et_builder' );
+				break;
 			default:
 				$url_label    = esc_html__( 'Module Link URL', 'et_builder' );
 				$target_label = esc_html__( 'Module Link Target', 'et_builder' );
@@ -6781,8 +6799,8 @@ class ET_Builder_Element {
 			}
 		}
 
-		// Add general fields for modules. Don't add them to module item and column
-		if ( ( ! isset( $this->type ) || 'child' !== $this->type ) && 'et_pb_column' !== $this->slug ) {
+		// Add general fields for modules including Columns.
+		if ( ( ! isset( $this->type ) || 'child' !== $this->type ) || in_array( $this->slug, array( 'et_pb_column', 'et_pb_column_inner' ) ) ) {
 			$disabled_on_fields = array();
 
 			$slug_labels = array(
@@ -9545,7 +9563,7 @@ class ET_Builder_Element {
 			'%6$s<div class="et-pb-option-advanced-module-settings" data-module_type="%1$s">
 				<ul class="et-pb-sortable-options">
 				</ul>
-				<a href="#" class="et-pb-add-sortable-option"><span>%2$s</span></a>
+				%2$s
 			</div>
 			<div class="et-pb-option et-pb-option-main-content et-pb-option-advanced-module">
 				<label for="et_pb_content">%3$s</label>
@@ -9555,7 +9573,7 @@ class ET_Builder_Element {
 				</div>
 			</div>%5$s',
 			esc_attr( $this->child_slug ),
-			esc_html( $this->add_new_child_text() ),
+			! in_array( $this->child_slug, array( 'et_pb_column', 'et_pb_column_inner' ) ) ? sprintf( '<a href="#" class="et-pb-add-sortable-option"><span>%1$s</span></a>', esc_html( $this->add_new_child_text() ) ) : '',
 			esc_html__( 'Content', 'et_builder' ),
 			esc_html__( 'Here you can define the content that will be placed within the current tab.', 'et_builder' ),
 			"\n\n",
@@ -9764,7 +9782,7 @@ class ET_Builder_Element {
 
 		if ( 'child' === $this->type ) {
 			$title_var = esc_js( $this->child_title_var );
-			$title_var = false === strpos( $title_var, 'et_pb_' ) ? 'et_pb_'. $title_var : $title_var;
+			$title_var = false === strpos( $title_var, 'et_pb_' ) && 'admin_label' !== $title_var ? 'et_pb_' . $title_var : $title_var;
 			$title_fallback_var = esc_js( $this->child_title_fallback_var );
 			$title_fallback_var = false === strpos( $title_fallback_var, 'et_pb_' ) ? 'et_pb_'. $title_fallback_var : $title_fallback_var;
 			$add_new_text = isset( $this->advanced_setting_title_text ) ? $this->advanced_setting_title_text : $this->add_new_child_text();
@@ -10477,6 +10495,9 @@ class ET_Builder_Element {
 					// Allow specific selector tablet and mobile, simply add _tablet or _phone suffix
 					if ( isset( $option_settings['css'][ $mobile_option ] ) && "" !== $option_settings['css'][ $mobile_option ] ) {
 						$selector = $option_settings['css'][ $mobile_option ];
+					} elseif ( 'text_color' === $main_option_name && ! empty( $option_settings['css']['color'] ) ) {
+						// We define custom selector for text color as 'color', not 'text_color'.
+						$selector = $option_settings['css']['color'];
 					} elseif ( isset( $option_settings['css'][ $main_option_name ] ) || isset( $option_settings['css']['main'] ) ) {
 						$selector = isset( $option_settings['css'][ $main_option_name ] ) ? $option_settings['css'][ $main_option_name ] : $option_settings['css']['main'];
 					} elseif ( et_builder_has_limitation( 'use_limited_main' ) && ! empty( $option_settings['css']['limited_main'] ) ) {
@@ -12217,7 +12238,9 @@ class ET_Builder_Element {
 				if ( $is_dbp && ! empty( $option_settings['css']['limited_main'] ) ) {
 					$css_element_processed = $option_settings['css']['limited_main'];
 				} else if ( ! $is_dbp ) {
-					$css_element_processed = "body #page-container {$css_element}";
+					// Explicitly add '.et_pb_section' to the selector so selector splitting during prefixing
+					// does not incorrectly add third party classes before #et-boc.
+					$css_element_processed = "body #page-container .et_pb_section {$css_element}";
 				}
 
 				if ( et_builder_has_limitation('force_use_global_important') ) {
@@ -13730,9 +13753,9 @@ class ET_Builder_Element {
 		$child_modules = self::get_child_modules( $post_type );
 
 		if ( ! empty( $child_modules ) ) {
-			foreach( $child_modules as $module ) {
-				if ( ! empty( $module->slug ) ) {
-					$slugs[] = $module->slug;
+			foreach( $child_modules as $slug => $module ) {
+				if ( ! empty( $slug ) ) {
+					$slugs[] = $slug;
 				}
 			}
 		}
@@ -16169,11 +16192,17 @@ class ET_Builder_Element {
 	public static function init_cache() {
 		$cache = self::get_cache_filename();
 
-		if ( $cache && file_exists( $cache ) ) {
+		if ( $cache && is_readable( $cache ) ) {
 			// Load cache
-			list ( self::$_cache, self::$_fields_unprocessed ) = unserialize( file_get_contents( $cache ) );
-			// Box Shadow sets WP hooks internally so we gotta load it anyway -> #blame_george.
-			ET_Builder_Module_Fields_Factory::get( 'BoxShadow' );
+			$result = @unserialize( file_get_contents( $cache ) );
+			if ( false !== $result ) {
+				list ( self::$_cache, self::$_fields_unprocessed ) = $result;
+				// Box Shadow sets WP hooks internally so we gotta load it anyway -> #blame_george.
+				ET_Builder_Module_Fields_Factory::get( 'BoxShadow' );
+			} else {
+				// Cache couldn't be unserialized, delete the file so it will be regenerated.
+				@unlink( $cache );
+			}
 		} else if ( $cache ) {
 			// Only save cache when a builder page is being rendered, needed because some data
 			// (e.g. mail provider defaults) is only generated in this case, hence saving while rendering
@@ -16208,7 +16237,7 @@ class ET_Builder_Element {
 		}
 
 		// Per language Cache due to fields data being localized.
-		$lang   = sanitize_file_name( get_user_locale() );
+		$lang   = trim( sanitize_file_name( get_user_locale() ), '.' );
 		$prefix = 'modules';
 		$cache  = sprintf( '%s/%s', ET_Core_PageResource::get_cache_directory(), $lang );
 		$files  = glob( sprintf( '%s/%s-%s-*.data', $cache, $prefix, $post_type ) );
@@ -16222,7 +16251,7 @@ class ET_Builder_Element {
 
 		// Create uniq filename
 		$uniq      = str_replace( '.', '', (string) microtime( true ) );
-		$post_type = sanitize_file_name( $post_type );
+		$post_type = trim( sanitize_file_name( $post_type ), '.' );
 		$file      = sprintf( '%s/%s-%s-%s.data', $cache, $prefix, $post_type, $uniq );
 
 		return is_writable( dirname( $file ) ) ? $file : false;
@@ -16230,10 +16259,10 @@ class ET_Builder_Element {
 
 	public static function save_cache() {
 		remove_filter( 'et_builder_modules_is_saving_cache', '__return_true' );
-		file_put_contents(
-			self::get_cache_filename(),
-			serialize( array( self::$_cache, self::$_fields_unprocessed ) )
-		);
+		$cache = self::get_cache_filename();
+		if ( $cache ) {
+			@file_put_contents( $cache, serialize( array( self::$_cache, self::$_fields_unprocessed ) ) );
+		}
 	}
 }
 
@@ -16260,6 +16289,10 @@ class ET_Builder_Structure_Element extends ET_Builder_Element {
 				break;
 			case 'column_settings_css' :
 				$output = $this->generate_columns_settings_css();
+				break;
+			case 'column-structure' :
+				// column structure option is not supported in BB
+				return '';
 				break;
 			default:
 				$depends = false;
@@ -16339,7 +16372,7 @@ class ET_Builder_Structure_Element extends ET_Builder_Element {
 
 	function generate_column_vars_css() {
 		$output = '';
-		for ( $i = 1; $i < 7; $i++ ) {
+		for ( $i = 1; $i < 4; $i++ ) {
 			$output .= sprintf(
 				'case %1$s :
 					current_module_id_value = typeof et_pb_module_id_%1$s !== \'undefined\' ? et_pb_module_id_%1$s : \'\',
@@ -16357,7 +16390,7 @@ class ET_Builder_Structure_Element extends ET_Builder_Element {
 
 	function generate_column_vars_bg() {
 		$output = '';
-		for ( $i = 1; $i < 7; $i++ ) {
+		for ( $i = 1; $i < 4; $i++ ) {
 			$output .= sprintf(
 				'case %1$s :
 					current_value_bg = typeof et_pb_background_color_%1$s !== \'undefined\' ? et_pb_background_color_%1$s : \'\',
@@ -16436,7 +16469,7 @@ class ET_Builder_Structure_Element extends ET_Builder_Element {
 
 	function generate_column_vars_padding() {
 		$output = '';
-		for ( $i = 1; $i < 7; $i++ ) {
+		for ( $i = 1; $i < 4; $i++ ) {
 			$output .= sprintf(
 				'case %1$s :
 					current_value_pt = typeof et_pb_padding_top_%1$s !== \'undefined\' ? et_pb_padding_top_%1$s : \'\',

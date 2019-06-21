@@ -4006,7 +4006,7 @@ var isBuilder = 'object' === typeof window.ET_Builder;
 			 * Update map filters.
 			 *
 			 * @since 3.23
-			 * @since ?? Prevent reinit maps to update map filters.
+			 * @since 3.24.1 Prevent reinit maps to update map filters.
 			 *
 			 * @param {jQuery} $et_pb_map
 			 */

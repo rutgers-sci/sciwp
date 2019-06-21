@@ -46,7 +46,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class ET_Core_Support_Center Provides admin tools to assist with troubleshooting and fixing issues in our products.
  *
- * @since ?? Renamed from `ET_Support_Center` to `ET_Core_Support_Center`.
+ * @since 3.24.1 Renamed from `ET_Support_Center` to `ET_Core_Support_Center`.
  * @since 3.20
  */
 class ET_Core_Support_Center {
@@ -162,6 +162,7 @@ class ET_Core_Support_Center {
 		'divi-builder/divi-builder.php', // Divi Builder Plugin
 		'query-monitor/query-monitor.php', // Query Monitor
 		'woocommerce/woocommerce.php', // WooCommerce
+		'really-simple-ssl/rlrsssl-really-simple-ssl.php', // Really Simple SSL
 	);
 
 	/**

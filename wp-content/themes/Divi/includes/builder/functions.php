@@ -4,7 +4,7 @@ require_once 'module/helpers/Overflow.php';
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '3.24.1' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '3.25.1' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -5703,17 +5703,21 @@ function et_pb_pagebuilder_meta_box() {
 	// Advanced Settings Buttons Module
 	printf(
 		'<script type="text/template" id="et-builder-advanced-setting">
-			<a href="#" class="et-pb-advanced-setting-remove">
-				<span>%1$s</span>
-			</a>
+			<%% if ( \'et_pb_column\' !== module_type && \'et_pb_column_inner\' !== module_type ) { %%>
+				<a href="#" class="et-pb-advanced-setting-remove">
+					<span>%1$s</span>
+				</a>
+			<%% } %%>
 
 			<a href="#" class="et-pb-advanced-setting-options">
 				<span>%2$s</span>
 			</a>
-
-			<a href="#" class="et-pb-clone et-pb-advanced-setting-clone">
-				<span>%3$s</span>
-			</a>
+			
+			<%% if ( \'et_pb_column\' !== module_type && \'et_pb_column_inner\' !== module_type ) { %%>
+				<a href="#" class="et-pb-clone et-pb-advanced-setting-clone">
+					<span>%3$s</span>
+				</a>
+			<%% } %%>
 		</script>',
 		esc_html__( 'Delete', 'et_builder' ),
 		esc_html__( 'Settings', 'et_builder' ),
@@ -10140,4 +10144,121 @@ if ( ! function_exists( 'et_builder_module_prop' ) ) {
 
 		return null === $value || '' === $value ? $default : $value;
     }
+}
+
+if ( ! function_exists( 'et_pb_get_column_svg' ) ) {
+	/**
+	 * Returns svg which represents the requried columns type
+	 *
+	 * @param string $type
+	 *
+	 * @return string svg code.
+	 */
+	function et_pb_get_column_svg( $type ) {
+		$svg = '';
+
+		switch ( $type ) {
+			case '4_4':
+				$svg = '<rect width="100%" height="20" y="5" rx="5" ry="5" />';
+				break;
+			case '1_2,1_2':
+				$svg = '<rect width="48.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="48.5%" height="20" y="5" rx="5" ry="5" x="51.5%" />';
+				break;
+			case '1_3,1_3,1_3':
+				$svg = '<rect width="31.3%" height="20" y="5" rx="5" ry="5" />
+						<rect width="31.3%" height="20" y="5" rx="5" ry="5" x="34.3%" />
+						<rect width="31.3%" height="20" y="5" rx="5" ry="5" x="68.6%" />';
+				break;
+			case '1_4,1_4,1_4,1_4':
+				$svg = '<rect width="22.75%" height="20" y="5" rx="5" ry="5" />
+						<rect width="22.75%" height="20" y="5" rx="5" ry="5" x="25.75%" />
+						<rect width="22.75%" height="20" y="5" rx="5" ry="5" x="51.5%" />
+						<rect width="22.75%" height="20" y="5" rx="5" ry="5" x="77.25%" />';
+				break;
+			case '1_5,1_5,1_5,1_5,1_5':
+				$svg = '<rect width="17.6%" height="20" y="5" rx="5" ry="5" />
+						<rect width="17.6%" height="20" y="5" rx="5" ry="5" x="20.6%" />
+						<rect width="17.6%" height="20" y="5" rx="5" ry="5" x="41.2%" />
+						<rect width="17.6%" height="20" y="5" rx="5" ry="5" x="61.8%" />
+						<rect width="17.6%" height="20" y="5" rx="5" ry="5" x="82.4%" />';
+				break;
+			case '1_6,1_6,1_6,1_6,1_6,1_6':
+				$svg = '<rect width="14.16%" height="20" y="5" rx="5" ry="5" />
+						<rect width="14.16%" height="20" y="5" rx="5" ry="5" x="17.16%" />
+						<rect width="14.16%" height="20" y="5" rx="5" ry="5" x="34.32%" />
+						<rect width="14.16%" height="20" y="5" rx="5" ry="5" x="51.48%" />
+						<rect width="14.16%" height="20" y="5" rx="5" ry="5" x="68.64%" />
+						<rect width="14.16%" height="20" y="5" rx="5" ry="5" x="85.8%" />';
+				break;
+			case '2_5,3_5' :
+				$svg = '<rect width="38.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="58.5%" height="20" y="5" rx="5" ry="5" x="41.5%" />';
+				break;
+			case '3_5,2_5' :
+				$svg = '<rect width="58.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="38.5%" height="20" y="5" rx="5" ry="5" x="61.5%" />';
+				break;
+			case '1_3,2_3' :
+				$svg = '<rect width="31.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="65.5%" height="20" y="5" rx="5" ry="5" x="34.5%" />';
+				break;
+			case '2_3,1_3' :
+				$svg = '<rect width="65.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="31.5%" height="20" y="5" rx="5" ry="5" x="68.5%" />';
+				break;
+			case '1_4,3_4' :
+				$svg = '<rect width="23.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="73.5%" height="20" y="5" rx="5" ry="5" x="26.5%" />';
+				break;
+			case '3_4,1_4' :
+				$svg = '<rect width="73.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="23.5%" height="20" y="5" rx="5" ry="5" x="76.5%" />';
+				break;
+			case '1_4,1_2,1_4':
+				$svg = '<rect width="23.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="47%" height="20" y="5" rx="5" ry="5" x="26.5%" />
+						<rect width="23.5%" height="20" y="5" rx="5" ry="5" x="76.5%" />';
+				break;
+			case '1_5,3_5,1_5':
+				$svg = '<rect width="18.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="57%" height="20" y="5" rx="5" ry="5" x="21.5%" />
+						<rect width="18.5%" height="20" y="5" rx="5" ry="5" x="81.5%" />';
+				break;
+			case '1_4,1_4,1_2':
+				$svg = '<rect width="23.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="23.5%" height="20" y="5" rx="5" ry="5" x="26.5%" />
+						<rect width="47%" height="20" y="5" rx="5" ry="5" x="53%" />';
+				break;
+			case '1_2,1_4,1_4':
+				$svg = '<rect width="47%" height="20" y="5" rx="5" ry="5" />
+						<rect width="23.5%" height="20" y="5" rx="5" ry="5" x="50%" />
+						<rect width="23.5%" height="20" y="5" rx="5" ry="5" x="76.5%" />';
+				break;
+			case '1_5,1_5,3_5':
+				$svg = '<rect width="18.5%" height="20" y="5" rx="5" ry="5" />
+						<rect width="18.5%" height="20" y="5" rx="5" ry="5" x="21.5%" />
+						<rect width="57%" height="20" y="5" rx="5" ry="5" x="43%" />';
+				break;
+			case '3_5,1_5,1_5':
+				$svg = '<rect width="57%" height="20" y="5" rx="5" ry="5" />
+						<rect width="18.5%" height="20" y="5" rx="5" ry="5" x="60%" />
+						<rect width="18.5%" height="20" y="5" rx="5" ry="5" x="81.5%" />';
+				break;
+			case '1_6,1_6,1_6,1_2':
+				$svg = '<rect width="14.6%" height="20" y="5" rx="5" ry="5" />
+						<rect width="14.6%" height="20" y="5" rx="5" ry="5" x="18.1%" />
+						<rect width="14.6%" height="20" y="5" rx="5" ry="5" x="36.2%" />
+						<rect width="45.7%" height="20" y="5" rx="5" ry="5" x="54.3%" />';
+				break;
+			case '1_2,1_6,1_6,1_6':
+				$svg = '<rect width="47%" height="20" y="5" rx="5" ry="5" />
+						<rect width="14.6%" height="20" y="5" rx="5" ry="5" x="50%" />
+						<rect width="14.6%" height="20" y="5" rx="5" ry="5" x="67.6%" />
+						<rect width="14.6%" height="20" y="5" rx="5" ry="5" x="85.2%" />';
+				break;
+		}
+
+		return $svg;
+	}
 }

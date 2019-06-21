@@ -25,7 +25,8 @@ class ET_Builder_Module_Settings_Migration_DividerHeight extends ET_Builder_Modu
 		$saved_value,
 		$saved_field_name,
 		$attrs,
-		$content
+		$content,
+		$module_address
 	) {
 		return et_sanitize_input_unit( $saved_value, false, 'px' );
 	}

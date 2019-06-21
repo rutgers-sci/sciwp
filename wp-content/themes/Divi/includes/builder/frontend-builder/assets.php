@@ -243,6 +243,12 @@ function et_fb_enqueue_assets() {
 		$builder_modules_script_handle,
 	);
 
+	if ( ! wp_script_is( 'wp-hooks', 'registered' ) ) {
+		// Use bundled wp-hooks script when WP < 5.0
+		wp_register_script( 'wp-hooks', "{$assets}/backports/hooks.js" );
+		$dependencies_list[] = 'wp-hooks';
+	}
+
 	// Add dependency on et-shortcode-js only if Divi Theme is used or ET Shortcodes plugin activated
 	if ( ! et_is_builder_plugin_active() || et_is_shortcodes_plugin_active() ) {
 		$dependencies_list[] = 'et-shortcodes-js';

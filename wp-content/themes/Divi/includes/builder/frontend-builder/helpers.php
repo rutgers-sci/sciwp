@@ -1296,6 +1296,8 @@ function et_fb_get_static_backend_helpers($post_type) {
 			'colorpicker'              => array(
 				'clear'                => esc_html__( 'Clear', 'et_builder' ),
 				'select'               => esc_html__( 'Select', 'et_builder' ),
+				'noColor'              => esc_html__( 'Transparent', 'et_builder' ),
+				'addColor'             => esc_html__( 'Add Color', 'et_builder' ),
 			),
 			'colorManager'             => array(
 				'saved'                => esc_html__( 'Saved', 'et_builder' ),
@@ -1875,8 +1877,9 @@ function et_fb_get_static_backend_helpers($post_type) {
 					'update'       => esc_html__( 'Change Column Structure', 'et_builder' ),
 					'rightMenu'    => esc_html__( 'Other Row Settings', 'et_builder' ),
 				),
-				'addButton' => esc_html__( 'Add New Row', 'et_builder' ),
-				'chooseColumn' => esc_html__( 'Choose Column Structure', 'et_builder' ),
+				'addButton'       => esc_html__( 'Add New Row', 'et_builder' ),
+				'addColumnButton' => esc_html__( 'Add New Column', 'et_builder' ),
+				'chooseColumn'    => esc_html__( 'Choose Column Structure', 'et_builder' ),
 			),
 			'module' => array(
 				'tab' => array(

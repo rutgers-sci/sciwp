@@ -956,7 +956,7 @@ class ET_Builder_Module_Helper_ResponsiveOptions {
 	 * get the correct color, gradient status, image, and video. It's introduced along with new
 	 * enable fields to decide should we remove or inherit the value from larger device.
 	 * 
-	 * @since ??
+	 * @since 3.24.1
 	 *
 	 * @param array  $attrs           All module attributes.
 	 * @param string $base_setting    Setting need to be checked.
