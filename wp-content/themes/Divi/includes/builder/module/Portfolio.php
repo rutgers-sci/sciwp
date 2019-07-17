@@ -455,7 +455,7 @@ class ET_Builder_Module_Portfolio extends ET_Builder_Module_Type_PostBased {
 				'query' => $query,
 				'echo' => false
 			) ) : false;
-		} else if ( wp_doing_ajax() || et_core_is_fb_enabled() ) {
+		} else if ( self::is_processing_computed_prop() ) {
 			// This is for the VB
 			$query = array( 'posts' => self::get_no_results_template() );
 		}

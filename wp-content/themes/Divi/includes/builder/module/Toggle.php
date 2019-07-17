@@ -85,6 +85,24 @@ class ET_Builder_Module_Toggle extends ET_Builder_Module {
 						'default' => '0px',
 					),
 				),
+				'closed_title' => array(
+					'label'    => esc_html__( 'Closed Title', 'et_builder' ),
+					'css'      => array(
+						'main' => "{$this->main_css_element}.et_pb_toggle_close h5, {$this->main_css_element}.et_pb_toggle_close h1.et_pb_toggle_title, {$this->main_css_element}.et_pb_toggle_close h2.et_pb_toggle_title, {$this->main_css_element}.et_pb_toggle_close h3.et_pb_toggle_title, {$this->main_css_element}.et_pb_toggle_close h4.et_pb_toggle_title, {$this->main_css_element}.et_pb_toggle_close h6.et_pb_toggle_title",
+						'important' => 'plugin_only',
+					),
+					'hide_text_color' => true,
+					'default_from'    => 'title',
+					'line_height'     => array(
+						'default' => '1.7em',
+					),
+					'font_size'       => array(
+						'default' => '16px',
+					),
+					'letter_spacing'  => array(
+						'default' => '0px',
+					),
+				),
 				'body'                 => array(
 					'label'          => esc_html__( 'Body', 'et_builder' ),
 					'css'            => array(

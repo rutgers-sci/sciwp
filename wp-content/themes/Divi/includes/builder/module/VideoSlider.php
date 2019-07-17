@@ -262,13 +262,23 @@ class ET_Builder_Module_Video_Slider extends ET_Builder_Module {
 
 				$font_size_value_int  = (int) $font_size_value;
 				$font_size_value_unit = str_replace( $font_size_value_int, '', $font_size_value );
-				$font_size_value_half = 0 < $font_size_value_int ? $font_size_value_int / 2 : 0;
+				$font_size_value_half = 0 < $font_size_value_int ? -1 * $font_size_value_int / 2 : 0;
 				$font_size_value_half = (string) $font_size_value_half . $font_size_value_unit;
+
 				ET_Builder_Element::set_style( $render_slug, array(
 					'selector'    => '%%order_class%% .et_pb_video_play',
 					'declaration' => sprintf(
-						'font-size:%1$s; line-height:%1$s;',
+						'font-size:%1$s; line-height:%1$s; margin-top:%2$s;',
 						esc_html( $font_size_value ),
+						esc_html( $font_size_value_half )
+					),
+					'media_query' => $media_query,
+				) );
+
+				ET_Builder_Element::set_style( $render_slug, array(
+					'selector'    => '%%order_class%% .et_pb_video_wrap .et_pb_video_overlay .et_pb_video_play',
+					'declaration' => sprintf(
+						'margin-left:%1$s;',
 						esc_html( $font_size_value_half )
 					),
 					'media_query' => $media_query,

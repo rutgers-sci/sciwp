@@ -123,6 +123,7 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 							'style' => 'solid',
 						),
 					),
+					'label_prefix' => esc_html__( 'Grid Layout', 'et_builder' ),
 				),
 				'fullwidth' => array(
 					'css' => array(
@@ -1503,12 +1504,12 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 
 	public function process_box_shadow( $function_name ) {
 		if ( isset( $this->props['fullwidth'] ) && $this->props['fullwidth'] === 'off' ) {
-			$this->advanced_fields['box_shadow'] = array(
-				'default' => array(
-					'css' => array(
-						'main'         => '%%order_class%% article.et_pb_post',
-						'overlay'      => "inset",
-					),
+			// Only override 'default' box shadow because we also defined
+			// box shadow settings for the image.
+			$this->advanced_fields['box_shadow']['default'] = array(
+				'css' => array(
+					'main'    => '%%order_class%% article.et_pb_post',
+					'overlay' => 'inset',
 				),
 			);
 		}

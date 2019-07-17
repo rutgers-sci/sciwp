@@ -439,6 +439,7 @@ class ET_Builder_Module_Text extends ET_Builder_Module {
 					'step' => '1',
 				),
 				'mobile_options'   => true,
+				'hover'            => 'tabs',
 			),
 			'quote_border_color' => array(
 				'label'           => esc_html__( 'Blockquote Border Color', 'et_builder' ),
@@ -452,6 +453,7 @@ class ET_Builder_Module_Text extends ET_Builder_Module {
 				'field_template'  => 'color',
 				'priority'        => 90,
 				'mobile_options'  => true,
+				'hover'           => 'tabs',
 			),
 		);
 
@@ -467,6 +469,22 @@ class ET_Builder_Module_Text extends ET_Builder_Module {
 		);
 	}
 
+	/**
+	 * Transition fields for Text module.
+	 *
+	 * @since 3.26
+	 *
+	 * @return array Fields list in array.
+	 */
+	public function get_transition_fields_css_props() {
+		$fields = parent::get_transition_fields_css_props();
+
+		$fields['quote_border_weight'] = array( 'border-width' => '%%order_class%% blockquote' );
+		$fields['quote_border_color']  = array( 'border-color' => '%%order_class%% blockquote' );
+
+		return $fields;
+	}
+
 	function render( $attrs, $content = null, $render_slug ) {
 		$ul_type_values                  = et_pb_responsive_options()->get_property_values( $this->props, 'ul_type' );
 		$ul_position_values              = et_pb_responsive_options()->get_property_values( $this->props, 'ul_position' );
@@ -475,7 +493,9 @@ class ET_Builder_Module_Text extends ET_Builder_Module {
 		$ol_position_values              = et_pb_responsive_options()->get_property_values( $this->props, 'ol_position' );
 		$ol_item_indent_values           = et_pb_responsive_options()->get_property_values( $this->props, 'ol_item_indent' );
 		$quote_border_weight_values      = et_pb_responsive_options()->get_property_values( $this->props, 'quote_border_weight' );
+		$quote_border_weight_hover       = et_pb_hover_options()->get_value( 'quote_border_weight', $this->props );
 		$quote_border_color_values       = et_pb_responsive_options()->get_property_values( $this->props, 'quote_border_color' );
+		$quote_border_color_hover        = et_pb_hover_options()->get_value( 'quote_border_color', $this->props );
 
 		$background_layout               = $this->props['background_layout'];
 		$background_layout_hover         = et_pb_hover_options()->get_value( 'background_layout', $this->props, 'light' );
@@ -511,6 +531,26 @@ class ET_Builder_Module_Text extends ET_Builder_Module {
 		// Quote.
 		et_pb_responsive_options()->generate_responsive_css( $quote_border_weight_values, '%%order_class%% blockquote', 'border-width', $render_slug );
 		et_pb_responsive_options()->generate_responsive_css( $quote_border_color_values, '%%order_class%% blockquote', 'border-color', $render_slug, '', 'color' );
+
+		if ( '' !== $quote_border_color_hover && et_builder_is_hover_enabled( 'quote_border_color', $this->props ) ) {
+			self::set_style( $render_slug, array(
+				'selector'    => '%%order_class%% blockquote:hover',
+				'declaration' => sprintf(
+					'border-color: %1$s !important;',
+					esc_html( $quote_border_color_hover )
+				),
+			) );
+		}
+
+		if ( '' !== $quote_border_weight_hover && et_builder_is_hover_enabled( 'quote_border_weight', $this->props ) ) {
+			self::set_style( $render_slug, array(
+				'selector'    => '%%order_class%% blockquote:hover',
+				'declaration' => sprintf(
+					'border-width: %1$s !important;',
+					esc_html( $quote_border_weight_hover )
+				),
+			) );
+		}
 
 		// Module classnames
 		$this->add_classname( array(

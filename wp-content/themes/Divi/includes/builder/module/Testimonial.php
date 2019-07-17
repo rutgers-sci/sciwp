@@ -37,7 +37,7 @@ class ET_Builder_Module_Testimonial extends ET_Builder_Module {
 
 		$this->advanced_fields = array(
 			'fonts'                 => array(
-				'body' => array(
+				'body'     => array(
 					'label'            => esc_html__( 'Body', 'et_builder' ),
 					'css'              => array(
 						'main' => "{$this->main_css_element} *",
@@ -45,6 +45,56 @@ class ET_Builder_Module_Testimonial extends ET_Builder_Module {
 					'hide_text_shadow' => true,
 					'block_elements'   => array(
 						'tabbed_subtoggles' => true,
+					),
+				),
+				'author'   => array(
+					'label'          => esc_html__( 'Author', 'et_builder' ),
+					'css'            => array(
+						'main' => "{$this->main_css_element} .et_pb_testimonial_author",
+					),
+					'font'           => array(
+						'default' => '|700|||||||',
+					),
+					'line_height'    => array(
+						'default' => floatval( et_get_option( 'body_font_height', '1.5' ) ) . 'em',
+					),
+					'font_size'      => array(
+						'default' => absint( et_get_option( 'body_font_size', '14' ) ) . 'px',
+					),
+					'letter_spacing' => array(
+						'default' => '0px',
+					),
+				),
+				'position' => array(
+					'label'           => esc_html__( 'Position', 'et_builder' ),
+					'css'             => array(
+						'main' => "{$this->main_css_element} .et_pb_testimonial_position, {$this->main_css_element} .et_pb_testimonial_separator",
+					),
+					'hide_text_align' => true,
+					'line_height'    => array(
+						'default' => floatval( et_get_option( 'body_font_height', '1.5' ) ) . 'em',
+					),
+					'font_size'      => array(
+						'default' => absint( et_get_option( 'body_font_size', '14' ) ) . 'px',
+					),
+					'letter_spacing' => array(
+						'default' => '0px',
+					),
+				),
+				'company'  => array(
+					'label'           => esc_html__( 'Company', 'et_builder' ),
+					'css'             => array(
+						'main' => "{$this->main_css_element} .et_pb_testimonial_company",
+					),
+					'hide_text_align' => true,
+					'line_height'    => array(
+						'default' => floatval( et_get_option( 'body_font_height', '1.5' ) ) . 'em',
+					),
+					'font_size'      => array(
+						'default' => absint( et_get_option( 'body_font_size', '14' ) ) . 'px',
+					),
+					'letter_spacing' => array(
+						'default' => '0px',
 					),
 				),
 				'author'   => array(

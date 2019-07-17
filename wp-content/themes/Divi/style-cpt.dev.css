@@ -7,7 +7,7 @@
 /*!
 Theme Name: Divi
 Theme URI: http://www.elegantthemes.com/gallery/divi/
-Version: 3.25.1
+Version: 3.26.3
 Description: Smart. Flexible. Beautiful. Divi is the most powerful theme in our collection.
 Author: Elegant Themes
 Author URI: http://www.elegantthemes.com
@@ -15318,7 +15318,7 @@ span.comment_date {
 .et-db #et-boc .et_pb_with_border.et_pb_video_slider .et_pb_slider,
 .et-db #et-boc .et_pb_with_border.et_pb_video_slider .et_pb_carousel_item,
 .et-db #et-boc .et_pb_with_border.et_pb_shop .et_shop_image > img,
-.et-db #et-boc .et_pb_with_border .et_pb_slide_image,
+.et-db #et-boc .et_pb_with_border .et_pb_slide_image img,
 .et-db #et-boc .et_pb_with_border.et_pb_fullwidth_header .header-logo,
 .et-db #et-boc .et_pb_with_border.et_pb_fullwidth_header .header-image-container img,
 .et-db #et-boc .et_pb_with_border.et_pb_shop .products li {
@@ -15993,6 +15993,7 @@ span.comment_date {
 	display: block;
 	float: left;
 	position: relative;
+	box-sizing: content-box;
 	width: 90px;
 	height: 90px;
 	margin-right: 30px;
@@ -16481,20 +16482,12 @@ span.comment_date {
 	background: rgba(0, 0, 0, 0.6);
 }
 
-.et-db #et-boc .et_pb_video_slider .et_pb_slider_dots.et_pb_controls_light ~ .et-pb-controllers a {
-	background-color: rgba(255, 255, 255, 0.5);
-}
-
 .et-db #et-boc .et_pb_video_slider .et_pb_slider_dots.et_pb_controls_light ~ .et-pb-controllers .et-pb-active-control {
-	background-color: #fff !important;
+	background-color: #fff;
 }
 
 .et-db #et-boc .et_pb_video_slider .et_pb_slider_dots.et_pb_controls_dark ~ .et-pb-controllers a {
-	background-color: rgba(51, 51, 51, 0.5);
-}
-
-.et-db #et-boc .et_pb_video_slider .et_pb_slider_dots.et_pb_controls_dark ~ .et-pb-controllers .et-pb-active-control {
-	background-color: #333 !important;
+	background-color: rgba(51, 51, 51);
 }
 
 .et-db #et-boc .et_pb_video_slider .et_pb_controls_dark .et-pb-slider-arrows {
@@ -18936,8 +18929,7 @@ span.comment_date {
 .et-db #et-boc .et_pb_slider .et_pb_container {
 	position: relative;
 	z-index: 2;
-	width: 80%;
-	max-width: 1080px;
+	width: 100%;
 	margin: 0 auto;
 }
 
@@ -18949,8 +18941,10 @@ span.comment_date {
 	padding: 0;
 }
 
-.et-db #et-boc .et_pb_slider_fullwidth_off .et_pb_container {
-	width: 100% !important;
+.et-db #et-boc .et_pb_fullwidth_post_slider .et_pb_container,
+.et-db #et-boc .et_pb_fullwidth_slider .et_pb_container {
+	width: 80%;
+	max-width: 1080px;
 }
 
 .et-db #et-boc .et-pb-arrow-prev,
@@ -18974,10 +18968,6 @@ span.comment_date {
 
 .et-db #et-boc .et_pb_bg_layout_light .et-pb-controllers .et-pb-active-control {
 	background-color: #333;
-}
-
-.et-db #et-boc .et_pb_bg_layout_light .et-pb-controllers a {
-	background-color: rgba(0, 0, 0, 0.3);
 }
 
 .et-db #et-boc .et-pb-arrow-prev:hover,
@@ -19019,10 +19009,6 @@ span.comment_date {
 .et-db #et-boc .format-gallery .et-pb-arrow-prev,
 .et-db #et-boc .format-gallery .et-pb-arrow-next {
 	color: #fff;
-}
-
-.et-db #et-boc .format-gallery .et-pb-controllers a {
-	background-color: rgba(255, 255, 255, 0.5);
 }
 
 .et-db #et-boc .format-gallery .et_pb_slider:hover .et-pb-arrow-prev {
@@ -19086,8 +19072,13 @@ span.comment_date {
 	-webkit-border-radius: 7px;
 	-moz-border-radius: 7px;
 	border-radius: 7px;
+	opacity: 0.5;
 	background-color: rgba(255, 255, 255, 0.5);
 	text-indent: -9999px;
+}
+
+.et-db #et-boc .et-pb-controllers .et-pb-active-control {
+	opacity: 1;
 }
 
 .et-db #et-boc .et_pb_post .et-pb-controllers a {
@@ -19288,6 +19279,15 @@ span.comment_date {
 	text-decoration: none;
 }
 
+.et-db #et-boc .et_parallax_bg_wrap {
+	overflow: hidden;
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+}
+
 .et-db #et-boc .et_parallax_bg {
 	display: block;
 	position: absolute;
@@ -19329,11 +19329,6 @@ span.comment_date {
 	.et-db #et-boc .et_parallax_bg.et_parallax_bg_phone {
 		display: block;
 	}
-}
-
-.et-db #et-boc .et_pb_section_parallax:not(.et_pb_fullwidth_menu),
-.et-db #et-boc .et_pb_slider_parallax {
-	overflow: hidden;
 }
 
 .et-db #et-boc .et_pb_posts_nav a.et_pb_section_parallax,
@@ -19533,6 +19528,8 @@ span.comment_date {
 	margin-top: 5px;
 	margin-right: 25px;
 	padding: 0 12px;
+	border-width: 0;
+	border-style: solid;
 	border-radius: 3px;
 	color: rgba(0, 0, 0, 0.5);
 	background: rgba(0, 0, 0, 0.1);
@@ -19662,7 +19659,6 @@ span.comment_date {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background-color: #222;
 	-webkit-transition: display 0.3s;
 	-moz-transition: display 0.3s;
 	transition: display 0.3s;
@@ -19717,7 +19713,7 @@ span.comment_date {
 }
 
 .et-db #et-boc .et_pb_column.et_pb_column_empty {
-	min-height: 0.1px;
+	min-height: 1px;
 }
 
 .et-db #et-boc .et_pb_row_inner {
@@ -23466,6 +23462,10 @@ span.comment_date {
 		text-align: justify;
 	}
 
+	.et-db #et-boc .et_pb_blurb.et_pb_text_align_center-tablet .et_pb_blurb_content .et_pb_blurb_container {
+		text-align: center;
+	}
+
 	.et-db #et-boc .et_pb_text_align_left-tablet .et_pb_counter_amount {
 		text-align: left;
 	}
@@ -24642,6 +24642,10 @@ span.comment_date {
 		text-align: justify;
 	}
 
+	.et-db #et-boc .et_pb_blurb.et_pb_text_align_center-phone .et_pb_blurb_content .et_pb_blurb_container {
+		text-align: center;
+	}
+
 	.et-db #et-boc .et_pb_text_align_left-phone .et_pb_counter_amount {
 		text-align: left;
 	}
@@ -24939,7 +24943,7 @@ span.comment_date {
 	}
 
 	.et-db #et-boc .et_pb_audio_module_content h2 {
-		font-size: 20px !important;
+		font-size: 20px;
 	}
 
 	.et-db #et-boc .et_pb_column_1_4 .et_audio_module_meta,

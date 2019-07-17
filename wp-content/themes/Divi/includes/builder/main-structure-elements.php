@@ -117,14 +117,17 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 							'width'     => array(
 								'label'           => esc_html__( 'Inner Width', 'et_builder' ),
 								'depends_show_if' => 'on',
+								'specialty_only'  => 'yes',
 							),
 							'max_width' => array(
 								'label'           => esc_html__( 'Inner Max Width', 'et_builder' ),
 								'depends_show_if' => 'on',
+								'specialty_only'  => 'yes',
 							),
 							'module_alignment' => array(
 								'label'           => esc_html__( 'Row Alignment', 'et_builder' ),
 								'depends_show_if' => 'on',
+								'specialty_only'  => 'yes',
 							),
 						)
 					)
@@ -207,7 +210,7 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 				'specialty_only'   => 'yes',
 				'validate_unit'    => false,
 				'fixed_range'      => true,
-				'default_on_front' => et_get_option( 'gutter_width', 3 ),
+				'default_on_front' => (string) et_get_option( 'gutter_width', '3' ),
 				'hover'            => 'tabs',
 				'description'      => esc_html__( 'Gutter width controls the space between each column in a row. Lowering the gutter width will cause modules to become closer together.', 'et_builder' ),
 			),
@@ -396,7 +399,7 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 
 	/**
 	 * Check if current background is transparent background or not.
-	 * 
+	 *
 	 * @since 3.24.1
 	 *
 	 * @return boolean Transparent color status.
@@ -406,6 +409,15 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 		return 'rgba(255,255,255,0)' === $background_color || ( et_is_builder_plugin_active() && '' === $background_color && '' === $page_setting_section_background );
 	}
 
+	/**
+	 * Check if current background should have initial background color.
+	 *
+	 * @since 3.24.1
+	 *
+	 * @param string $mode
+	 *
+	 * @return boolean
+	 */
 	public function is_initial_background_color( $mode = 'desktop' ) {
 		// Ensure $mode parameter not empty.
 		$mode          = '' === $mode ? 'desktop' : $mode;
@@ -415,17 +427,18 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 		$background_blend   = 'hover' === $mode ? et_pb_hover_options()->get_raw_value( 'background_blend', $this->props ) : et_pb_responsive_options()->get_any_value( $this->props, "background_blend{$device_suffix}", '', true );
 		$use_gradient_value = et_pb_responsive_options()->get_inheritance_background_value( $this->props, 'use_background_color_gradient', $mode );
 		$background_image   = et_pb_responsive_options()->get_inheritance_background_value( $this->props, 'background_image', $mode );
+		$bg_blend_default   = self::$_->array_get( $this->fields_unprocessed, 'background_blend.default', '' );
 
 		$is_gradient_active = 'on' === $use_gradient_value;
 		$is_image_active    = '' !== $background_image && 'on' !== $parallax;
-		$is_image_blend     = '' !== $background_blend;
+		$is_image_blend     = '' !== $background_blend && $background_blend !== $bg_blend_default;
 
 		return $is_gradient_active && $is_image_active && $is_image_blend;
 	}
 
 	/**
 	 * Get parallax image background.
-	 * 
+	 *
 	 * @since 3.24.1
 	 *
 	 * @return HTML Parallax backgrounds markup.
@@ -490,7 +503,7 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 			if ( ( '_tablet' === $suffix || '' === $suffix ) && in_array( '_phone', $parallax_processed ) ) {
 				$parallax_classname[] = 'et_parallax_bg_phone_exist';
 			}
-			
+
 			if ( '' === $suffix && in_array( '_tablet', $parallax_processed ) ) {
 				$parallax_classname[] = 'et_parallax_bg_tablet_exist';
 			}
@@ -518,14 +531,12 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 				}
 
 				$parallax_background .= sprintf(
-					'%3$s<div
+					'<div class="et_parallax_bg_wrap"><div
 						class="%1$s"
 						style="background-image: url(%2$s);"
-					></div>%4$s',
+					></div></div>',
 					esc_attr( implode( ' ', $parallax_classname ) ),
-					esc_url( $background_image ),
-					!et_core_is_fb_enabled() ? '' : '<div class="et_parallax_bg_wrap">',
-					!et_core_is_fb_enabled() ? '' : '</div>'
+					esc_url( $background_image )
 				);
 			}
 
@@ -688,7 +699,7 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 		}
 
 		// Background Color.
-		$background_color        = $this->props['background_color'];
+		$background_color        = et_pb_responsive_options()->get_inheritance_background_value( $this->props, 'background_color', 'desktop' );
 		$background_color_tablet = '';
 		$background_color_phone  = '';
 
@@ -949,7 +960,7 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 			$current_row_position = $et_pb_rendering_column_content ? 'internal_row' : 'regular_row';
 
 			$et_pb_all_column_settings[ $current_row_position ] = $internal_columns_settings_array;
-			
+
 			$et_pb_rendering_specialty_section = true;
 
 			if ( $et_pb_rendering_column_content ) {
@@ -1338,7 +1349,7 @@ class ET_Builder_Row extends ET_Builder_Structure_Element {
 				'fixed_range'      => true,
 				'tab_slug'         => 'advanced',
 				'toggle_slug'      => 'width',
-				'default_on_front' => et_get_option( 'gutter_width', 3 ),
+				'default_on_front' => (string) et_get_option( 'gutter_width', '3' ),
 				'hover'            => 'tabs',
 			),
 			'custom_padding' => array(
@@ -1515,7 +1526,7 @@ class ET_Builder_Row extends ET_Builder_Structure_Element {
 			'custom_css_main'                            => array( 'tab_slug' => 'custom_css' ),
 			'custom_css_after'                           => array( 'tab_slug' => 'custom_css' ),
 		) );
-		 
+
 		return array_merge( $fields, $column_fields );
 	}
 
@@ -1862,7 +1873,7 @@ class ET_Builder_Row_Inner extends ET_Builder_Structure_Element {
 				'fixed_range'      => true,
 				'tab_slug'         => 'advanced',
 				'toggle_slug'      => 'width',
-				'default_on_front' => et_get_option( 'gutter_width', 3 ),
+				'default_on_front' => (string) et_get_option( 'gutter_width', '3' ),
 				'hover'            => 'tabs',
 			),
 			'make_equal' => array(
@@ -2259,6 +2270,7 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 
 	function render( $atts, $content = null, $function_name ) {
 		$type                        = $this->props['type'];
+		$specialty_columns           = $this->props['specialty_columns'];
 		$saved_specialty_column_type = $this->props['saved_specialty_column_type'];
 		$custom_css_class            = '';
 
@@ -2297,8 +2309,8 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 			$background_repeat                  = isset( $backgrounds_array[$array_index]['image_repeat'] ) ? $backgrounds_array[$array_index]['image_repeat'] : '';
 			$background_blend                   = isset( $backgrounds_array[$array_index]['image_blend'] ) ? $backgrounds_array[$array_index]['image_blend'] : '';
 			$background_gradient_overlays_image = isset( $background_gradient['overlays_image'] ) ? $background_gradient['overlays_image'] : '';
-			$background_color_hover             = self::$_->array_get( $backgrounds_array[$array_index], "color_hover" );
-			$background_color_hover_enabled     = self::$_->array_get( $backgrounds_array[$array_index], "color_hover_enabled" );
+			$background_color_hover             = isset( $backgrounds_array[ $array_index ] ) ? self::$_->array_get( $backgrounds_array[ $array_index ], "color_hover" ) : '';
+			$background_color_hover_enabled     = isset( $backgrounds_array[ $array_index ] ) ? self::$_->array_get( $backgrounds_array[ $array_index ], "color_hover_enabled" ) : '';
 
 			$padding_values            = isset( $paddings_array[$array_index] ) ? $paddings_array[$array_index] : array();
 			$padding_mobile_values     = isset( $paddings_mobile_array[$array_index] ) ? $paddings_mobile_array[$array_index] : array();
@@ -2315,8 +2327,8 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 			$custom_css_main_hover   = self::$_->array_get( $column_css_array, "custom_css_main_hover.[$array_index]", '' );
 			$custom_css_after_hover  = self::$_->array_get( $column_css_array, "custom_css_after_hover.[$array_index]", '' );
 		} else {
-			$custom_css_id   = $this->props['module_id'];
-			$parallax_method = $this->props['parallax_method'];
+			$custom_css_id   = self::$_->array_get( $this->props, 'module_id', '' );
+			$parallax_method = self::$_->array_get( $this->props, 'parallax_method', '' );
 		}
 
 		// Get column type value in array
@@ -2336,7 +2348,7 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 
 		// Last column is when sum of column type value equals to 1
 		$is_last_column = 1 === $et_pb_column_completion;
-	
+
 		// Still need to manually output this for Specialty columns.
 		if ( $is_specialty_column ) {
 			$background_images = array();
@@ -2586,6 +2598,10 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 
 					break;
 				case '2_3':
+					if ( '1_3' === $type ) {
+						$type = '2_9';
+					}
+
 					if ( '1_2' === $type ) {
 						$type = '1_3';
 					}
@@ -2614,11 +2630,11 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 			$video_background = trim( $this->video_background( $background_video ) );
 			if ( '' !== $background_img && '' !== $parallax_method ) {
 				$parallax_image = sprintf(
-					'%3$s<div class="et_parallax_bg%2$s" style="background-image: url(%1$s);"></div>%4$s',
+					'<div class="et_parallax_bg_wrap">
+						<div class="et_parallax_bg%2$s" style="background-image: url(%1$s);"></div>
+					</div>',
 					esc_attr( $background_img ),
-					( 'off' === $parallax_method ? ' et_pb_parallax_css' : '' ),
-					!et_core_is_fb_enabled() ? '' : '<div class="et_parallax_bg_wrap">',
-					!et_core_is_fb_enabled() ? '' : '</div>'
+					( 'off' === $parallax_method ? ' et_pb_parallax_css' : '' )
 				);
 			}
 
@@ -2639,7 +2655,7 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 			$this->add_classname( $custom_css_class );
 		}
 
-		if ( $is_specialty_column ) {
+		if ( $is_specialty_column && '' !== $specialty_columns ) {
 			$this->add_classname( 'et_pb_specialty_column' );
 		}
 

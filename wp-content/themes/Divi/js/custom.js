@@ -26,7 +26,7 @@ var isBuilder = 'object' === typeof window.ET_Builder;
 		$et_single_post = $( 'body.single' ),
 		$et_window = $(window),
 		etRecalculateOffset = false,
-		et_header_height,
+		et_header_height = 0,
 		et_header_modifier,
 		et_header_offset,
 		et_primary_header_top,

@@ -103,6 +103,7 @@ class ET_Builder_Module_Blurb extends ET_Builder_Module {
 						'show_if_not' => array(
 							'use_icon' => 'on',
 						),
+						'overlay' => 'inset',
 					),
 					'default_on_fronts'  => array(
 						'color'    => '',

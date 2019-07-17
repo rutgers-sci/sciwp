@@ -1,5 +1,7 @@
 <?php
 
+require_once 'helpers/Slider.php';
+
 class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 	function init() {
 		$this->name            = esc_html__( 'Fullwidth Slider', 'et_builder' );
@@ -71,8 +73,8 @@ class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 				'image'   => array(
 					'css'             => array(
 						'main' => array(
-							'border_radii'  => '%%order_class%% .et_pb_slide_image',
-							'border_styles' => '%%order_class%% .et_pb_slide_image',
+							'border_radii'  => '%%order_class%% .et_pb_slide_image img',
+							'border_styles' => '%%order_class%% .et_pb_slide_image img',
 						)
 					),
 					'label_prefix'    => esc_html__( 'Image', 'et_builder' ),
@@ -101,7 +103,7 @@ class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 					'tab_slug'          => 'advanced',
 					'toggle_slug'       => 'image',
 					'css'               => array(
-						'main' => '%%order_class%% .et_pb_slide_image',
+						'main' => '%%order_class%% .et_pb_slide_image img',
 					),
 					'default_on_fronts' => array(
 						'color'    => '',
@@ -174,6 +176,26 @@ class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 						'%%order_class%% .et_pb_section_video_bg',
 					),
 				),
+			),
+			'max_width'             => array(
+				'extra'   => array(
+					'content' => array(
+						'use_module_alignment' => false,
+						'css' => array(
+							'main' => '%%order_class%% .et_pb_slide > .et_pb_container',
+						),
+						'options' => array(
+							'width'     => array(
+								'label' => esc_html__( 'Content Width', 'et_builder' ),
+								'default' => '80%',
+							),
+							'max_width' => array(
+								'label' => esc_html__( 'Content Max Width', 'et_builder' ),
+								'default' => '1080px',
+							),
+						)
+					)
+				)
 			),
 		);
 
@@ -361,6 +383,7 @@ class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 				'tab_slug'       => 'advanced',
 				'toggle_slug'    => 'navigation',
 				'mobile_options' => true,
+				'hover'          => 'tabs',
 			),
 			'dot_nav_custom_color'  => array(
 				'label'          => esc_html__( 'Dot Navigation Color', 'et_builder' ),
@@ -370,6 +393,7 @@ class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 				'tab_slug'       => 'advanced',
 				'toggle_slug'    => 'navigation',
 				'mobile_options' => true,
+				'hover'          => 'tabs',
 			),
 		);
 
@@ -378,7 +402,9 @@ class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 
 	function before_render() {
 		global $et_pb_slider_has_video, $et_pb_slider_parallax, $et_pb_slider_parallax_method, $et_pb_slider_show_mobile, $et_pb_slider_custom_icon, $et_pb_slider_custom_icon_tablet, $et_pb_slider_custom_icon_phone, $et_pb_slider_item_num, $et_pb_slider_button_rel;
+		global $et_pb_slider_parent_type;
 
+		$et_pb_slider_parent_type = $this->slug;
 		$et_pb_slider_item_num = 0;
 
 		$parallax        = $this->props['parallax'];
@@ -497,6 +523,15 @@ class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 		$et_pb_slider[ $background_color_hover_key ]   = self::$_->array_get( $this->props, $background_color_hover_key, '' );
 	}
 
+	public function get_transition_fields_css_props() {
+		$fields = parent::get_transition_fields_css_props();
+
+		$fields['dot_nav_custom_color'] = array( 'background-color' => et_pb_slider_options()->get_dots_selector() );
+		$fields['arrows_custom_color']  = array( 'all' => et_pb_slider_options()->get_arrows_selector() );
+
+		return $fields;
+	}
+
 	function render( $attrs, $content = null, $render_slug ) {
 		$show_arrows             = $this->props['show_arrows'];
 		$show_pagination         = $this->props['show_pagination'];
@@ -537,17 +572,13 @@ class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 			) );
 		}
 
-		$fullwidth = 'et_pb_fullwidth_slider' === $render_slug ? 'on' : 'off';
-
 		// Module classnames
+		$this->add_classname( $render_slug );
+
 		$this->add_classname( 'et_pb_slider' );
 
 		if ( $et_pb_slider_has_video ) {
 			$this->add_classname( 'et_pb_preload' );
-		}
-
-		if ( 'off' === $fullwidth ) {
-			$this->add_classname( 'et_pb_slider_fullwidth_off' );
 		}
 
 		if ( 'off' === $show_arrows ) {
@@ -576,6 +607,9 @@ class ET_Builder_Module_Fullwidth_Slider extends ET_Builder_Module {
 		if ( 'on' === $show_image_video_mobile ) {
 			$this->add_classname( 'et_pb_slider_show_image' );
 		}
+
+		$this->generate_responsive_hover_style( 'arrows_custom_color', et_pb_slider_options()->get_arrows_selector(), 'color' );
+		$this->generate_responsive_hover_style( 'dot_nav_custom_color', et_pb_slider_options()->get_dots_selector(), 'background-color' );
 
 		// Remove automatically added classnames
 		$this->remove_classname( 'et_pb_fullwidth_slider' );

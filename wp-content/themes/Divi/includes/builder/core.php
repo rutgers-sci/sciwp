@@ -41,6 +41,10 @@ function et_builder_should_load_framework() {
 		return $should_load = true;
 	}
 
+	if ( ET_Core_Portability::doing_import() ) {
+		return $should_load = true;
+	}
+
 	$is_admin = is_admin();
 	$required_admin_pages = array( 'edit.php', 'post.php', 'post-new.php', 'admin.php', 'customize.php', 'edit-tags.php', 'admin-ajax.php', 'export.php', 'options-permalink.php', 'themes.php', 'revision.php' ); // list of admin pages where we need to load builder files
 	$specific_filter_pages = array( 'edit.php', 'post.php', 'post-new.php', 'admin.php', 'edit-tags.php' ); // list of admin pages where we need more specific filtering
@@ -586,7 +590,11 @@ function et_is_extra_library_layout( $post_id ) {
 }
 
 /**
- * Check whether the specified capability allowed for current user
+ * Check whether the specified capability allowed for the user
+ *
+ * @param array|string $capabilities
+ * @param string       $role         - The user role. If empty the role of the current user is used
+ *
  * @return bool
  */
 function et_pb_is_allowed( $capabilities, $role = '' ) {
@@ -1736,6 +1744,9 @@ function et_pb_heartbeat_post_modified( $response ) {
 					$response['et']['action'] = 'current editor is fb, content wasnt updated by bb'; // dev use
 				}
 			}
+
+			$custom_defaults_manager = ET_Builder_Custom_Defaults_Settings::instance();
+			$response['et']['custom_defaults'] = $custom_defaults_manager->get_custom_defaults();
 		} else {
 			$response['et']['post_not_modified'] = true;
 			$response['et']['action'] = 'post content not modified externally'; // dev use
@@ -2053,35 +2064,38 @@ function et_fb_get_portability_export_url() {
 function et_fb_get_nonces() {
 	$nonces    = apply_filters( 'et_fb_nonces', array() );
 	$fb_nonces = array(
-		'moduleContactFormSubmit'       => wp_create_nonce( 'et-pb-contact-form-submit' ),
-		'et_admin_load'                 => wp_create_nonce( 'et_admin_load_nonce' ),
-		'computedProperty'              => wp_create_nonce( 'et_pb_process_computed_property_nonce' ),
-		'renderShortcode'               => wp_create_nonce( 'et_pb_render_shortcode_nonce' ),
-		'updateAssets'                  => wp_create_nonce( 'et_fb_update_helper_assets_nonce' ),
-		'loadAssets'                    => wp_create_nonce( 'et_fb_load_helper_assets_nonce' ),
-		'renderSave'                    => wp_create_nonce( 'et_fb_save_nonce' ),
-		'convertToShortcode'            => wp_create_nonce( 'et_fb_convert_to_shortcode_nonce' ),
-		'dropAutosave'                  => wp_create_nonce( 'et_fb_drop_autosave_nonce' ),
-		'prepareShortcode'              => wp_create_nonce( 'et_fb_prepare_shortcode_nonce' ),
-		'processImportedData'           => wp_create_nonce( 'et_fb_process_imported_data_nonce' ),
-		'retrieveLibraryModules'        => wp_create_nonce( 'et_fb_retrieve_library_modules_nonce' ),
-		'saveLibraryModules'            => wp_create_nonce( 'et_fb_save_library_modules_nonce' ),
-		'preview'                       => wp_create_nonce( 'et_pb_preview_nonce' ),
-		'autosave'                      => wp_create_nonce( 'et_fb_autosave_nonce' ),
-		'moduleEmailOptinFetchLists'    => wp_create_nonce( 'et_builder_email_fetch_lists_nonce' ),
-		'moduleEmailOptinAddAccount'    => wp_create_nonce( 'et_builder_email_add_account_nonce' ),
-		'moduleEmailOptinRemoveAccount' => wp_create_nonce( 'et_builder_email_remove_account_nonce' ),
-		'uploadFontNonce'               => wp_create_nonce( 'et_fb_upload_font_nonce' ),
-		'abTestingReport'               => wp_create_nonce( 'ab_testing_builder_nonce' ),
-		'libraryLayoutsData'            => wp_create_nonce( 'et_builder_library_get_layouts_data' ),
-		'libraryGetLayout'              => wp_create_nonce( 'et_builder_library_get_layout' ),
-		'libraryUpdateAccount'          => wp_create_nonce( 'et_builder_library_update_account' ),
-		'fetchAttachments'              => wp_create_nonce( 'et_fb_fetch_attachments' ),
-		'droploaderProcess'             => wp_create_nonce( 'et_builder_droploader_process_nonce' ),
-		'resolvePostContent'            => wp_create_nonce( 'et_fb_resolve_post_content' ),
-		'getPostTypes'                  => wp_create_nonce( 'et_fb_get_post_types' ),
-		'getPostsList'                  => wp_create_nonce( 'et_fb_get_posts_list' ),
-		'sendErrorReport'               => wp_create_nonce( 'et_fb_send_error_report' ),
+		'moduleContactFormSubmit'         => wp_create_nonce( 'et-pb-contact-form-submit' ),
+		'et_admin_load'                   => wp_create_nonce( 'et_admin_load_nonce' ),
+		'computedProperty'                => wp_create_nonce( 'et_pb_process_computed_property_nonce' ),
+		'renderShortcode'                 => wp_create_nonce( 'et_pb_render_shortcode_nonce' ),
+		'updateAssets'                    => wp_create_nonce( 'et_fb_update_helper_assets_nonce' ),
+		'loadAssets'                      => wp_create_nonce( 'et_fb_load_helper_assets_nonce' ),
+		'renderSave'                      => wp_create_nonce( 'et_fb_save_nonce' ),
+		'convertToShortcode'              => wp_create_nonce( 'et_fb_convert_to_shortcode_nonce' ),
+		'dropAutosave'                    => wp_create_nonce( 'et_fb_drop_autosave_nonce' ),
+		'prepareShortcode'                => wp_create_nonce( 'et_fb_prepare_shortcode_nonce' ),
+		'processImportedData'             => wp_create_nonce( 'et_fb_process_imported_data_nonce' ),
+		'retrieveLibraryModules'          => wp_create_nonce( 'et_fb_retrieve_library_modules_nonce' ),
+		'saveLibraryModules'              => wp_create_nonce( 'et_fb_save_library_modules_nonce' ),
+		'preview'                         => wp_create_nonce( 'et_pb_preview_nonce' ),
+		'autosave'                        => wp_create_nonce( 'et_fb_autosave_nonce' ),
+		'moduleEmailOptinFetchLists'      => wp_create_nonce( 'et_builder_email_fetch_lists_nonce' ),
+		'moduleEmailOptinAddAccount'      => wp_create_nonce( 'et_builder_email_add_account_nonce' ),
+		'moduleEmailOptinRemoveAccount'   => wp_create_nonce( 'et_builder_email_remove_account_nonce' ),
+		'uploadFontNonce'                 => wp_create_nonce( 'et_fb_upload_font_nonce' ),
+		'abTestingReport'                 => wp_create_nonce( 'ab_testing_builder_nonce' ),
+		'libraryLayoutsData'              => wp_create_nonce( 'et_builder_library_get_layouts_data' ),
+		'libraryGetLayout'                => wp_create_nonce( 'et_builder_library_get_layout' ),
+		'libraryUpdateAccount'            => wp_create_nonce( 'et_builder_library_update_account' ),
+		'fetchAttachments'                => wp_create_nonce( 'et_fb_fetch_attachments' ),
+		'droploaderProcess'               => wp_create_nonce( 'et_builder_droploader_process_nonce' ),
+		'resolvePostContent'              => wp_create_nonce( 'et_fb_resolve_post_content' ),
+		'getPostTypes'                    => wp_create_nonce( 'et_fb_get_post_types' ),
+		'getPostsList'                    => wp_create_nonce( 'et_fb_get_posts_list' ),
+		'sendErrorReport'                 => wp_create_nonce( 'et_fb_send_error_report' ),
+		'saveCustomDefaultsHistory'       => wp_create_nonce( 'et_builder_save_custom_defaults_history' ),
+		'retrieveCustomDefaultsHistory'   => wp_create_nonce( 'et_builder_retrieve_custom_defaults_history' ),
+		'migrateModuleCustomizerPhaseTwo' => wp_create_nonce( 'et_builder_migrate_module_customizer_phase_two' ),
 	);
 
 	return array_merge( $nonces, $fb_nonces );
@@ -3769,6 +3783,9 @@ if ( ! function_exists( 'et_fb_is_enabled' ) ) :
  * @return bool
  */
 function et_fb_is_enabled( $post_id = false ) {
+	// Cache results since the function could end up being called thousands of times.
+	static $cache = array();
+
 	if ( ! $post_id ) {
 		global $post;
 
@@ -3781,15 +3798,21 @@ function et_fb_is_enabled( $post_id = false ) {
 		return $check;
 	}
 
+	if ( ! $post_id ) {
+		return false;
+	}
+
+	if ( isset( $cache[ $post_id ] ) ) {
+		return $cache[ $post_id ];
+	}
+
+	$cache[ $post_id ] = false;
+
 	if ( is_admin() ) {
 		return false;
 	}
 
 	if ( is_customize_preview() ) {
-		return false;
-	}
-
-	if ( ! $post_id ) {
 		return false;
 	}
 
@@ -3808,6 +3831,8 @@ function et_fb_is_enabled( $post_id = false ) {
 	if ( ! et_pb_is_allowed( 'use_visual_builder' ) ) {
 		return false;
 	}
+
+	$cache[ $post_id ] = true;
 
 	return true;
 }
@@ -5051,7 +5076,7 @@ function et_builder_show_bfb_optin_modal() {
 	if ( 'post.php' !== $pagenow ) {
 		return;
 	}
-	
+
 	// Exit if no pagebuilder enabled or BFB activated already.
 	if ( ! et_pb_is_pagebuilder_used() || et_builder_bfb_enabled() ) {
 		return;
@@ -5463,3 +5488,35 @@ function et_fb_enqueue_open_sans() {
 	wp_enqueue_style( 'et-fb-fonts', esc_url_raw( add_query_arg( $query_args, "{$protocol}://fonts.googleapis.com/css" ) ), array(), null );
 }
 endif;
+
+/**
+ * Wrapper for et_core_portability_link() which does ET capability checks as well.
+ *
+ * @since 3.26
+ *
+ * @param string $context
+ * @param string|array $attributes
+ *
+ * @return string
+ */
+function et_builder_portability_link( $context, $attributes = array() ) {
+	global $shortname;
+
+	$product = (string) $shortname;
+
+	$context_caps = array(
+		'et_builder'         => 'et_builder_portability',
+		'et_builder_layouts' => 'et_builder_layouts_portability',
+		"et_{$product}_mods" => "et_{$product}_mods_portability",
+		'et_pb_roles'        => 'et_pb_roles_portability',
+		'epanel'             => 'epanel_portability',
+	);
+
+	$cap = et_()->array_get( $context_caps, $context, '' );
+
+	if ( ! empty( $cap ) && ! et_pb_is_allowed( $cap ) ) {
+		return '';
+	}
+
+	return et_core_portability_link( $context, $attributes );
+}
