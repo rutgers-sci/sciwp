@@ -1548,7 +1548,6 @@ class ET_Core_Support_Center {
 			'edit_global_library'                => true,
 			'edit_layout'                        => true,
 			'export'                             => true,
-			'global_defaults'                    => true,
 			'lock_module'                        => true,
 			'page_options'                       => true,
 			'portability'                        => true,

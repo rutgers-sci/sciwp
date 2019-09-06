@@ -764,7 +764,6 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 				) );
 			}
 
-			$et_pb_columns_counter = 0;
 			$et_pb_column_backgrounds = array(
 				array(
 					'color'               => $background_color_1,
@@ -946,15 +945,15 @@ class ET_Builder_Section extends ET_Builder_Structure_Element {
 			);
 
 			$internal_columns_settings_array = array(
-				'keep_column_padding_mobile' => 'on',
-				'et_pb_column_backgrounds' => $et_pb_column_backgrounds,
+				'keep_column_padding_mobile'        => 'on',
+				'et_pb_column_backgrounds'          => $et_pb_column_backgrounds,
 				'et_pb_column_backgrounds_gradient' => $et_pb_column_backgrounds_gradient,
-				'et_pb_column_backgrounds_video' => $et_pb_column_backgrounds_video,
-				'et_pb_column_parallax' => $et_pb_column_parallax,
-				'et_pb_columns_counter' => $et_pb_columns_counter,
-				'et_pb_column_paddings' => $et_pb_column_paddings,
-				'et_pb_column_paddings_mobile' => $et_pb_column_paddings_mobile,
-				'et_pb_column_css' => $et_pb_column_css,
+				'et_pb_column_backgrounds_video'    => $et_pb_column_backgrounds_video,
+				'et_pb_column_parallax'             => $et_pb_column_parallax,
+				'et_pb_columns_counter'             => 0,
+				'et_pb_column_paddings'             => $et_pb_column_paddings,
+				'et_pb_column_paddings_mobile'      => $et_pb_column_paddings_mobile,
+				'et_pb_column_css'                  => $et_pb_column_css,
 			);
 
 			$current_row_position = $et_pb_rendering_column_content ? 'internal_row' : 'regular_row';
@@ -1242,10 +1241,6 @@ class ET_Builder_Row extends ET_Builder_Structure_Element {
 				'toggle_priority' => 50,
 			),
 			'margin_padding' => array(
-				'use_padding'       => false,
-				'custom_margin'     => array(
-					'priority' => 1,
-				),
 				'css' => array(
 					'main' => '%%order_class%%.et_pb_row',
 					'important' => 'all',
@@ -1352,45 +1347,12 @@ class ET_Builder_Row extends ET_Builder_Structure_Element {
 				'default_on_front' => (string) et_get_option( 'gutter_width', '3' ),
 				'hover'            => 'tabs',
 			),
-			'custom_padding' => array(
-				'label'           => esc_html__( 'Padding', 'et_builder' ),
-				'type'            => 'custom_padding',
-				'mobile_options'  => true,
-				'option_category' => 'layout',
-				'description'     => esc_html__( 'Adjust padding to specific values, or leave blank to use the default padding.', 'et_builder' ),
-				'tab_slug'        => 'advanced',
-				'toggle_slug'     => 'margin_padding',
-				'hover'           => 'tabs',
-				'allowed_units'   => array( '%', 'em', 'rem', 'px', 'cm', 'mm', 'in', 'pt', 'pc', 'ex', 'vh', 'vw' ),
-			),
-			'custom_padding_tablet' => array(
-				'type'        => 'skip',
-				'tab_slug'    => 'advanced',
-				'toggle_slug' => 'margin_padding',
-				'default_on_front' => '',
-			),
-			'custom_padding_phone' => array(
-				'type'        => 'skip',
-				'tab_slug'    => 'advanced',
-				'toggle_slug' => 'margin_padding',
-				'default_on_front' => '',
-			),
 			'padding_mobile' => array(
 				'label' => esc_html__( 'Keep Custom Padding on Mobile', 'et_builder' ),
 				'type'        => 'skip', // Remaining attribute for backward compatibility
 				'tab_slug'    => 'advanced',
 				'toggle_slug' => 'margin_padding',
 				'default_on_front' => '',
-			),
-			'custom_margin' => array(
-				'label'           => esc_html__( 'Margin', 'et_builder' ),
-				'description'     => esc_html__( 'Margin adds extra space to the outside of the element, increasing the distance between the element and other items on the page.', 'et_builder' ),
-				'type'            => 'custom_margin',
-				'option_category' => 'layout',
-				'tab_slug'        => 'advanced',
-				'hover'           => 'tabs',
-				'toggle_slug'     => 'margin_padding',
-				'allowed_units'   => array( '%', 'em', 'rem', 'px', 'cm', 'mm', 'in', 'pt', 'pc', 'ex', 'vh', 'vw' ),
 			),
 			'make_equal' => array(
 				'label'             => esc_html__( 'Equalize Column Heights', 'et_builder' ),
@@ -1583,11 +1545,9 @@ class ET_Builder_Row extends ET_Builder_Structure_Element {
 			'phone' => false,
 		);
 
-		$et_pb_columns_counter = 0;
-
 		$internal_columns_settings_array = array(
 			'keep_column_padding_mobile' => $keep_column_padding_mobile,
-			'et_pb_columns_counter' => $et_pb_columns_counter,
+			'et_pb_columns_counter'      => 0,
 		);
 
 		$current_row_position = $et_pb_rendering_column_content ? 'internal_row' : 'regular_row';
@@ -1746,13 +1706,9 @@ class ET_Builder_Row_Inner extends ET_Builder_Structure_Element {
 				'use_background_video' => true,
 			),
 			'margin_padding' => array(
-				'use_padding'       => false,
 				'css'               => array(
 					'main' => '%%order_class%%.et_pb_row_inner',
 					'important' => 'all',
-				),
-				'custom_margin'     => array(
-					'priority' => 1,
 				),
 			),
 			'max_width'             => array(
@@ -1810,29 +1766,6 @@ class ET_Builder_Row_Inner extends ET_Builder_Structure_Element {
 					'1_4,1_4,1_4,1_4' => et_pb_get_column_svg( '1_4,1_4,1_4,1_4' ),
 				),
 				'toggle_slug' => 'column_structure',
-			),
-
-			'custom_padding' => array(
-				'label'           => esc_html__( 'Padding', 'et_builder' ),
-				'description'     => esc_html__( 'Padding adds extra space to the inside of the element, increasing the distance between the edge of the element and its inner contents.', 'et_builder' ),
-				'type'            => 'custom_padding',
-				'mobile_options'  => true,
-				'option_category' => 'layout',
-				'description'     => esc_html__( 'Adjust padding to specific values, or leave blank to use the default padding.', 'et_builder' ),
-				'tab_slug'        => 'advanced',
-				'toggle_slug'     => 'margin_padding',
-				'hover'           => 'tabs',
-				'allowed_units'   => array( '%', 'em', 'rem', 'px', 'cm', 'mm', 'in', 'pt', 'pc', 'ex', 'vh', 'vw' ),
-			),
-			'custom_padding_tablet' => array(
-				'type'        => 'skip',
-				'tab_slug'    => 'advanced',
-				'toggle_slug' => 'margin_padding',
-			),
-			'custom_padding_phone' => array(
-				'type'        => 'skip',
-				'tab_slug'    => 'advanced',
-				'toggle_slug' => 'margin_padding',
 			),
 			'padding_mobile' => array(
 				'label' => esc_html__( 'Keep Custom Padding on Mobile', 'et_builder' ),
@@ -2117,8 +2050,9 @@ class ET_Builder_Row_Inner extends ET_Builder_Structure_Element {
 		}
 
 		$internal_columns_settings_array = array(
-			'keep_column_padding_mobile' => $keep_column_padding_mobile,
+			'keep_column_padding_mobile'  => $keep_column_padding_mobile,
 			'et_pb_columns_inner_counter' => $et_pb_columns_inner_counter,
+			'et_pb_columns_counter'       => 0,
 		);
 
 		$current_row_position = $et_pb_rendering_column_content ? 'internal_row' : 'regular_row';
@@ -2282,12 +2216,11 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 			$et_pb_rendering_specialty_section,
 			$et_pb_column_completion;
 
-		$is_specialty_column = 'et_pb_column_inner' !== $function_name && $et_pb_rendering_specialty_section;
-
-		$current_row_position = $et_pb_rendering_column_content_row ? 'internal_row' : 'regular_row';
-
-		$array_index = self::$_->array_get( $et_pb_all_column_settings, "{$current_row_position}.et_pb_columns_counter", 0 );
-		$keep_column_padding_mobile = self::$_->array_get( $et_pb_all_column_settings, "{$current_row_position}.keep_column_padding_mobile", 'on' );
+		$is_specialty_column          = 'et_pb_column_inner' !== $function_name && $et_pb_rendering_specialty_section;
+		$gobal_column_settings_holder = 'et_pb_column_inner' === $function_name ? $et_pb_all_column_settings_inner : $et_pb_all_column_settings;
+		$current_row_position         = $et_pb_rendering_column_content_row ? 'internal_row' : 'regular_row';
+		$array_index                  = self::$_->array_get( $gobal_column_settings_holder, "{$current_row_position}.et_pb_columns_counter", 0 );
+		$keep_column_padding_mobile   = self::$_->array_get( $gobal_column_settings_holder, "{$current_row_position}.keep_column_padding_mobile", 'on' );
 
 		if ( $is_specialty_column ) {
 			$et_specialty_column_type = $type;
@@ -2298,9 +2231,6 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 			$paddings_mobile_array    = self::$_->array_get( $et_pb_all_column_settings, "{$current_row_position}.et_pb_column_paddings_mobile", array() );
 			$column_css_array         = self::$_->array_get( $et_pb_all_column_settings, "{$current_row_position}.et_pb_column_css", array() );
 			$column_parallax          = self::$_->array_get( $et_pb_all_column_settings, "{$current_row_position}.et_pb_column_parallax", '' );
-			if ( isset( $et_pb_all_column_settings[ $current_row_position ] ) ) {
-				$et_pb_all_column_settings[ $current_row_position ]['et_pb_columns_counter']++;
-			}
 
 			$background_color                   = isset( $backgrounds_array[$array_index]['color'] ) ? $backgrounds_array[$array_index]['color'] : '';
 			$background_img                     = isset( $backgrounds_array[$array_index]['image'] ) ? $backgrounds_array[$array_index]['image'] : '';
@@ -2331,6 +2261,15 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 			$parallax_method = self::$_->array_get( $this->props, 'parallax_method', '' );
 		}
 
+		// et_pb_columns_counter should be updated for all columns to calculate the last column correctly.
+		if ( isset( $gobal_column_settings_holder[ $current_row_position ] ) ) {
+			if ( 'et_pb_column_inner' === $function_name ) {
+				$et_pb_all_column_settings_inner[ $current_row_position ]['et_pb_columns_counter']++;
+			} else {
+				$et_pb_all_column_settings[ $current_row_position ]['et_pb_columns_counter']++;
+			}
+		}
+
 		// Get column type value in array
 		$column_type = explode( '_', $type );
 
@@ -2346,8 +2285,8 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 			}
 		}
 
-		// Last column is when sum of column type value equals to 1
-		$is_last_column = 1 === $et_pb_column_completion;
+		// Last column is when sum of column type value equals to 1. Compare value as a string, comparing integers returns inconsistent results.
+		$is_last_column = '1' === strval( $et_pb_column_completion );
 
 		// Still need to manually output this for Specialty columns.
 		if ( $is_specialty_column ) {

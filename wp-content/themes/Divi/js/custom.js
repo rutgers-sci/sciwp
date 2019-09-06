@@ -257,8 +257,11 @@ var isBuilder = 'object' === typeof window.ET_Builder;
 					et_primary_header_top += $top_header.innerHeight();
 				}
 
-				if ( ! window.et_is_vertical_nav && ( $body.hasClass( 'et_fixed_nav' ) ) ) {
-					$('#main-header').css( 'top', et_primary_header_top );
+				var isFixedNav           = $body.hasClass('et_fixed_nav');
+				var isAbsolutePrimaryNav = !isFixedNav && $body.hasClass('et_transparent_nav') && $body.hasClass('et_secondary_nav_enabled');
+
+				if (!window.et_is_vertical_nav && (isFixedNav || isAbsolutePrimaryNav)) {
+					$('#main-header').css('top', et_primary_header_top);
 				}
 			}, delay );
 		}
