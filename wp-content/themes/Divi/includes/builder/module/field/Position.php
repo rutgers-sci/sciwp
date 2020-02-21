@@ -241,7 +241,7 @@ class ET_Builder_Module_Field_Position extends ET_Builder_Module_Field_Base {
 	/**
 	 * Get exposed module settings for assisting layout block preview rendering
 	 *
-	 * @since ??
+	 * @since 4.3.2
 	 *
 	 * @param string $function_name
 	 *
@@ -507,20 +507,23 @@ class ET_Builder_Module_Field_Position extends ET_Builder_Module_Field_Base {
 					}
 
 					// add the adminbar height offset to avoid overflow of fixed elements.
+					$active_position = $this->get_value( $props, 'positioning', $position_default, $type, true );
 					if ( 'top' === $property ) {
 						$admin_bar_declaration = "$property: $value";
-						if ( 'fixed' === $this->get_value( $props, 'positioning', $position_default, $type, true ) ) {
+						if ( 'fixed' === $active_position ) {
 							$admin_bar_height      = 'phone' === $type ? '46px' : '32px';
 							$admin_bar_declaration = "$property: calc($value + $admin_bar_height);";
 						}
-						ET_Builder_Element::set_style( $function_name,
-							array(
-								'selector'    => "body.logged-in.admin-bar $type_selector",
-								'declaration' => $admin_bar_declaration,
-								'priority'    => $this->module->get_style_priority(),
-							) + $this->get_media_query( $type ) );
+						if ( 'desktop' !== $type || 'fixed' === $active_position ) {
+							ET_Builder_Element::set_style( $function_name,
+								array(
+									'selector'    => "body.logged-in.admin-bar $type_selector",
+									'declaration' => $admin_bar_declaration,
+									'priority'    => $this->module->get_style_priority(),
+								) + $this->get_media_query( $type ) );
+						}
 					}
-					if ( 'top' === $inverse_property ) {
+					if ( 'top' === $inverse_property && ( 'desktop' !== $type || 'fixed' === $active_position ) ) {
 						ET_Builder_Element::set_style( $function_name,
 							array(
 								'selector'    => "body.logged-in.admin-bar $type_selector",

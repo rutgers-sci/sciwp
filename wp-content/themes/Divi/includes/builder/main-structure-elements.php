@@ -1684,6 +1684,10 @@ class ET_Builder_Row extends ET_Builder_Structure_Element {
 		// Remove automatically added classnames
 		$this->remove_classname( 'et_pb_module' );
 
+		if ( self::contains( $content, array( 'et_pb_menu', 'et_pb_fullwidth_menu' ) ) ) {
+			$this->add_classname( 'et_pb_row--with-menu' );
+		}
+
 		// Save module classes into variable BEFORE processing the content with `do_shortcode()`
 		// Otherwise order classes messed up with internal rows if exist
 		$module_classes = $this->module_classname( $function_name );
@@ -2124,6 +2128,10 @@ class ET_Builder_Row_Inner extends ET_Builder_Structure_Element {
 
 		// Remove automatically added classnames
 		$this->remove_classname( 'et_pb_module' );
+
+		if ( self::contains( $content, array( 'et_pb_menu', 'et_pb_fullwidth_menu' ) ) ) {
+			$this->add_classname( 'et_pb_row--with-menu' );
+		}
 
 		// Save module classes into variable BEFORE processing the content with `do_shortcode()`
 		// Otherwise order classes messed up with internal rows if exist
@@ -2655,7 +2663,7 @@ class ET_Builder_Column extends ET_Builder_Structure_Element {
 			$this->add_classname( 'et-last-child' );
 		}
 
-		if ( false !== strpos( $content, '[et_pb_menu' ) || false !== strpos( $content, '[et_pb_fullwidth_menu' ) ) {
+		if ( self::contains( $content, array( 'et_pb_menu', 'et_pb_fullwidth_menu' ) ) ) {
 			$this->add_classname( 'et_pb_column--with-menu' );
 		}
 

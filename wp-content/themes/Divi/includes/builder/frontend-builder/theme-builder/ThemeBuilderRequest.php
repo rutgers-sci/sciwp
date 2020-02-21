@@ -69,12 +69,12 @@ class ET_Theme_Builder_Request {
 			return new self( self::TYPE_POST_TYPE_ARCHIVE, 'post', $id );
 		}
 
-		if ( is_post_type_archive() ) {
-			return new self( self::TYPE_POST_TYPE_ARCHIVE, $object->name, $id );
-		}
-
 		if ( is_category() || is_tag() || is_tax() ) {
 			return new self( self::TYPE_TERM, $object->taxonomy, $id );
+		}
+
+		if ( is_post_type_archive() ) {
+			return new self( self::TYPE_POST_TYPE_ARCHIVE, $object->name, $id );
 		}
 
 		if ( is_author() ) {

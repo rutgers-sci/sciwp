@@ -2,7 +2,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '4.3.2' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '4.3.3' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -1852,6 +1852,10 @@ function et_fb_ajax_save() {
 		$saved_post_content   = $saved_post->post_content;
 		$builder_post_content = stripslashes( $sanitized_content );
 
+		// Get rendered post content only if it's needed.
+		$return_rendered_content = sanitize_text_field( $utils->array_get( $_POST, 'options.return_rendered_content', 'false' ) );
+		$rendered_post_content   = 'true' === $return_rendered_content ? do_shortcode( $saved_post_content ) : '';
+
 		// If `post_content` column on wp_posts table doesn't use `utf8mb4` charset, the saved post
 		// content's emoji will be encoded which means the check of saved post_content vs
 		// builder's post_content will be false; Thus check the charset of `post_content` column
@@ -1891,6 +1895,7 @@ function et_fb_ajax_save() {
 		wp_send_json_success( array(
 			'status'            => get_post_status( $update ),
 			'save_verification' => apply_filters( 'et_fb_ajax_save_verification_result', $saved_verification ),
+			'rendered_content'  => $rendered_post_content,
 		) );
 	} else if( isset( $_POST['skip_post_update'] ) ) {
 		wp_send_json_success();
@@ -1910,8 +1915,14 @@ function et_fb_get_shortcode_from_fb_object() {
 
 	$post_content = et_fb_process_to_shortcode( $shortcode_data, array(), $layout_type );
 
+	// Get rendered post content only if it's needed.
+	$utils                   = ET_Core_Data_Utils::instance();
+	$return_rendered_content = sanitize_text_field( $utils->array_get( $_POST, 'options.return_rendered_content', 'false' ) );
+	$rendered_post_content   = 'true' === $return_rendered_content ? do_shortcode( $post_content ) : '';
+
 	wp_send_json_success( array(
 		'processed_content' => $post_content,
+		'rendered_content'  => $rendered_post_content,
 	) );
 }
 
@@ -4772,7 +4783,7 @@ if ( ! function_exists( 'et_builder_ajax_toggle_bfb' ) ) {
  		et_builder_toggle_bfb( $enable );
 
 		set_transient( 'et_builder_show_bfb_welcome_modal', true, 0 );
- 
+
 		wp_safe_redirect( $redirect );
 		exit;
 	}

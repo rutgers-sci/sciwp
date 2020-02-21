@@ -759,7 +759,7 @@ class ET_Builder_Module_Testimonial extends ET_Builder_Module {
 		$name               = et_()->array_get( $args, 'name', '' );
 		$mode               = et_()->array_get( $args, 'mode', '' );
 		$url                = $this->props['url'];
-		$link_target        = 'on' === $this->props['url_new_window'] ? ' target="_blank"' : '';
+		$link_target        = 'on' === $this->props['url_new_window'] ? 'target="_blank"' : '';
 		$fields_need_escape = array(
 			'author',
 			'job_title',
@@ -776,17 +776,17 @@ class ET_Builder_Module_Testimonial extends ET_Builder_Module {
 			if ( $url && $raw_value ) {
 				if ( 'author' === $name && ! $this->_esc_attr( $multi_view->get_name_by_mode( 'company_name', $mode ) ) ) {
 					$raw_value = sprintf(
-						'<a href="%2$s" target="%3$s">%1$s</a>',
+						'<a href="%2$s" %3$s>%1$s</a>',
 						$raw_value,
 						esc_url( $url ),
-						esc_attr( $link_target )
+						et_core_intentionally_unescaped( $link_target, 'fixed_string' )
 					);
 				} elseif ( 'company_name' === $name ) {
 					$raw_value = sprintf(
-						'<a href="%2$s" target="%3$s">%1$s</a>',
+						'<a href="%2$s" %3$s>%1$s</a>',
 						$raw_value,
 						esc_url( $url ),
-						esc_attr( $link_target )
+						et_core_intentionally_unescaped( $link_target, 'fixed_string' )
 					);
 				}
 			}

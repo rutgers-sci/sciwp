@@ -39,6 +39,7 @@ require_once ET_THEME_BUILDER_DIR . 'dynamic-content.php';
 // Conditional Includes.
 if ( et_is_woocommerce_plugin_active() ) {
 	require_once ET_THEME_BUILDER_DIR . 'woocommerce.php';
+	require_once ET_THEME_BUILDER_DIR . 'WoocommerceProductVariationPlaceholder.php';
 	require_once ET_THEME_BUILDER_DIR . 'WoocommerceProductVariablePlaceholder.php';
 	require_once ET_THEME_BUILDER_DIR . 'WoocommerceProductVariablePlaceholderDataStoreCPT.php';
 }
@@ -597,7 +598,17 @@ function et_theme_builder_get_template_settings_options_for_post_type( $post_typ
 	}
 
 	foreach ( $taxonomies as $taxonomy ) {
-		if ( ! $taxonomy->public || ! $taxonomy->show_ui ) {
+		/**
+		 * Filters whether the given taxonomy should be used to generate the following template settings:
+		 * - Posts with Specific %
+		 *
+		 * @since ??
+		 *
+		 * @param boolean $show
+		 */
+		$show = apply_filters( 'et_theme_builder_template_settings_options_posts_with_specific_term', $taxonomy->show_ui );
+
+		if ( ! $show ) {
 			continue;
 		}
 
@@ -724,7 +735,18 @@ function et_theme_builder_get_template_settings_options_for_archive_pages() {
 	);
 
 	foreach ( $taxonomies as $taxonomy ) {
-		if ( ! $taxonomy->public || ! $taxonomy->show_ui ) {
+		/**
+		 * Filters whether the given taxonomy should be used to generate the following template settings:
+		 * - All % Pages
+		 * - Specific % Pages
+		 *
+		 * @since ??
+		 *
+		 * @param boolean $show
+		 */
+		$show = apply_filters( 'et_theme_builder_template_settings_options_term_pages', $taxonomy->public && $taxonomy->show_ui );
+
+		if ( ! $show ) {
 			continue;
 		}
 
@@ -1116,6 +1138,11 @@ function et_theme_builder_get_template_layouts( $request = null, $cache = true, 
 	static $store = array();
 
 	if ( null === $request ) {
+		if ( is_embed() ) {
+			// Ignore TB templates when displaying posts intended for embedding.
+			return array();
+		}
+
 		if ( is_et_pb_preview() ) {
 			// Ignore TB templates when previewing.
 			return array();

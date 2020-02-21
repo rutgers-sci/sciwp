@@ -129,6 +129,11 @@ class ET_Builder_Module_Woocommerce_Cart_Notice extends ET_Builder_Module {
 					'important' => 'all',
 				),
 			),
+			'border'         => array(
+				'css' => array(
+					'important' => true,
+				),
+			),
 		);
 
 		$this->custom_css_fields = array(

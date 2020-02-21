@@ -49,8 +49,8 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 						'font' => "{$this->main_css_element} .entry-title a, %%order_class%% .not-found-title",
 						'color' => "{$this->main_css_element} .entry-title a, %%order_class%% .not-found-title",
 						'limited_main' => "{$this->main_css_element} .entry-title, {$this->main_css_element} .entry-title a, %%order_class%% .not-found-title",
-						'hover'        => "{$this->main_css_element} .entry-title:hover, {$this->main_css_element} .entry-title:hover a, %%order_class%% .not-found-title:hover",
-						'color_hover'  => "{$this->main_css_element} .entry-title:hover a, %%order_class%% .not-found-title:hover",
+						'hover'        => "{$this->main_css_element}:hover .entry-title, {$this->main_css_element}:hover .entry-title:hover a, %%order_class%% .not-found-title",
+						'color_hover'  => "{$this->main_css_element}:hover .entry-title a, %%order_class%%:hover .not-found-title",
 						'important' => 'all',
 					),
 					'header_level' => array(
@@ -67,6 +67,8 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 						'color'        => "{$this->main_css_element}, {$this->main_css_element} .post-content *",
 						'line_height'  => "{$this->main_css_element} p",
 						'limited_main' => "{$this->main_css_element}, %%order_class%%.et_pb_bg_layout_light .et_pb_post .post-content p, %%order_class%%.et_pb_bg_layout_dark .et_pb_post .post-content p, %%order_class%%.et_pb_bg_layout_light .et_pb_post a.more-link, %%order_class%%.et_pb_bg_layout_dark .et_pb_post a.more-link",
+						'hover'        => "{$this->main_css_element}:hover .post-content, %%order_class%%.et_pb_bg_layout_light:hover .et_pb_post .post-content p, %%order_class%%.et_pb_bg_layout_dark:hover .et_pb_post .post-content p",
+						'color_hover'  => "{$this->main_css_element}:hover, {$this->main_css_element}:hover .post-content *"
 					),
 					'block_elements' => array(
 						'tabbed_subtoggles' => true,
@@ -86,7 +88,7 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 					'css'      => array(
 						'main'         => "{$this->main_css_element} .post-meta, {$this->main_css_element} .post-meta a",
 						'limited_main' => "{$this->main_css_element} .post-meta, {$this->main_css_element} .post-meta a, {$this->main_css_element} .post-meta span",
-						'hover'        => "{$this->main_css_element} .post-meta:hover, {$this->main_css_element} .post-meta:hover a, {$this->main_css_element} .post-meta:hover span",
+						'hover'        => "{$this->main_css_element}:hover .post-meta, {$this->main_css_element}:hover .post-meta a, {$this->main_css_element}:hover .post-meta span",
 					),
 				),
 				'read_more'  => array(
@@ -796,7 +798,8 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 
 		$query_args = array(
 			'posts_per_page' => intval( $args['posts_number'] ),
-			'post_status'    => 'publish',
+			'post_status'    => array( 'publish', 'private' ),
+			'perm'           => 'readable',
 			'post_type'      => $args['post_type'],
 		);
 
@@ -1099,11 +1102,7 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 			ob_start();
 		}
 
-		$use_current_loop = 'on' === ( isset( $this->props['use_current_loop'] ) ? $this->props['use_current_loop'] : 'off' );
-
-		if ( ! $use_current_loop ) {
-			add_filter( 'get_pagenum_link', array( 'ET_Builder_Module_Blog', 'filter_pagination_url' ) );
-		}
+		add_filter( 'get_pagenum_link', array( 'ET_Builder_Module_Blog', 'filter_pagination_url' ) );
 
 		if ( function_exists( 'wp_pagenavi' ) ) {
 			wp_pagenavi();
@@ -1115,9 +1114,7 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 			}
 		}
 
-		if ( ! $use_current_loop ) {
-			remove_filter( 'get_pagenum_link', array( 'ET_Builder_Module_Blog', 'filter_pagination_url' ) );
-		}
+		remove_filter( 'get_pagenum_link', array( 'ET_Builder_Module_Blog', 'filter_pagination_url' ) );
 
 		if ( ! $echo ) {
 			$output = ob_get_contents();
@@ -1268,6 +1265,8 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 
 		$args = array(
 			'posts_per_page' => (int) $posts_number,
+			'post_status'    => array( 'publish', 'private' ),
+			'perm'           => 'readable',
 			'post_type'      => $post_type,
 		);
 
@@ -1374,7 +1373,7 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 		} else {
 			// Only allow certain args when `Posts For Current Page` is set.
 			$original = $wp_query->query_vars;
-			$custom   = array_intersect_key( $args, array_flip( array( 'posts_per_page', 'offset' ) ) );
+			$custom   = array_intersect_key( $args, array_flip( array( 'posts_per_page', 'offset', 'paged' ) ) );
 
 			// Trick WP into reporting this query as the main query so third party filters
 			// that check for is_main_query() are applied.

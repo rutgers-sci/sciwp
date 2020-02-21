@@ -777,7 +777,7 @@ class ET_Builder_Module_Helper_ResponsiveOptions {
 	/**
 	 * Get breakpoint minimum widths
 	 *
-	 * @since ??
+	 * @since 4.3.2
 	 *
 	 * @return array
 	 */

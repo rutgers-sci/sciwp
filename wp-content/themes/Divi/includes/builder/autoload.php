@@ -86,6 +86,9 @@ function _et_pb_autoload( $class ) {
 		case 'ET_Builder_Module_Helper_Font':
 			require_once 'module/helpers/Font.php';
 			break;
+		case 'ET_Builder_Module_Helper_Background':
+			require_once 'module/helpers/Background.php';
+			break;
 		case 'ET_Builder_Module_Helper_BackgroundLayout':
 			require_once 'module/helpers/BackgroundLayout.php';
 			break;
@@ -195,4 +198,13 @@ if ( et_is_woocommerce_plugin_active() ) {
  */
 function et_pb_option_template() {
 	return ET_Builder_Module_Helper_OptionTemplate::instance();
+}
+
+/**
+ * @return ET_Builder_Module_Helper_Background
+ *
+ * @since ??
+ */
+function et_pb_background_options() {
+	return ET_Builder_Module_Helper_Background::instance();
 }
