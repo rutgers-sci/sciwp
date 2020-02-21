@@ -96,6 +96,9 @@ class ET_Builder_Module_Bar_Counters extends ET_Builder_Module {
 					'main' => '%%order_class%%',
 				),
 			),
+			'scroll_effects'        => array(
+				'grid_support' => 'yes',
+			),
 			'button'                => false,
 		);
 

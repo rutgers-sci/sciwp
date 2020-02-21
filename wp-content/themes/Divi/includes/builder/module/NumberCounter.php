@@ -97,6 +97,9 @@ class ET_Builder_Module_Number_Counter extends ET_Builder_Module {
 				)
 			),
 			'button'                => false,
+			'position_fields'       => array(
+				'default' => 'relative',
+			),
 		);
 
 		if ( et_builder_has_limitation( 'force_use_global_important' ) ) {

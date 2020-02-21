@@ -408,7 +408,7 @@ class ET_Builder_Module_Bar_Counters_Item extends ET_Builder_Module {
 		) );
 
 		$output = sprintf(
-			'<li class="%6$s">
+			'<li class="et_pb_counter %6$s">
 				<span class="et_pb_counter_title"%9$s>%1$s</span>
 				<span class="et_pb_counter_container"%4$s%10$s>
 					%8$s

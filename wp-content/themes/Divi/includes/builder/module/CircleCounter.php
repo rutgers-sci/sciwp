@@ -93,6 +93,9 @@ class ET_Builder_Module_Circle_Counter extends ET_Builder_Module {
 				),
 			),
 			'button'                => false,
+			'position_fields'       => array(
+				'default' => 'relative',
+			),
 		);
 
 		$this->custom_css_fields = array(

@@ -89,6 +89,7 @@ function et_setup_theme() {
 
 	// Load editor styling
 	add_editor_style( 'css/editor-style.css' );
+	add_editor_style( 'css/editor-blocks.css' );
 
 	// Load unminified scripts based on selected theme options field
 	add_filter( 'et_load_unminified_scripts', 'et_divi_load_unminified_scripts' );
@@ -207,9 +208,9 @@ function et_add_home_link( $args ) {
 add_filter( 'wp_page_menu_args', 'et_add_home_link' );
 
 function et_divi_load_scripts_styles(){
-	global $wp_styles;
+	global $wp_styles, $et_user_fonts_queue;
 
-	$script_suffix = et_load_unminified_scripts() ? '' : '.min';
+	$script_suffix = et_load_unminified_scripts() ? '' : '.unified';
 	$style_suffix  = et_load_unminified_styles() && ! is_child_theme() ? '.dev' : '';
 	$template_dir  = get_template_directory_uri();
 	$theme_version = et_get_theme_version();
@@ -229,7 +230,7 @@ function et_divi_load_scripts_styles(){
 		$dependencies_array[] = 'jquery-effects-core';
 	}
 
-	wp_enqueue_script( 'et-jquery-touch-mobile', $template_dir . '/includes/builder/scripts/jquery.mobile.custom.min.js', array( 'jquery' ), $theme_version, true );
+	wp_enqueue_script( 'et-jquery-touch-mobile', $template_dir . '/includes/builder/scripts/ext/jquery.mobile.custom.min.js', array( 'jquery' ), $theme_version, true );
 
 	if ( et_load_unminified_scripts() ) {
 		$dependencies_array[] = 'et-jquery-touch-mobile';
@@ -289,6 +290,10 @@ function et_divi_load_scripts_styles(){
 			}
 
 			et_builder_enqueue_font( $single_font );
+		}
+
+		if ( function_exists( 'et_builder_enqueue_user_fonts' ) && ! empty( $et_user_fonts_queue ) ) {
+			printf( '<style id="et-divi-userfonts">%1$s</style>', et_core_esc_previously( et_builder_enqueue_user_fonts( $et_user_fonts_queue ) ) );
 		}
 	}
 
@@ -371,7 +376,7 @@ function et_maybe_add_scroll_to_anchor_fix() {
 	if ( 'on' === $add_scroll_to_anchor_fix ) {
 		echo '<script>
 				document.addEventListener( "DOMContentLoaded", function( event ) {
-					window.et_location_hash = window.location.hash;
+					window.et_location_hash = window.location.hash.replace(/[^a-zA-Z0-9-_#]/g, "");
 					if ( "" !== window.et_location_hash ) {
 						// Prevent jump to anchor - Firefox
 						window.scrollTo( 0, 0 );
@@ -6364,7 +6369,7 @@ function et_layout_body_class( $classes ) {
 	$classes[] = esc_attr( "et_pb_gutters{$gutter_width}" );
 
 	// Add the page builder class.
-	if ( et_pb_is_pagebuilder_used( get_the_ID() ) ) {
+	if ( et_pb_is_pagebuilder_used( get_the_ID() ) && ! ET_GB_Block_Layout::is_layout_block_preview() ) {
 		$classes[] = 'et_pb_pagebuilder_layout';
 	}
 
@@ -6477,6 +6482,8 @@ add_action( 'init', 'et_divi_activate_features' );
 
 require_once( get_template_directory() . '/et-pagebuilder/et-pagebuilder.php' );
 require_once get_template_directory() . '/includes/theme-builder.php';
+
+require_once( get_template_directory() . '/includes/block-editor-integration.php' );
 
 /**
  * Custom body classes for sidebar location in different places

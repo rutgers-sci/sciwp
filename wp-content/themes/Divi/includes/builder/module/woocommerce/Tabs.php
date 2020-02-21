@@ -345,6 +345,7 @@ class ET_Builder_Module_Woocommerce_Tabs extends ET_Builder_Module_Tabs {
 			} else {
 				// Get tab value based on defined product tab's callback attribute.
 				ob_start();
+				// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
 				call_user_func( $tab['callback'], $name, $tab );
 				$tab_content = ob_get_clean();
 			}

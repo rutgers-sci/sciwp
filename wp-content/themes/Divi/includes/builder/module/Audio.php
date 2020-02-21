@@ -140,6 +140,9 @@ class ET_Builder_Module_Audio extends ET_Builder_Module {
 				),
 			),
 			'button'                => false,
+			'position_fields'       => array(
+				'default' => 'relative',
+			),
 		);
 
 		$this->custom_css_fields = array(

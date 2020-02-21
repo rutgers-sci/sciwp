@@ -1,7 +1,5 @@
 <?php
 
-require_once 'Sizing.php';
-
 /**
  * Class ET_Builder_Module_Helper_Slider
  */
@@ -37,6 +35,3 @@ class ET_Builder_Module_Helper_Slider {
 	}
 }
 
-function et_pb_slider_options() {
-	return new ET_Builder_Module_Helper_Slider();
-}
