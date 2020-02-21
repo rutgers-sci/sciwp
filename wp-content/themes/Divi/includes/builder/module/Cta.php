@@ -301,15 +301,26 @@ class ET_Builder_Module_CTA extends ET_Builder_Module {
 			'content' => '{{content}}',
 		) );
 
+		$content_wrapper = $multi_view->render_element( array(
+			'tag'     => 'div',
+			'content' => "{$title}{$content}",
+			'attrs'   => array(
+				'class' => 'et_pb_promo_description',
+			),
+			'classes' => array(
+				'et_multi_view_hidden' => array(
+					'title' => '__empty',
+					'content' => '__empty',
+				),
+			),
+		) );
+
 		// Render module output
 		$output = sprintf(
 			'<div%5$s class="%4$s"%8$s>
 				%7$s
 				%6$s
-				<div class="et_pb_promo_description">
-					%1$s
-					%2$s
-				</div>
+				%9$s
 				%3$s
 			</div>',
 			et_core_esc_previously( $title ),
@@ -319,7 +330,8 @@ class ET_Builder_Module_CTA extends ET_Builder_Module {
 			$this->module_id(), // #5
 			$video_background,
 			$parallax_image_background,
-			et_core_esc_previously( $data_background_layout )
+			et_core_esc_previously( $data_background_layout ),
+			et_core_esc_previously( $content_wrapper )
 		);
 
 		return $output;

@@ -69,10 +69,12 @@ class ET_Builder_Module_Post_Slider extends ET_Builder_Module_Type_PostBased {
 						'tabbed_subtoggles' => true,
 						'bb_icons_support'  => true,
 						'css'               => array(
-							'link'  => "{$this->main_css_element} .et_pb_slide_content a",
-							'ul'    => "{$this->main_css_element} .et_pb_slide_content ul li",
-							'ol'    => "{$this->main_css_element} .et_pb_slide_content ol li",
-							'quote' => "{$this->main_css_element} .et_pb_slide_content blockquote",
+							'link'           => "{$this->main_css_element} .et_pb_slide_content a",
+							'ul'             => "{$this->main_css_element} .et_pb_slide_content ul li",
+							'ul_item_indent' => "{$this->main_css_element} .et_pb_slide_content ul",
+							'ol'             => "{$this->main_css_element} .et_pb_slide_content ol li",
+							'ol_item_indent' => "{$this->main_css_element} .et_pb_slide_content ol",
+							'quote'          => "{$this->main_css_element} .et_pb_slide_content blockquote",
 						),
 					),
 				),
@@ -241,6 +243,9 @@ class ET_Builder_Module_Post_Slider extends ET_Builder_Module_Type_PostBased {
 						)
 					)
 				)
+			),
+			'position_fields'       => array(
+				'default' => 'relative',
 			),
 		);
 
@@ -821,7 +826,7 @@ class ET_Builder_Module_Post_Slider extends ET_Builder_Module_Type_PostBased {
 					global $more;
 
 					// page builder doesn't support more tag, so display the_content() in case of post made with page builder.
-					if ( et_pb_is_pagebuilder_used( get_the_ID() ) ) {
+					if ( et_pb_is_pagebuilder_used( get_the_ID() ) ||  has_block( 'divi/layout', get_the_ID() ) ) {
 						$more = 1; // phpcs:ignore WordPress.Variables.GlobalVariables.OverrideProhibited
 
 						// do_shortcode for Divi Plugin instead of applying `the_content` filter to avoid conflicts with 3rd party themes.
@@ -844,8 +849,7 @@ class ET_Builder_Module_Post_Slider extends ET_Builder_Module_Type_PostBased {
 				} else if ( 'on' === $args['content_source'] ) {
 					global $more;
 
-					// page builder doesn't support more tag, so display the_content() in case of post made with page builder.
-					if ( et_pb_is_pagebuilder_used( get_the_ID() ) ) {
+					if ( et_pb_is_pagebuilder_used( get_the_ID() ) ||  has_block( 'divi/layout', get_the_ID() ) ) {
 						$more = 1; // phpcs:ignore WordPress.Variables.GlobalVariables.OverrideProhibited
 
 						// do_shortcode for Divi Plugin instead of applying `the_content` filter to avoid conflicts with 3rd party themes.
@@ -1145,12 +1149,12 @@ class ET_Builder_Module_Post_Slider extends ET_Builder_Module_Type_PostBased {
 					'classes' => array(
 						'et_pb_slide_with_image' => array(
 							'show_image'         => 'on',
-							'has_post_thumbnail' => '__return_true',
+							'has_post_thumbnail' => true,
 							'image_placement'    => array( 'left', 'right' ),
 						),
 						'et_pb_slide_with_no_image' => array(
 							'show_image'         => 'on',
-							'has_post_thumbnail' => '__return_false',
+							'has_post_thumbnail' => false,
 						),
 					),
 				) );

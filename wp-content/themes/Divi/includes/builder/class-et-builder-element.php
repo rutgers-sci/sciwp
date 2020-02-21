@@ -7,25 +7,7 @@ define( 'ET_BUILDER_AJAX_TEMPLATES_AMOUNT', apply_filters( 'et_pb_templates_load
 
 add_action( 'init', array( 'ET_Builder_Element', 'set_media_queries' ), 11 );
 
-require_once 'module/helpers/Overflow.php';
-require_once 'module/helpers/HoverOptions.php';
-require_once 'module/helpers/ResponsiveOptions.php';
-require_once 'module/helpers/MultiViewOptions.php';
-require_once 'module/helpers/Height.php';
-require_once 'module/helpers/MinHeight.php';
-require_once 'module/helpers/MaxHeight.php';
-require_once 'module/helpers/Width.php';
-require_once 'module/helpers/MaxWidth.php';
-require_once 'module/helpers/Alignment.php';
-require_once 'module/helpers/TransitionOptions.php';
-require_once 'module/helpers/OptionTemplate.php';
-require_once 'module/helpers/Font.php';
-require_once 'module/helpers/BackgroundLayout.php';
-require_once 'module/field/Factory.php';
-
-if ( et_is_woocommerce_plugin_active() ) {
-	require_once 'module/helpers/WooCommerceModules.php';
-}
+add_action( 'wp_footer', array( 'ET_Builder_Element', 'enqueue_scroll_effects_fields' ), 11 );
 
 /**
  * Base class for all builder elements.
@@ -131,6 +113,12 @@ class ET_Builder_Element {
 	private static $_unique_bb_keys_values = array();
 	private static $_unique_bb_strip = array( "\t", "\r", "\n" );
 
+	public static $_scroll_effects_fields = array(
+		'desktop' => array(),
+		'tablet' => array(),
+		'phone' => array(),
+	);
+
 	/**
 	 * Number of times {@see self::render()} has been executed.
 	 *
@@ -187,6 +175,7 @@ class ET_Builder_Element {
 	private static $_module_slugs_by_post_type = array();
 	private static $module_icons = array();
 	private static $module_help_videos = array();
+	private static $parent_motion_effects = array();
 
 	/**
 	 * A stack of the current active theme builder layout post type.
@@ -282,6 +271,21 @@ class ET_Builder_Element {
 	 * @var array
 	 */
 	public $mv_inherited_props = array();
+
+	/**
+	 * Holds active position origin/location for all devices.
+	 *
+	 * @var array
+	 */
+	protected $position_locations = array();
+
+	/**
+	 * Module settings that are exposed so layout block previewer can correctly render it
+	 * despites tweaks performed to make block preview correctly aligned
+	 *
+	 * @var array
+	 */
+	protected static $layout_block_assistive_settings = array();
 
 	function __construct() {
 		self::$current_module_index++;
@@ -482,6 +486,13 @@ class ET_Builder_Element {
 			),
 		) );
 
+		$this->_add_settings_modal_toggles( 'custom_css', array(
+			'scroll_effects' => array(
+				'title'    => esc_html__( 'Scroll Effects', 'et_builder' ),
+				'priority' => 200,
+			),
+		) );
+
 		$this->main_tabs = $this->get_main_tabs();
 
 		$this->custom_css_tab = isset( $this->custom_css_tab ) ? $this->custom_css_tab : true;
@@ -633,11 +644,13 @@ class ET_Builder_Element {
 
 			} else if ( method_exists( $this, $new_method ) && ! $old_method_exists ) {
 				$message .= " Use {$class}::{$new_method}() instead.";
+				// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
 				$value    = call_user_func_array( array( $this, $new_method ), $args );
 
 			} else if ( $old_method_exists && function_exists( $new_method ) ) {
 				// New method is a function
 				$message .= " Use {$new_method}() instead.";
+				// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
 				$value   = call_user_func_array( $new_method, $args );
 
 			} else if ( $old_method_exists ) {
@@ -654,6 +667,7 @@ class ET_Builder_Element {
 
 				if ( ! in_array( $name, $callers ) ) {
 					$message .= " Use {$class}::{$new_method}() instead.";
+					// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
 					$value   = call_user_func_array( array( $this, $name ), $args );
 				}
 			}
@@ -906,7 +920,7 @@ class ET_Builder_Element {
 
 		$is_preview       = is_preview() || is_et_pb_preview();
 		$forced_in_footer = $post_id && et_builder_setting_is_on( 'et_pb_css_in_footer', $post_id );
-		$forced_inline    = ! $post_id || $is_preview || $forced_in_footer || et_builder_setting_is_off( 'et_pb_static_css_file', $post_id ) || et_core_is_safe_mode_active();
+		$forced_inline    = ! $post_id || $is_preview || $forced_in_footer || et_builder_setting_is_off( 'et_pb_static_css_file', $post_id ) || et_core_is_safe_mode_active() || ET_GB_Block_Layout::is_layout_block_preview();
 		$unified_styles   = ! $forced_inline && ! $forced_in_footer;
 
 		$resource_owner = $unified_styles ? 'core' : 'builder';
@@ -1942,6 +1956,8 @@ class ET_Builder_Element {
 			// instance is still rendering.
 			$clone               = clone $this;
 			$clone->is_rendering = false;
+
+			// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
 			return call_user_func_array( array( $clone, '_render' ), func_get_args() );
 		}
 
@@ -2127,6 +2143,9 @@ class ET_Builder_Element {
 			$enabled_dynamic_attributes,
 			$et_fb_processing_shortcode_object
 		);
+
+		// Process scroll effects earlier to preserve the modules hierarchy during processing.
+		$this->process_scroll_effects( $render_slug );
 
 		$content = apply_filters( 'et_pb_module_content', $content, $this->props, $attrs, $render_slug, $_address, $global_content );
 
@@ -2951,8 +2970,9 @@ class ET_Builder_Element {
 			$attrs = new stdClass();
 		}
 
+		$is_child_module             = in_array( $render_slug, self::get_child_slugs( $this->get_post_type() ) ) && false === strpos( $render_slug, '_column_inner' ) && false === strpos( $render_slug, '_column' );
 		$module_type                 = $this->type;
-		$render_count                = self::_get_index( array( self::INDEX_MODULE_ORDER, $function_name_processed ) );
+		$render_count                = $is_child_module ? self::_get_index( self::INDEX_MODULE_ITEM ) : self::_get_index( array( self::INDEX_MODULE_ORDER, $function_name_processed ) );
 		$child_title_var             = isset( $this->child_title_var ) ? $this->child_title_var : '';
 		$child_title_fallback_var    = isset( $this->child_title_fallback_var ) ? $this->child_title_fallback_var : '';
 		$advanced_setting_title_text = isset( $this->advanced_setting_title_text ) ? $this->advanced_setting_title_text : '';
@@ -3208,6 +3228,8 @@ class ET_Builder_Element {
 
 		$this->_add_transforms_fields();
 
+		$this->_add_position_fields();
+
 		$this->_add_text_fields();
 
 		$this->_add_sizing_fields();
@@ -3227,13 +3249,13 @@ class ET_Builder_Element {
 
 		$this->_add_additional_transition_fields();
 
-		$this->_add_additional_z_index_fields();
-
 		// Add text shadow fields to all modules
 		$this->_add_text_shadow_fields();
 
 		// Add link options to all modules
 		$this->_add_link_options_fields();
+
+		$this->_add_scroll_effects_fields();
 
 		if ( ! isset( $this->_additional_fields_options ) ) {
 			return false;
@@ -3376,23 +3398,27 @@ class ET_Builder_Element {
 				) );
 
 				// c. Unordered List.
-				$ul_element_selector    = isset( $block_elements_css['ul'] ) ? $block_elements_css['ul'] : "{$block_elements_selector} ul";
-				$ul_li_element_selector = isset( $block_elements_css['ul_li'] ) ? $block_elements_css['ul_li'] : "{$ul_element_selector} li";
+				$ul_element_selector     = et_()->array_get( $block_elements_css, 'ul', "{$block_elements_selector} ul" );
+				$ul_li_element_selector  = et_()->array_get( $block_elements_css, 'ul_li', "{$ul_element_selector} li" );
+				$ul_item_indent_selector = et_()->array_get( $block_elements_css, 'ul_item_indent', $ul_element_selector );
 				$advanced_font_options["{$option_name}_ul"] = array_merge( $block_elements_default_settings, array(
 					'label'       => esc_html__( 'Unordered List', 'et_builder' ),
 					'css'         => array(
-						'main' => $ul_li_element_selector,
+						'main'        => $ul_li_element_selector,
+						'item_indent' => $ul_item_indent_selector,
 					),
 					'sub_toggle'  => 'ul',
 				) );
 
 				// d. Ordered List.
-				$ol_element_selector    = isset( $block_elements_css['ol'] ) ? $block_elements_css['ol'] : "{$block_elements_selector} ol";
-				$ol_li_element_selector = isset( $block_elements_css['ol_li'] ) ? $block_elements_css['ol_li'] : "{$ol_element_selector} li";
+				$ol_element_selector     = et_()->array_get( $block_elements_css, 'ol', "{$block_elements_selector} ol" );
+				$ol_li_element_selector  = et_()->array_get( $block_elements_css, 'ol_li', "{$ol_element_selector} li" );
+				$ol_item_indent_selector = et_()->array_get( $block_elements_css, 'ol_item_indent', $ol_element_selector );
 				$advanced_font_options["{$option_name}_ol"] = array_merge( $block_elements_default_settings, array(
 					'label'       => esc_html__( 'Ordered List', 'et_builder' ),
 					'css'         => array(
-						'main' => $ol_li_element_selector,
+						'main'        => $ol_li_element_selector,
+						'item_indent' => $ol_item_indent_selector,
 					),
 					'sub_toggle'  => 'ol',
 				) );
@@ -4390,9 +4416,89 @@ class ET_Builder_Element {
 
 	protected function _add_overflow_fields() {
 		if ( is_array( self::$_->array_get( $this->advanced_fields, 'overflow', array() ) ) ) {
+			$defaultOverflow = self::$_->array_get( $this->advanced_fields, 'overflow.default', ET_Builder_Module_Helper_Overflow::OVERFLOW_DEFAULT );
 			$this->_additional_fields_options = array_merge(
 				$this->_additional_fields_options,
-				ET_Builder_Module_Fields_Factory::get( 'Overflow' )->get_fields()
+				ET_Builder_Module_Fields_Factory::get( 'Overflow' )->get_fields( array( 'default' => $defaultOverflow ) )
+			);
+		}
+	}
+
+	public function get_scroll_effects_options() {
+		$prefix = 'scroll_';
+
+		return array(
+			"${prefix}vertical_motion"   => array(
+				'label'            => __( 'Vertical Motion', 'et_builder' ),
+				'icon'             => 'vertical-motion',
+				'description'      => __( 'Give this element vertical motion so that is moves faster or slower than the elements around it as the viewer scrolls through the page.', 'et_builder' ),
+				'startValueTitle'  => __( 'Starting Offset', 'et_builder' ),
+				'middleValueTitle' => __( 'Mid Offset', 'et_builder' ),
+				'endValueTitle'    => __( 'Ending Offset', 'et_builder' ),
+				'resolver'         => 'translateY',
+				'default'          => '0|50|50|100|4|0|-4',
+			),
+			"{$prefix}horizontal_motion" => array(
+				'label'            => __( 'Horizontal Motion', 'et_builder' ),
+				'icon'             => 'horizontal-motion',
+				'description'      => __( 'Give this element horizontal motion so that it slides left or right as the viewer scrolls through the page.', 'et_builder' ),
+				'startValueTitle'  => __( 'Starting Offset', 'et_builder' ),
+				'middleValueTitle' => __( 'Mid Offset', 'et_builder' ),
+				'endValueTitle'    => __( 'Ending Offset', 'et_builder' ),
+				'resolver'         => 'translateX',
+				'default'          => '0|50|50|100|4|0|-4',
+			),
+			"{$prefix}fade"              => array(
+				'label'            => __( 'Fading In and Out', 'et_builder' ),
+				'icon'             => 'animation-fade',
+				'description'      => __( 'Give this element an opacity effect so that it fades in and out as the viewer scrolls through the page.', 'et_builder' ),
+				'startValueTitle'  => __( 'Starting Opacity', 'et_builder' ),
+				'middleValueTitle' => __( 'Mid Opacity', 'et_builder' ),
+				'endValueTitle'    => __( 'Ending Opacity', 'et_builder' ),
+				'resolver'         => 'opacity',
+				'default'          => '0|50|50|100|0|100|100',
+			),
+			"{$prefix}scaling"           => array(
+				'label'            => __( 'Scaling Up and Down', 'et_builder' ),
+				'icon'             => 'resize',
+				'description'      => __( 'Give this element a scale effect so that it grows and shrinks as the viewer scrolls through the page.', 'et_builder' ),
+				'startValueTitle'  => __( 'Starting Scale', 'et_builder' ),
+				'middleValueTitle' => __( 'Mid Scale', 'et_builder' ),
+				'endValueTitle'    => __( 'Ending Scale', 'et_builder' ),
+				'resolver'         => 'scale',
+				'default'          => '0|50|50|100|70|100|100',
+			),
+			"{$prefix}rotating"          => array(
+				'label'            => __( 'Rotating', 'et_builder' ),
+				'icon'             => 'rotate',
+				'description'      => __( 'Give this element rotating motion so that it spins as the viewer scrolls through the page.', 'et_builder' ),
+				'startValueTitle'  => __( 'Starting Rotation', 'et_builder' ),
+				'middleValueTitle' => __( 'Mid Rotation', 'et_builder' ),
+				'endValueTitle'    => __( 'Ending Rotation', 'et_builder' ),
+				'resolver'         => 'rotate',
+				'default'          => '0|50|50|100|90|0|0',
+			),
+			"{$prefix}blur"              => array(
+				'label'            => __( 'Blur', 'et_builder' ),
+				'icon'             => 'blur',
+				'description'      => __( 'Give this element a blur effect so that it moves in and out of focus as the viewer scrolls through the page.', 'et_builder' ),
+				'startValueTitle'  => __( 'Starting Blur', 'et_builder' ),
+				'middleValueTitle' => __( 'Mid Blur', 'et_builder' ),
+				'endValueTitle'    => __( 'Ending Blur', 'et_builder' ),
+				'resolver'         => 'blur',
+				'default'          => '0|40|60|100|10|0|0',
+			),
+		);
+	}
+
+	protected function _add_scroll_effects_fields() {
+		if ( is_array( self::$_->array_get( $this->advanced_fields, 'scroll_effects', array() ) ) ) {
+			$this->_additional_fields_options = array_merge(
+				$this->_additional_fields_options,
+				ET_Builder_Module_Fields_Factory::get( 'Scroll' )->get_fields(array(
+					'options'      => $this->get_scroll_effects_options(),
+					'grid_support' => self::$_->array_get( $this->advanced_fields, 'scroll_effects.grid_support', 'no' ),
+				))
 			);
 		}
 	}
@@ -5525,50 +5631,46 @@ class ET_Builder_Element {
 		$this->_additional_fields_options = array_merge( $this->_additional_fields_options, $additional_options );
 	}
 
-	private function _add_additional_z_index_fields() {
-		// Default z-index for modules is ''
-		$default_z_index = '';
+	/**
+	 * Add CSS position controls affects top,right,bottom,left,position and transform translate CSS properties.
+	 *
+	 * @return void
+	 * @since 4.2
+	 *
+	 */
+	private function _add_position_fields() {
+		/** @var $class ET_Builder_Module_Field_Position */
+		$class = ET_Builder_Module_Fields_Factory::get( 'Position' );
 
-		if ( 'child' === $this->type && !in_array( $this->slug, array( 'et_pb_column', 'et_pb_column_inner' ) ) ) {
-			// Disable z-index support for child modules except for the Columns
+		$this->advanced_fields[ $class::TOGGLE_SLUG ] = self::$_->array_get( $this->advanced_fields, $class::TOGGLE_SLUG, array() );
+		$this->advanced_fields['z_index']             = self::$_->array_get( $this->advanced_fields, 'z_index', array() );
+
+		// Position and Z Index Disabled
+		if ( ! is_array( $this->advanced_fields[ $class::TOGGLE_SLUG ] ) && ! is_array( $this->advanced_fields['z_index'] ) ) {
 			return;
 		}
 
-		$this->advanced_fields['z_index'] = self::$_->array_get( $this->advanced_fields, 'z_index', array() );
+		$this->settings_modal_toggles[ $class::TAB_SLUG ]['toggles'][ $class::TOGGLE_SLUG ] = array(
+			'title'    => esc_html__( 'Position', 'et_builder' ),
+			'priority' => 190,
+		);
 
-		$additional_options = array();
+		$default_position = self::$_->array_get( $this->advanced_fields[ $class::TOGGLE_SLUG ], 'default', 'none' );
+		$default_z_index  = self::$_->array_get( $this->advanced_fields['z_index'], 'default', '' );
 
-		$additional_options['z_index'] = array(
-			'label'            => esc_html__( 'Z Index', 'et_builder' ),
-			'type'             => 'range',
-			'range_settings'   => array(
-				'min'  => 0,
-				'max'  => 999,
-				'step' => 1,
+		$args = array(
+			'defaults'             => array(
+				'positioning'       => $default_position, // none | relative | absolute | fixed
+				'position_origin'   => 'top_left',
+				'vertical_offset'   => '',
+				'horizontal_offset' => '',
+				'z_index'           => $default_z_index,
 			),
-			'option_category'  => 'layout',
-			'default'          => $default_z_index,
-			'default_on_child' => true,
-			'tab_slug'         => 'custom_css',
-			'toggle_slug'      => 'visibility',
-			'unitless'         => true,
-			'hover'            => 'tabs',
-			'responsive'       => true,
-			'mobile_options'   => true,
-			'description'      => esc_html__( 'Here you can control element position on the z axis. Elements with higher z-index values will sit atop elements with lower z-index values.', 'et_builder' ),
+			'hide_position_fields' => false === $this->advanced_fields[ $class::TOGGLE_SLUG ],
+			'hide_z_index_fields'  => false === $this->advanced_fields['z_index'],
 		);
 
-		$skip = array(
-			'type'        => 'skip',
-			'tab_slug'    => 'custom_css',
-			'toggle_slug' => 'visibility',
-		);
-
-		$additional_options['z_index_tablet']      = $skip;
-		$additional_options['z_index_phone']       = $skip;
-		$additional_options['z_index_last_edited'] = $skip;
-
-		$this->_additional_fields_options = array_merge( $this->_additional_fields_options, $additional_options );
+		$this->_additional_fields_options = array_merge( $this->_additional_fields_options, $class->get_fields( $args ) );
 	}
 
 	/**
@@ -6472,12 +6574,25 @@ class ET_Builder_Element {
 		$key      = empty( $module ) ? '' : "$module.";
 		$suffix   = empty( $module ) ? '' : "_$module";
 		$selector = self::$_->array_get( $this->advanced_fields, "transform.{$key}css.main", '%%order_class%%' );
-		/** @var ET_Builder_Module_Field_Transform */
+		/** @see ET_Builder_Module_Field_Transform */
 		$defaults = array( 'scale', 'translate', 'rotate', 'skew', 'origin' );
 		$fields   = array();
 		foreach ( $defaults as $name ) {
 			$fields += array( "transform_{$name}{$suffix}" => array( 'transform' => implode( ', ', (array) $selector ) ) );
 		}
+
+		return $fields;
+	}
+
+	public function get_transition_position_css_props( $module = null ) {
+		$key             = empty( $module ) ? '' : "$module.";
+		$suffix          = empty( $module ) ? '' : "_$module";
+		$selector        = self::$_->array_get( $this->advanced_fields, "position_fields.{$key}css.main", '%%order_class%%' );
+		$string_selector = implode( ', ', (array) $selector );
+		$fields          = array();
+
+		$fields += array( "horizontal_offset{$suffix}" => array( 'left' => $string_selector, 'right' => $string_selector ) );
+		$fields += array( "vertical_offset{$suffix}" => array( 'top' => $string_selector, 'bottom' => $string_selector ) );
 
 		return $fields;
 	}
@@ -6681,6 +6796,7 @@ class ET_Builder_Element {
 		$fields = array_merge( $this->get_transition_gutter_fields_css_props(), $fields );
 		$fields = array_merge( $this->get_transition_height_fields_css_props(), $fields );
 		$fields = array_merge( $this->get_transition_transform_css_props(), $fields );
+		$fields = array_merge( $this->get_transition_position_css_props(), $fields );
 
 		return apply_filters( 'et_builder_hover_transitions_map', $fields );
 	}
@@ -7553,6 +7669,7 @@ class ET_Builder_Element {
 
 				//before calling the 'render' method make sure the instantiated class is child of 'ET_Builder_Module_Field_Template_Base'
 				if ( is_subclass_of( $field_renderer['renderer']['class'], "ET_Builder_Module_Field_Template_Base" ) ) {
+					// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
 					$field_el = call_user_func( array( $renderer, "render" ), $field, $this );
 				}
 			}
@@ -7560,6 +7677,7 @@ class ET_Builder_Element {
 			$renderer_options = ! empty( $field_renderer['renderer_options'] ) ? $field_renderer['renderer_options'] : $field;
 			$default_value = isset( $field['default'] ) ? $field['default'] : '';
 
+			// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
 			$field_el = is_callable( $field_renderer['renderer'] ) ? call_user_func( $field_renderer['renderer'], $renderer_options, $default_value ) : $field_renderer['renderer'];
 
 			if ( ! empty( $field_renderer['renderer_with_field'] ) && $field_renderer['renderer_with_field'] ) {
@@ -10415,9 +10533,9 @@ class ET_Builder_Element {
 
 		$this->process_box_shadow( $function_name );
 
-		$this->process_transform( $function_name );
+		$this->process_position( $function_name );
 
-		$this->process_z_index( $function_name );
+		$this->process_transform( $function_name );
 
 		// Process Margin & Padding CSS.
 		$module->margin_padding->process_advanced_css( $module, $function_name );
@@ -11048,7 +11166,9 @@ class ET_Builder_Element {
 						'phone'   => $is_list_indent_responsive ? esc_html( et_pb_responsive_options()->get_any_value( $this->props, "{$list_indent_name}_phone" ) ) : '',
 					);
 
-					et_pb_responsive_options()->generate_responsive_css( $list_indent_values, $list_selector, 'padding-left', $function_name, ' !important;' );
+					$list_item_indent_selector = et_()->array_get( $option_settings, 'css.item_indent', $list_selector );
+
+					et_pb_responsive_options()->generate_responsive_css( $list_indent_values, $list_item_indent_selector, 'padding-left', $function_name, ' !important;' );
 				}
 
 				// Additional quote option slugs.
@@ -11353,6 +11473,12 @@ class ET_Builder_Element {
 							esc_html( $background_color ),
 							esc_html( $important )
 						);
+						// If text module has background color set position to relative, as opposed to set text module as relative by default.
+						// Changing background selector to point to et_pb_text_inner will not render background correctly
+						// If position options are set they will override this value.
+						if ( 'et_pb_text' === $function_name ) {
+							$style .= 'position: relative; ';
+						}
 					}
 				} else if ( $has_background_color_toggle_options && 'off' === $use_background_color_value && ! $is_desktop ) {
 					// Reset - If current module has background color toggle, it's off, and current mode
@@ -11718,7 +11844,19 @@ class ET_Builder_Element {
 					'et_pb_fullwidth_menu',
 				);
 
-				$overflow = ! in_array( $function_name, $no_overflow_module );
+				$overflow   = ! in_array( $function_name, $no_overflow_module );
+				$overflow_x = ! in_array( self::$_->array_get( $this->props, 'overflow-x' ), array( '', 'hidden' ) );
+				$overflow_y = ! in_array( self::$_->array_get( $this->props, 'overflow-y' ), array( '', 'hidden' ) );
+
+				// Remove "overflow: hidden" if both overflow-x and overflow-y are not empty or not set to "hidden"
+				// Add "overflow-y: hidden" if overflow-x is not empty or not set to "hidden" (or vice versa)
+				if ( $overflow_x && $overflow_y ) {
+					$overflow = false;
+				} else if ( $overflow_x ) {
+					$overflow = 'overflow-y';
+				} else if ( $overflow_y ) {
+					$overflow = 'overflow-x';
+				}
 
 				// Render border radii for all devices.
 				foreach( et_pb_responsive_options()->get_modes() as $device ) {
@@ -11797,6 +11935,14 @@ class ET_Builder_Element {
 		}
 	}
 
+	function get_position_locations() {
+		return $this->position_locations;
+	}
+
+	function set_position_locations( $locations ) {
+		$this->position_locations = $locations;
+	}
+
 	function process_transform( $function_name ) {
 		$transform = self::$_->array_get( $this->advanced_fields, 'transform', array() );
 
@@ -11818,21 +11964,23 @@ class ET_Builder_Element {
 		$class = ET_Builder_Module_Fields_Factory::get( 'Transform' );
 		$class->set_props( $this->props + array( 'transforms_important' => $important ) );
 
-		$views = array( 'desktop' );
-		if ( $isHoverEnabled ) {
+		$position_locations = $this->get_position_locations();
+		$views              = array( 'desktop' );
+		if ( $isHoverEnabled || isset( $position_locations['hover'] ) ) {
 			array_push( $views, 'hover' );
 		}
-		if ( $isResponsiveEnabled || ( 'none' !== $animationType && $responsiveDirection ) ) {
+		if ( $isResponsiveEnabled || ( 'none' !== $animationType && $responsiveDirection )
+			 || ( isset( $position_locations['hover'] ) || isset( $position_locations['phone'] ) ) ) {
 			array_push( $views, 'tablet', 'phone' );
 		}
 		foreach ( $views as $view ) {
 			$viewSelector = $selector;
-			$device = $view;
-			if ( ! $isResponsiveEnabled && ( 'phone' === $view || 'tablet' === $view ) ) {
+			$device       = $view;
+			if ( ! $isResponsiveEnabled && in_array( $view, array( 'phone', 'tablet' ) ) || ( 'hover' === $view && ! $isHoverEnabled ) ) {
 				$device = 'desktop';
 			}
-			$elements = $class->get_elements( $device );
-			$media_query  = array();
+			$elements    = $class->get_elements( $device );
+			$media_query = array();
 
 			if ( 'hover' === $view ) {
 				$viewSelector = $selector . ':hover';
@@ -11844,6 +11992,28 @@ class ET_Builder_Element {
 				$media_query = array(
 					'media_query' => self::get_media_query( 'max_width_767' ),
 				);
+			}
+
+			if ( isset( $position_locations[ $view ] ) ) {
+				$default_strpos = strpos( $position_locations[ $view ], '_is_default' );
+				$location       = $position_locations[ $view ];
+				if ( $default_strpos !== false ) {
+					$location = substr( $position_locations[ $view ], 0, $default_strpos );
+				}
+				if ( ! isset( $elements['transform']['translateX'] ) ) {
+					if ( in_array( $location, array( 'top_center', 'bottom_center', 'center_center' ) ) ) {
+						$elements['transform']['translateX'] = '-50%';
+					} elseif ( $view !== 'desktop' ) {
+						$elements['transform']['translateX'] = '0px';
+					}
+				}
+				if ( ! isset( $elements['transform']['translateY'] ) ) {
+					if ( in_array( $location, array( 'center_left', 'center_right', 'center_center' ) ) ) {
+						$elements['transform']['translateY'] = '-50%';
+					} elseif ( $view !== 'desktop' ) {
+						$elements['transform']['translateY'] = '0px';
+					}
+				}
 			}
 
 			if ( ! empty( $elements['transform'] ) || ! empty( $elements['origin'] ) ) {
@@ -11866,7 +12036,7 @@ class ET_Builder_Element {
 				} else {
 					$declaration = '';
 					if ( ! empty( $elements['transform'] ) ) {
-						$declaration .= $class->getTransformDeclaration( $elements['transform'] );
+						$declaration .= $class->getTransformDeclaration( $elements['transform'], $view );
 					}
 
 					if ( ! empty( $elements['origin'] ) ) {
@@ -11887,69 +12057,21 @@ class ET_Builder_Element {
 		}
 	}
 
-	function process_z_index( $function_name ) {
-		$setting             = 'z_index';
-		$selector            = '%%order_class%%';
-		$hover               = et_pb_hover_options();
-		$isHoverEnabled      = $hover->is_enabled( $setting, $this->props );
-		$isResponsiveEnabled = isset( $this->props["${setting}_last_edited"] )
-							   && et_pb_get_responsive_status( $this->props["${setting}_last_edited"] );
-		$settingDefault      = '';
-		$views               = array( 'desktop' );
+	function process_position( $function_name ) {
+		/** @var $position_class ET_Builder_Module_Field_Position */
+		$position_class = ET_Builder_Module_Fields_Factory::get( 'Position' );
+		$position_class->set_module( $this );
+		$position_class->process( $function_name );
 
-		if ( $isHoverEnabled ) {
-			array_push( $views, 'hover' );
-		}
+		// Expose position settings on layout block preview so necesary adjustment can be applied
+		if ( ET_GB_Block_Layout::is_layout_block_preview() ) {
+			$layout_block_settings = $position_class->get_layout_block_settings( $function_name );
 
-		if ( $isResponsiveEnabled ) {
-			array_push( $views, 'tablet', 'phone' );
-		}
-
-		foreach ( $views as $view ) {
-			$viewSelector = $selector;
-			$media_query  = array();
-			$suffix       = '';
-			if ( 'hover' === $view ) {
-				$viewSelector .= ':hover';
-				$suffix       = '__hover';
-			} elseif ( 'tablet' === $view ) {
-				$media_query = array(
-					'media_query' => ET_Builder_Element::get_media_query( 'max_width_980' ),
+			if ( is_array( $layout_block_settings ) && ! empty( $layout_block_settings ) ) {
+				self::$layout_block_assistive_settings['position'][] = array(
+					'selector' => '.' . self::get_module_order_class( $function_name ),
+					'settings' => $layout_block_settings,
 				);
-				$suffix      = '_tablet';
-			} elseif ( 'phone' === $view ) {
-				$media_query = array(
-					'media_query' => ET_Builder_Element::get_media_query( 'max_width_767' ),
-				);
-				$suffix      = '_phone';
-			}
-
-			$optionValue = isset( $this->props[ $setting . $suffix ] )
-						   && ( ! empty( $this->props[ $setting . $suffix ] ) || $this->props[ $setting . $suffix ] === '0' ) ?
-				$this->props[ $setting . $suffix ] : $settingDefault;
-
-			$defaultValue = $settingDefault;
-			if ( 'hover' === $view && isset( $this->props[ $setting ] ) ) {
-				$defaultValue = empty( $this->props[ $setting ] ) ? $settingDefault : $this->props[ $setting ];
-				if ( ! isset( $this->props[ $setting . $suffix ] ) || empty( $this->props[ $setting . $suffix ] ) ) {
-					$optionValue = $defaultValue;
-				}
-			} elseif ( 'tablet' === $view && isset( $this->props[ $setting ] ) ) {
-				$defaultValue = empty( $this->props[ $setting ] ) ? $settingDefault : $this->props[ $setting ];
-			} elseif ( 'phone' === $view && isset( $this->props[ $setting . '_tablet' ] ) ) {
-				$defaultValue = empty( $this->props[ $setting . '_tablet' ] ) ? 'none' : $this->props[ $setting . '_tablet' ];
-				if ( 'none' === $defaultValue ) {
-					$defaultValue = ! isset( $this->props[ $setting ] )
-									|| empty( $this->props[ $setting ] ) ? $settingDefault : $this->props[ $setting ];
-				}
-			}
-			if ( $defaultValue != $optionValue || $isHoverEnabled ) {
-				self::set_style( $function_name,
-					array(
-						'selector'    => $viewSelector,
-						'declaration' => "z-index: $optionValue; position: relative;",
-						'priority'    => $this->_style_priority,
-					) + $media_query );
 			}
 		}
 	}
@@ -12154,6 +12276,99 @@ class ET_Builder_Element {
 						'media_query' => ET_Builder_Element::get_media_query( 'max_width_767' ),
 					) );
 				}
+			}
+		}
+	}
+
+	function process_scroll_effects( $function_name ) {
+		$advanced_fields = self::$_->array_get( $this->advanced_fields, 'scroll_effects', array( 'default' => array() ) );
+
+		if ( ! $advanced_fields ) {
+			return;
+		}
+
+		$options    = $this->get_scroll_effects_options();
+		$motion     = ET_Builder_Module_Helper_Motion::instance();
+		$responsive = et_pb_responsive_options();
+		$devices    = array(
+			$responsive::DESKTOP,
+			$responsive::TABLET,
+			$responsive::PHONE,
+		);
+
+		foreach ( $options as $id => $option ) {
+			$is_effect_enabled = 'on' === $this->prop( $id . '_enable' );
+			$is_inherit_parent = 'child' === $this->type && !empty( self::$parent_motion_effects ) && isset( self::$parent_motion_effects['effect_id'] ) && $id === self::$parent_motion_effects['effect_id'];
+
+			if ( !$is_effect_enabled && !$is_inherit_parent ) {
+				continue;
+			}
+
+			$default = $option['default'];
+
+			foreach ( $devices as $device ) {
+				if ( ! $is_effect_enabled ) {
+					$item                = self::$parent_motion_effects;
+					$item['id']          = '.' . self::get_module_order_class( $function_name );
+					$item['module_type'] = esc_html( $function_name );
+				} else {
+					$field         = $responsive->get_field( $id, $device );
+					$default_value = $responsive->get_default_value( $this->props, $field, $default );
+					$saved_value   = $this->prop( $field, $default_value );
+					$value         = $motion->getValue( $saved_value, $default_value );
+					$grid_motion   = $this->prop( 'enable_grid_motion', 'off' );
+					$grid_modules  = array('et_pb_gallery', 'et_pb_portfolio', 'et_pb_fullwidth_portfolio', 'et_pb_filterable_portfolio', 'et_pb_shop', 'et_pb_blog');
+
+					$item = array(
+						'id'          => '.' . self::get_module_order_class( $function_name ),
+						'start'       => $motion->getStartLimit( $value ),
+						'midStart'    => $motion->getStartMiddle( $value ),
+						'midEnd'      => $motion->getEndMiddle( $value ),
+						'end'         => $motion->getEndLimit( $value ),
+						'startValue'  => (float) $motion->getStartValue( $value ),
+						'midValue'    => (float) $motion->getMiddleValue( $value ),
+						'endValue'    => (float) $motion->getEndValue( $value ),
+						'resolver'    => $option['resolver'],
+						'module_type' => esc_html( $function_name ),
+					);
+
+					$transform_class = ET_Builder_Module_Fields_Factory::get( 'Transform' );
+					$transform_class->set_props( $this->props + array( 'transforms_important' => true ) );
+
+					$elements = $transform_class->get_elements( $device );
+
+					// Process transforms if defined
+					if ( !empty( $elements ) && !empty( $elements['transform'] ) ) {
+						$item['transforms'] = $elements['transform'];
+					}
+
+					if ( 'on' === $grid_motion ) {
+						$item['grid_motion']    = $grid_motion;
+						$item['children_count'] = in_array( $function_name, $grid_modules ) ? $this->prop( 'posts_number', 10 ) : 0;
+						$item['module_index']   = self::_get_index( array( self::INDEX_MODULE_ORDER, $function_name ) );
+					}
+
+					if ( $this->child_slug && 'on' === $grid_motion ) {
+						self::$parent_motion_effects = $item;
+						self::$parent_motion_effects['effect_id'] = $id;
+						unset(self::$parent_motion_effects['id'], self::$parent_motion_effects['grid_motion'], self::$parent_motion_effects['children_count'], self::$parent_motion_effects['module_index']);
+
+						$item['child_slug'] = $this->child_slug;
+					}
+
+					if ( 'child' === $this->type ) {
+						if ( !empty( self::$parent_motion_effects ) ) {
+							$additional_item = self::$parent_motion_effects;
+							$additional_item['id'] = $item['id'];
+
+							self::$_scroll_effects_fields[ $device ][] = $additional_item;
+						}
+					} else if ( 'on' !== $grid_motion ) {
+						self::$parent_motion_effects = array();
+					}
+				}
+
+				self::$_scroll_effects_fields[ $device ][] = $item;
 			}
 		}
 	}
@@ -16758,6 +16973,8 @@ class ET_Builder_Element {
 	 * @return string
 	 */
 	protected function _resolve_value( $post_id, $field, $value, $enabled_dynamic_attributes, $serialize ) {
+		global $wp_query;
+
 		if ( ! in_array( $field, $enabled_dynamic_attributes ) ) {
 			return $value;
 		}
@@ -16768,7 +16985,9 @@ class ET_Builder_Element {
 			return $builder_value->serialize();
 		}
 
-		if ( ! is_singular() ) {
+		$is_blog_query = isset( $wp_query->et_pb_blog_query ) && $wp_query->et_pb_blog_query;
+
+		if ( ! $is_blog_query && ! $wp_query->is_singular() ) {
 			return $builder_value->resolve( null );
 		}
 
@@ -17069,10 +17288,13 @@ class ET_Builder_Element {
 	public static function get_cache_filename( $post_type = false ) {
 
 		global $post, $et_builder_post_type;
+		$ajax_use_cache = apply_filters( 'et_builder_ajax_use_cache', false );
 
 		if ( false === $post_type ) {
 			if ( is_a( $post, 'WP_POST' ) ) {
 				$post_type = $post->post_type;
+			} else if ( $ajax_use_cache ) {
+				$post_type = et_()->array_get( $_POST, 'et_post_type', 'page' );
 			} else if ( is_admin() && ! wp_doing_ajax() ) {
 				$et_builder_post_type = $post_type = 'page';
 			}
@@ -17083,6 +17305,7 @@ class ET_Builder_Element {
 		}
 
 		$post_type = apply_filters( 'et_builder_cache_post_type', $post_type, 'modules' );
+		$post_type = trim( sanitize_file_name( $post_type ), '.' );
 
 		// Per language Cache due to fields data being localized.
 		// Use user custom locale only if admin or VB/BFB
@@ -17095,13 +17318,15 @@ class ET_Builder_Element {
 
 		if ( $exists ) {
 			return $files[0];
+		} elseif ( $ajax_use_cache ) {
+			// Whitelisted AJAX requests aren't allowed to generate cache, only to use it.
+			return false;
 		}
 
 		wp_mkdir_p( $cache );
 
 		// Create uniq filename
 		$uniq      = str_replace( '.', '', (string) microtime( true ) );
-		$post_type = trim( sanitize_file_name( $post_type ), '.' );
 		$file      = sprintf( '%s/%s-%s-%s.data', $cache, $prefix, $post_type, $uniq );
 
 		return wp_is_writable( dirname( $file ) ) ? $file : false;
@@ -17237,6 +17462,25 @@ class ET_Builder_Element {
 		echo et_core_intentionally_unescaped( $html, 'html' );
 	}
 
+	/**
+	 * Get advanced field settings exposed for layout block preview
+	 *
+	 * @since ??
+	 *
+	 * @return array
+	 */
+	public static function get_layout_block_assistive_settings() {
+		return self::$layout_block_assistive_settings;
+	}
+
+	public static function enqueue_scroll_effects_fields() {
+		wp_localize_script(
+			apply_filters( 'et_builder_modules_script_handle', 'et-builder-modules-script' ),
+			'et_pb_motion_elements',
+			ET_Builder_Element::$_scroll_effects_fields
+		);
+	}
+
 	/* ================================================================================================================
 	 * -------------------------->>> Class-level (static) deprecations begin here! <<<---------------------------------
 	 * ================================================================================================================ */
@@ -17345,7 +17589,6 @@ class ET_Builder_Element {
 
 	/* NOTE: Adding a new method? New methods should be placed BEFORE deprecated methods. */
 }
-
 do_action( 'et_pagebuilder_module_init' );
 
 class ET_Builder_Module extends ET_Builder_Element {}
