@@ -661,7 +661,7 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 						%4$s
 					</form>
 				</div> <!-- .et_pb_contact -->',
-				esc_url( get_permalink( get_the_ID() ) ),
+				'',
 				(  'on' === $captcha && 'off' === $use_spam_service ? $et_pb_captcha : '' ),
 				esc_html( $multi_view->get_value( 'submit_button_text' ) ),
 				wp_nonce_field( 'et-pb-contact-form-submit', '_wpnonce-et-pb-contact-form-submitted-' . $et_pb_contact_form_num, true, false ),

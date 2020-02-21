@@ -228,7 +228,7 @@ class ET_Builder_Module_Woocommerce_Tabs extends ET_Builder_Module_Tabs {
 						%1$s
 					</div><!-- .et_pb_tab_content" -->
 				</div>',
-				do_shortcode( $tab['content'] ),
+				do_shortcode( et_strip_shortcodes( $tab['content'] ) ),
 				1 === $index ? ' et_pb_active_content' : ''
 			);
 		}

@@ -122,6 +122,7 @@ class ET_Builder_Module_Shop extends ET_Builder_Module_Type_PostBased {
 							'border_radii_hover'  => "{$this->main_css_element} .et_shop_image > img:hover, {$this->main_css_element} .et_shop_image .et_overlay",
 							'border_styles' => "{$this->main_css_element} .et_shop_image > img",
 						),
+						'important' => 'all',
 					),
 					'label_prefix' => esc_html__( 'Image', 'et_builder' ),
 					'tab_slug'     => 'advanced',

@@ -79,6 +79,11 @@ class ET_Builder_Module_Button extends ET_Builder_Module {
 					'main'=> "{$this->main_css_element}_wrapper",
 				),
 			),
+			'transform'             => array(
+				'css' => array(
+					'main' => "{$this->main_css_element}_wrapper",
+				),
+			),
 		);
 
 		$this->help_videos = array(

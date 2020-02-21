@@ -364,10 +364,11 @@ class ET_Builder_Module_Portfolio extends ET_Builder_Module_Type_PostBased {
 		$is_search     = et_fb_conditional_tag( 'is_search', $conditional_tags );
 
 		// Prepare query arguments
-		$query_args    = array(
+		$query_args = array(
 			'posts_per_page' => (int) $args['posts_number'],
 			'post_type'      => 'project',
-			'post_status'    => 'publish',
+			'post_status'    => array( 'publish', 'private' ),
+			'perm'           => 'readable',
 		);
 
 		// Conditionally get paged data

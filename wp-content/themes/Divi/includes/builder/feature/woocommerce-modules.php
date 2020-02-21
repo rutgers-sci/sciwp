@@ -888,12 +888,28 @@ function et_builder_wc_is_non_product_post_type() {
  *       removed here because there is currently no WooCommerce module equivalent of them
  *
  * @since 3.29
+ *
+ * @since ?? Loads WC scripts on Shop, Product Category & Product Tags archives.
  */
 function et_builder_wc_load_scripts() {
 	global $post;
 
+	$is_shop             = function_exists( 'is_shop' ) && is_shop();
+
+	// is_product_taxonomy() is not returning TRUE for Category & Tags.
+	// Hence we check Category & Tag archives individually.
+	$is_product_category = function_exists( 'is_product_category' ) && is_product_category();
+	$is_product_tag      = function_exists( 'is_product_tag' ) && is_product_tag();
+
 	// If current page is not non-`product` CPT which using builder, stop early
-	if ( ( ! et_builder_wc_is_non_product_post_type() || ! class_exists( 'WC_Frontend_Scripts' ) ) && function_exists( 'et_fb_enabled' ) && ! et_fb_enabled() ) {
+	if ( ( ! et_builder_wc_is_non_product_post_type()
+			|| ! class_exists( 'WC_Frontend_Scripts' ) )
+		&& function_exists( 'et_fb_enabled' )
+		&& ! et_fb_enabled()
+		&& ! $is_shop
+		&& ! $is_product_category
+		&& ! $is_product_tag
+	) {
 		return;
 	}
 
@@ -1111,6 +1127,38 @@ function et_builder_trigger_extra_product_options( $hook ) {
 }
 
 /**
+ * Strip Builder shortcodes to avoid nested parsing.
+ *
+ * @see   https://github.com/elegantthemes/Divi/issues/18682
+ *
+ * @param string $content
+ *
+ * @since ??
+ *
+ * @return string
+ */
+function et_builder_avoid_nested_shortcode_parsing( $content ) {
+	// Strip shortcodes only on non-builder pages that contain Builder shortcodes.
+	if ( et_pb_is_pagebuilder_used( get_the_ID() ) ) {
+		return $content;
+	}
+
+	// WooCommerce layout loads when builder is not enabled.
+	// So strip builder shortcodes from Post content.
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		return et_strip_shortcodes( $content );
+	}
+
+	// Strip builder shortcodes from non-product pages.
+	// Only Tabs shortcode is checked since that causes nested rendering.
+	if ( has_shortcode( $content, 'et_pb_wc_tabs' ) ) {
+		return et_strip_shortcodes( $content );
+	}
+
+	return $content;
+}
+
+/**
  * Entry point for the woocommerce-modules.php file.
  *
  * @since 3.29
@@ -1181,6 +1229,12 @@ function et_builder_wc_init() {
 	 * @see https://github.com/elegantthemes/Divi/issues/17909
 	 */
 	add_filter( 'thwepof_hook_name_before_single_product', 'et_builder_trigger_extra_product_options' );
+
+	/*
+	 * Fix nested parsing on non-builder product pages w/ shortcode content.
+	 * @see https://github.com/elegantthemes/Divi/issues/18682
+	 */
+	add_filter( 'the_content', 'et_builder_avoid_nested_shortcode_parsing' );
 }
 
 et_builder_wc_init();

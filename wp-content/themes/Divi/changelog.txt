@@ -1,3 +1,98 @@
+version 4.3.3 ( updated 02-20-2020 )
+- Prevented WP-Stateless from causing et-cache folder to grow indefinitely.
+- Fixed redundant CSS on modules with position options.
+- Fixed Scroll Effects elements Animation issues on real mobile devices.
+- Fixed an issue with the Testimonial module author/company link target.
+- Fixed background image and gradient not working in Bar Counter Module.
+- Fixed Border settings in Cart notice module.
+- Fixed Contact Forms not showing a success message on 404 or other error pages.
+- Improved Scroll Effects preview accuracy when using the Divi Builder in backend.
+- Fixed a JavaScript error that occured when choosing to clone an existing page from the Page Creation cards.
+- Fixed a PHP error that occured when loading the builder in certain cases.
+- Introduces hooks action after BFB autosave and VB explicit save for 3rd Party extensions to access the rendered content.
+- Fixed Sections Removing issue in Legacy Builder in some cases.
+- Fixed menus inside rows being cut off on mobile devices.
+- Avoid reinit Maps and Fullwidth Maps modules during preview mode changes and resizing settings modal.
+- Fixed inconsistent background behaviour on post slider and fullwidth post slider when featured image is set as background and other background setting are changed.
+- Rendered progress bar on portability tooltip even the progress is 0% to avoid spinner being rendered.
+- Added Border and Box Shadow options to the Fullwidth Code and Code modules.
+- Fixed Individual accordion Closed Title Font styles output.
+- Fixed error "Input argument is not an HTMLInputElement" in custom CSS editor.
+- Fixed Theme Builder cannot be loaded when WooCommerce Points & Rewards plugin is activated.
+- Fixed fullscreen Fullwidth Header elements not taking the full screen height when used inside a Theme Builder header layout.
+- Fixed Post oEmbeds not working when post pages are affected by a Theme Builder body layout.
+- Fixed custom post type taxonomy term archive listings being overridden by the post type archive page condition rather than the taxonomy term archive condition in Theme Builder.
+- Fixed contact form modules in Theme Builder layouts not submitting when displayed on archive listing pages.
+- Fixed specialty section solid column border not showing in frontend.
+- Fixed misaligned settings modal's UI component on Layout Block builder.
+- Fixed modules with position fixed and bottom origin, on VB and TB.
+- Fixed location of buttons with fixed position on VB.
+- Fixed location of modules with fixed position on zoom preview.
+- Fixed Image border not showing on Placeholder images when using the Shop module.
+- Fixed a bug in Blog/PostSlider/Portfolio modules to show Private posts to Admin, Editor and Author user level.
+- Fixed title, content, and meta hover styles in the blog module not being applied when hovering over the module.
+- Fixed nested Toolset shortcodes not working.
+- Allowed the display of non-public taxonomies for post conditions in the Theme builder and added filters to control this behavior.
+- Fixed Woo Images module's Image not showing up on Shop when Theme Builder layout is used.
+- Fixed Product crashes on front end when using Divi Builder content w/o enabling the builder.
+- Fixed Blog module pagination being affected by the main WordPress query in certain cases leading to 404 errors.
+- Removed unsupported Read More Tag button from the tinyMCE editor.
+- Fixed mailster custom field data not showing.
+- Fixed reCAPTCHA v3 invalid action name JavaScript error.
+- Revived progress bar in tooltip export at visual builder.
+- Fixed issue with Mailchimp Email Optin's group data with type dropdown / radio not being sent properly.
+- Fixed error email already exists in Mailster Optin Email Module when the user already subscribed to another list.
+- Fixed theme customizer not displaying correctly in RTL mode.
+	* LICENSE.md
+	* core/admin/js/core.js
+	* core/admin/js/portability.js
+	* core/components/api/email/MailChimp.php
+	* core/components/api/email/Mailster.php
+	* core/components/api/spam/ReCaptcha.php
+	* includes/builder/ab-testing.php
+	* includes/builder/autoload.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/compat/early.php
+	* includes/builder/feature/woocommerce-modules.php
+	* includes/builder/framework.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/theme-builder/ThemeBuilderRequest.php
+	* includes/builder/frontend-builder/theme-builder/WoocommerceProductVariablePlaceholder.php
+	* includes/builder/frontend-builder/theme-builder/WoocommerceProductVariablePlaceholderDataStoreCPT.php
+	* includes/builder/frontend-builder/theme-builder/WoocommerceProductVariationPlaceholder.php
+	* includes/builder/frontend-builder/theme-builder/theme-builder.php
+	* includes/builder/functions.php
+	* includes/builder/main-structure-elements.php
+	* includes/builder/module/AccordionItem.php
+	* includes/builder/module/BarCounters.php
+	* includes/builder/module/BarCountersItem.php
+	* includes/builder/module/Blog.php
+	* includes/builder/module/Button.php
+	* includes/builder/module/Code.php
+	* includes/builder/module/ContactForm.php
+	* includes/builder/module/FilterablePortfolio.php
+	* includes/builder/module/FullwidthCode.php
+	* includes/builder/module/FullwidthPortfolio.php
+	* includes/builder/module/FullwidthPostSlider.php
+	* includes/builder/module/Portfolio.php
+	* includes/builder/module/PostSlider.php
+	* includes/builder/module/Shop.php
+	* includes/builder/module/Testimonial.php
+	* includes/builder/module/field/Position.php
+	* includes/builder/module/helpers/Background.php
+	* includes/builder/module/helpers/ResponsiveOptions.php
+	* includes/builder/module/helpers/Slider.php
+	* includes/builder/module/woocommerce/CartNotice.php
+	* includes/builder/module/woocommerce/Tabs.php
+	* includes/builder/plugin-compat/wp-views.php
+	* includes/builder/scripts/frontend/global-functions.js
+	* includes/builder/scripts/frontend/scripts.js
+	* includes/builder/scripts/src/bfb_admin_script.js
+	* includes/builder/scripts/src/block-layout-frontend-preview.js
+	* includes/builder/scripts/src/builder.js
+	* js/src/custom.js
+	* js/src/theme-customizer.js
+
 version 4.3.2 ( updated 02-07-2020 )
 - Fixed the issue when Module settings were not accessible on hover in some cases.
 - Fixed headed z-index position on custom post types.
