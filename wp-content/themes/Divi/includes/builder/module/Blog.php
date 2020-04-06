@@ -252,7 +252,7 @@ class ET_Builder_Module_Blog extends ET_Builder_Module_Type_PostBased {
 			),
 			'featured_image' => array(
 				'label'    => esc_html__( 'Featured Image', 'et_builder' ),
-				'selector' => '.et_pb_image_container',
+				'selector' => '.entry-featured-image-url img',
 			),
 			'read_more' => array(
 				'label'    => esc_html__( 'Read More Button', 'et_builder' ),

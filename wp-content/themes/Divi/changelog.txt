@@ -1,3 +1,208 @@
+version 4.4.2 ( updated 03-27-2020 )
+- Fixed incorrect Layout Block preview dimension on editor item inserter menu selector at WordPress 5.4.
+- Fixed possible error when gutenberg is loaded if the menu's collapse-button isn't ready when the script is loaded.
+- Fixed the dynamic content field getting escaped twice.
+- Fixed header z-index.
+- Fixed Email Optin Module in Theme Builder Footer does not work.
+- Fixed a PHP 7.4+ notice that occurred in some cases with the Backend Divi Builder.
+- Fixed Circle Counter animation not working with hidden header or sidebar.
+- Fixed border radii not working for Woo Image module in Safari browser.
+- Improved icons in Layers panel.
+- Fixed Child Row alignment of specialty sections don't respect their alignment on the FE.
+- Fixed a bug which prevented Layers panel to be opened from shortcut in some cases.
+- Fixed Shop module showing incorrect number of columns in mobile mode when Column layout is set to default.
+- Fixed undefined Woocommerce related fatal error on builder load.
+- Fixed PHP fatal error when Menu module is added in TB.
+- Fixed Featured Image on Product pages not being full width on mobile.
+- Added Custom tabs in Woo Tabs module in non-product Pages.
+- Includes Divi module's images on Rank Math sitemap and add ability to reload Rank Math app on rendered content update.
+- Fixed the "wp is not defined" error that could show up in console when loading the builder.
+- Fixed srset attributes not being generated properly for images that were scaled down by WordPress core.
+- Fixed rollback to use fallback version format for trailing dot zero case.
+- Fixed ES6 Promise enqueuing from jsDelivr CDN instead of local.
+- Fixed a Javascript error when loading a page inside an iframe on a different domain.
+	* core/admin/js/es6-promise.auto.min.js
+	* core/admin/js/frame-helpers.js
+	* core/components/VersionRollback.php
+	* core/components/api/spam/ReCaptcha.php
+	* core/functions.php
+	* core/ui/components/icon/icon.jsx
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/core.php
+	* includes/builder/deprecations.php
+	* includes/builder/feature/gutenberg/blocks/Layout.php
+	* includes/builder/feature/woocommerce-modules.php
+	* includes/builder/framework.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/functions.php
+	* includes/builder/main-structure-elements.php
+	* includes/builder/module/Signup.php
+	* includes/builder/module/helpers/WooCommerceModules.php
+	* includes/builder/module/woocommerce/Images.php
+	* includes/builder/module/woocommerce/RelatedProducts.php
+	* includes/builder/module/woocommerce/Tabs.php
+	* includes/builder/module/woocommerce/Upsells.php
+	* includes/builder/plugin-compat/seo-by-rank-math.php
+	* includes/builder/scripts/frontend/scripts.js
+	* includes/builder/scripts/src/block-layout-frontend-preview.js
+
+version 4.4.1 ( updated 03-11-2020 )
+- Fixed Gutenberg's Snackbar and Publish sidebar that is being rendered on top of Divi Library's overlay.
+- Fixed price text hover styles in Shop module.
+- Fixed arrows positioning for the Motion Effects Mid offset setting in Firefox.
+- Fixed an HTML validation error in the Contact Form module's form element.
+- Fixed incorrect fullscreen fullwidth header height in Layout Block Preview.
+- Fixed Fullwidth Menu overlaping.
+- Fixed layout block not being rendered on reusable block edit page if WordPress is installed in sub-directory.
+- Fixed shortcode not working in Woo Tabs module.
+- Fixed Blog Module Pagination to work in the Safari browser with Image Overlay.
+- Fixed video iframe aspect ratio on the frontend when Smush Lazy Load enabled.
+- Fixed Image Border settings in Gallery module.
+- Fix a regression in the Email Opt-in module that caused all form submissions to be flagged as spam when Spam Protection was disabled in the module settings.
+- Fixed incorrect layout block dimension in Gutenberg after window is resized to smaller screen since WordPress 5.4.
+- Fixed breaking position options adjustment at Layout Block due to another Gutenberg markup change in WordPress 5.4.
+- Fixed responsive content inherit value not properly computed when the value is escaped by ET_Builder_Element::_esc_attr  method.
+- Fixed CTA Body Text design not working on FE and few  Body Text design affecting the CTA Title Text.
+- Fixed broken fullscreen fullwidth header at Layout Block preview.
+- Fixed broken tablet layout when using Woo Related product module and when Column layout is set.
+- Fixed unwanted margin rendered when Use Default Editor on Gutenberg placeholder is hovered.
+- Fixed an issue with HTML special characters not being decoded in Mailster error messages.
+- Fixed broken tablet layout when using Woo Related product module and when Column layout is set.
+	* core/components/api/email/Mailster.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/core.php
+	* includes/builder/feature/BlockEditorIntegration.php
+	* includes/builder/feature/gutenberg/blocks/Layout.php
+	* includes/builder/feature/woocommerce-modules.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/module/Audio.php
+	* includes/builder/module/Blurb.php
+	* includes/builder/module/Button.php
+	* includes/builder/module/CircleCounter.php
+	* includes/builder/module/ContactForm.php
+	* includes/builder/module/CountdownTimer.php
+	* includes/builder/module/Cta.php
+	* includes/builder/module/FullwidthHeader.php
+	* includes/builder/module/FullwidthPortfolio.php
+	* includes/builder/module/Login.php
+	* includes/builder/module/MapItem.php
+	* includes/builder/module/NumberCounter.php
+	* includes/builder/module/PricingTablesItem.php
+	* includes/builder/module/Shop.php
+	* includes/builder/module/Signup.php
+	* includes/builder/module/TeamMember.php
+	* includes/builder/module/Testimonial.php
+	* includes/builder/module/Toggle.php
+	* includes/builder/module/helpers/WooCommerceModules.php
+	* includes/builder/module/type/WithSpamProtection.php
+	* includes/builder/module/woocommerce/AddToCart.php
+	* includes/builder/module/woocommerce/Description.php
+	* includes/builder/module/woocommerce/RelatedProducts.php
+	* includes/builder/module/woocommerce/Tabs.php
+	* includes/builder/module/woocommerce/Upsells.php
+	* includes/builder/plugin-compat/wp-responsive-table.php
+	* includes/builder/scripts/frontend/scripts.js
+	* includes/builder/scripts/src/block-layout-frontend-preview.js
+
+version 4.4 ( updated 03-05-2020 )
+- Added a modal to display a streamlined layers view of every element on your page.
+- Fixed "Use The Divi Builder" button hover styles in WordPress 5.4.
+- Fixed layout block rendering compatibility on upcoming WordPress 5.4 due to its markup changes on Block Editor.
+- Fixed js warning about non-boolean attribute is_specialty_placeholder in browser console.
+- Improved Blog module's compatibility with plugins that rely on the 'post-load' event to initialize their JavaScript.
+- Fixed the Blog module Featured Image Custom CSS field not working.
+- Fixed compatibility issue w/ WooCommerce Product Add-ons.
+- Fixed empty Specialty Section item creating from the Library using the New Divi Builder Experience.
+- Fixed creating new Fullwidth Module from the Library using legacy Builder.
+- Fixed a number of translatable strings missing or using the wrong text domain.
+- Fixed Theme Builder section, row, column and module styles affecting wireframe mode of posts displayed via a Post Content module.
+- Fix regression that caused spam protection for the Contact Form and Email Optin modules to be ineffective.
+- Added Position z-index option to page settings.
+- Fixed Scroll Effects re-rendering issues after switching preview modes in Visual Builder.
+- Fixed compatibility with the WP Responsive Table plugin.
+- Modified the Gallery module to include each image's Alt Text when defined in the WP Media Library.
+- Fixed a PHP notice that could be triggered by some 3rd Party Extensions.
+- Fixed issue with Email Optin Module where an empty checkbox field name shows a wrong message related to captcha.
+- Fixed PHP notice that occurred when post featured image attachment didn't exist.
+- Decreased recommended max execution time and max input time from 180 to 120 seconds.
+- Fixed an issue where top padding was added to the Theme Builder footer in some situations.
+- Fixed archive listing pages having incorrect CSS selectors for custom post type listings.
+- Disabled custom.js file minification.
+	* core/components/SupportCenter.php
+	* core/components/VersionRollback.php
+	* epanel/custom_functions.php
+	* functions.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/class-et-builder-settings.php
+	* includes/builder/feature/gutenberg/blocks/Layout.php
+	* includes/builder/framework.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/helpers.php
+	* includes/builder/functions.php
+	* includes/builder/module/Blog.php
+	* includes/builder/module/Gallery.php
+	* includes/builder/module/Signup.php
+	* includes/builder/module/field/Position.php
+	* includes/builder/module/field/Scroll.php
+	* includes/builder/module/type/WithSpamProtection.php
+	* includes/builder/module/woocommerce/AddToCart.php
+	* includes/builder/plugin-compat/sfwd-lms.php
+	* includes/builder/plugin-compat/wp-responsive-table.php
+	* includes/builder/scripts/frontend/scripts.js
+	* includes/builder/scripts/src/builder.js
+	* js/src/custom.js
+
+version 4.3.4 ( updated 02-24-2020 )
+- Fix a JavaScript error in Theme Customizer.
+- Fixed newsletter module fields and text spacing.
+- Fixed Accordion Module Scroll Effects with Apply Motion Effects To Child Elements option.
+- Fixed inaccurate typography on layout block preview if current post used Theme Builder template which has custom typography configuration.
+- "Show Post Categories" will no longer display on non-post layouts in Post Title modules.
+- Added arrow head to Add to Cart module's dropdown control.
+- Fixed Collapsed state saving for Global Rows and Sections.
+- Fixed Woo Add to Cart module's Text alignment option not working in page.
+- Added options for choosing when to trigger Scroll Animations.
+- Fixed Featured Image Dynamic Content not working inside a Blog module which uses the full post content and is assigned a category filter.
+- Fixed compatibility with LearnDash's Focus mode.
+- Fixed some errors related to the spam protection feature of the Contact Form and Email Opt-in modules.
+- Fixed a bug that caused the Google reCAPTCHA logo to be shown on pages that did not include any modules with Spam Protection enabled.
+- Fixed Fullwidth Header module not having the appropriate top padding when the current post is not powered by the builder.
+	* core/admin/js/recaptcha.js
+	* core/components/api/spam/ReCaptcha.php
+	* core/cypress.json
+	* core/ui/utils/property-resolver.js
+	* includes/builder/autoload.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/feature/dynamic-content.php
+	* includes/builder/feature/gutenberg/blocks/Layout.php
+	* includes/builder/feature/woocommerce-modules.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/theme-builder/WoocommerceProductVariablePlaceholder.php
+	* includes/builder/frontend-builder/theme-builder/WoocommerceProductVariablePlaceholderDataStoreCPT.php
+	* includes/builder/frontend-builder/theme-builder/WoocommerceProductVariationPlaceholder.php
+	* includes/builder/frontend-builder/theme-builder/theme-builder.php
+	* includes/builder/module/FullwidthPostTitle.php
+	* includes/builder/module/PostTitle.php
+	* includes/builder/module/field/Scroll.php
+	* includes/builder/module/helpers/Background.php
+	* includes/builder/module/helpers/Slider.php
+	* includes/builder/module/type/WithSpamProtection.php
+	* includes/builder/module/woocommerce/AddToCart.php
+	* includes/builder/plugin-compat/sfwd-lms.php
+	* includes/builder/scripts/frontend/global-functions.js
+	* includes/builder/scripts/frontend/motion-effects.js
+	* includes/builder/scripts/frontend/preview.js
+	* includes/builder/scripts/frontend/scripts.js
+	* includes/builder/scripts/src/block-layout-frontend-preview.js
+	* includes/builder/scripts/src/builder.js
+	* includes/builder/scripts/src/cpt-modules-wrapper.js
+	* includes/builder/templates/block-layout-preview.php
+	* includes/theme-builder.php
+	* js/src/custom.js
+	* js/src/smoothscroll.js
+	* js/src/theme-customizer-controls.js
+	* js/src/theme-customizer.js
+
 version 4.3.3 ( updated 02-20-2020 )
 - Prevented WP-Stateless from causing et-cache folder to grow indefinitely.
 - Fixed redundant CSS on modules with position options.

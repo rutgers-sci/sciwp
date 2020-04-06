@@ -104,6 +104,7 @@ if ( wp_doing_ajax() && ! is_customize_preview() ) {
 			'et_builder_retrieve_custom_defaults_history',
 			'et_theme_builder_api_import_theme_builder_step',
 			'et_pb_submit_subscribe_form',
+			'et_builder_get_woocommerce_tabs',
 		),
 	);
 
@@ -265,6 +266,7 @@ function et_builder_load_modules_styles() {
 		'previous'               => esc_html__( 'Previous', 'et_builder' ),
 		'next'                   => esc_html__( 'Next', 'et_builder' ),
 		'wrong_captcha'          => esc_html__( 'You entered the wrong number in captcha.', 'et_builder' ),
+		'wrong_checkbox'         => esc_html__( 'Checkbox', 'et_builder' ),
 		'ignore_waypoints'       => et_is_ignore_waypoints() ? 'yes' : 'no',
 		'is_divi_theme_used'     => function_exists( 'et_divi_fonts_url' ),
 		'widget_search_selector' => apply_filters( 'et_pb_widget_search_selector', '.widget_search' ),

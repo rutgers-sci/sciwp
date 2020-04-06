@@ -496,8 +496,11 @@ if ( ! function_exists( 'get_thumbnail' ) ) {
 			$thumb_array['use_timthumb'] = false;
 
 			$et_fullpath = wp_get_attachment_image_src( get_post_thumbnail_id( $post->ID ), 'full' );
-			$thumb_array['fullpath'] = $et_fullpath[0];
-			$thumb_array['thumb'] = $thumb_array['fullpath'];
+
+			if ( is_array( $et_fullpath ) ) {
+				$thumb_array['fullpath'] = $et_fullpath[0];
+				$thumb_array['thumb'] = $thumb_array['fullpath'];
+			}
 		}
 
 		if ( empty( $thumb_array['thumb'] ) ) {

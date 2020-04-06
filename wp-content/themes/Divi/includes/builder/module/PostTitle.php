@@ -141,7 +141,6 @@ class ET_Builder_Module_Post_Title extends ET_Builder_Module {
 				'affects'           => array(
 					'author',
 					'date',
-					'categories',
 					'comments',
 				),
 				'toggle_slug'       => 'elements',
@@ -200,7 +199,10 @@ class ET_Builder_Module_Post_Title extends ET_Builder_Module {
 					'off' => esc_html__( 'No', 'et_builder' ),
 				),
 				'default_on_front'  => 'on',
-				'depends_show_if'   => 'on',
+				'show_if'           => array(
+					'meta'                      => 'on',
+					'function.isPostOrTBLayout' => 'on',
+				),
 				'toggle_slug'       => 'elements',
 				'description'       => esc_html__( 'Here you can choose whether or not display the Categories in Post Meta. Note: This option doesn\'t work with custom post types.', 'et_builder' ),
 				'mobile_options'    => true,

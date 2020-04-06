@@ -602,7 +602,7 @@ function et_theme_builder_get_template_settings_options_for_post_type( $post_typ
 		 * Filters whether the given taxonomy should be used to generate the following template settings:
 		 * - Posts with Specific %
 		 *
-		 * @since ??
+		 * @since 4.3.3
 		 *
 		 * @param boolean $show
 		 */
@@ -740,7 +740,7 @@ function et_theme_builder_get_template_settings_options_for_archive_pages() {
 		 * - All % Pages
 		 * - Specific % Pages
 		 *
-		 * @since ??
+		 * @since 4.3.3
 		 *
 		 * @param boolean $show
 		 */

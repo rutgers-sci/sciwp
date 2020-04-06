@@ -37,7 +37,7 @@ class ET_Builder_Module_Helper_Slider {
 	/**
 	 * Reapply (fullwidth) post slider's module background on slide item which has featured image
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 *
 	 * @param array $args {
 	 *     @type int         $slide_post_id

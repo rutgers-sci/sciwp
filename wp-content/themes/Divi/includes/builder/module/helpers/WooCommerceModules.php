@@ -616,7 +616,8 @@ if ( et_is_woocommerce_plugin_active() ) {
 		}
 
 		/**
-		 * Return all possible product tabs. See woocommerce_default_product_tabs() in woocommerce/includes/wc-template-functions.php
+		 * Return all possible product tabs.
+		 * See woocommerce_default_product_tabs() in woocommerce/includes/wc-template-functions.php
 		 *
 		 * @return array
 		 */
@@ -640,6 +641,25 @@ if ( et_is_woocommerce_plugin_active() ) {
 			);
 
 			return $tabs;
+		}
+
+		public static function get_default_tab_options() {
+			$tabs    = self::get_default_product_tabs();
+			$options = array();
+
+			foreach ( $tabs as $name => $tab ) {
+				if ( ! isset( $tab['title'] ) ) {
+					continue;
+				}
+
+				$options[ $name ] = array(
+					'value' => $name,
+					'label' => 'reviews' === $name ? esc_html__( 'Reviews', 'et_builder' ) :
+						esc_html( $tab['title'] ),
+				);
+			}
+
+			return $options;
 		}
 
 		/**
@@ -827,6 +847,58 @@ if ( et_is_woocommerce_plugin_active() ) {
 		}
 
 		/**
+		 * Gets the WooCommerce Tabs defaults.
+		 *
+		 * Implementation based on
+		 *
+		 * @see   https://github.com/elegantthemes/submodule-builder/pull/6568
+		 *
+		 * @since ??
+		 *
+		 * @return array
+		 */
+		public static function get_woo_default_tabs() {
+			return array(
+				'filter',
+				'et_builder_get_woo_default_tabs',
+			);
+		}
+
+		/**
+		 * Gets the WooCommerce Tabs options for the given Product.
+		 *
+		 * @since ??
+		 *
+		 * @return string
+		 */
+		public static function get_woo_default_tabs_options() {
+			$maybe_product_id = self::get_product_default_value();
+			$product_id       = self::get_product( $maybe_product_id );
+
+			$current_product = wc_get_product( $product_id );
+			if ( ! $current_product ) {
+				return '';
+			}
+
+			global $product, $post;
+			$original_product = $product;
+			$original_post    = $post;
+			$product          = $current_product;
+			$post             = get_post( $product->get_id() );
+
+			$tabs = apply_filters( 'woocommerce_product_tabs', array() );
+			// Reset global $product.
+			$product = $original_product;
+			$post    = $original_post;
+
+			if ( ! empty( $tabs ) ) {
+				return implode( '|', array_keys( $tabs ) );
+			}
+
+			return '';
+		}
+
+		/**
 		 * Sets the Display type to render only Products.
 		 *
 		 * @since 4.1.0
@@ -865,7 +937,6 @@ if ( et_is_woocommerce_plugin_active() ) {
 		public static function reset_display_type( $option_name, $display_type ) {
 			update_option( $option_name, $display_type );
 		}
-
 	}
 
 	add_filter(
@@ -881,6 +952,14 @@ if ( et_is_woocommerce_plugin_active() ) {
 		array(
 			'ET_Builder_Module_Helper_Woocommerce_Modules',
 			'get_product_default_value',
+		)
+	);
+
+	add_filter(
+		'et_builder_get_woo_default_tabs',
+		array(
+			'ET_Builder_Module_Helper_Woocommerce_Modules',
+			'get_woo_default_tabs_options',
 		)
 	);
 }

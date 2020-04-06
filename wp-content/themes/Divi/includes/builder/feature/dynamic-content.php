@@ -783,7 +783,7 @@ function et_builder_wrap_dynamic_content( $post_id, $name, $value, $settings ) {
  * @return string
  */
 function et_builder_filter_resolve_default_dynamic_content( $content, $name, $settings, $post_id, $context, $overrides ) {
-	global $shortname;
+	global $shortname, $wp_query;
 
 	$_       = ET_Core_Data_Utils::instance();
 	$def     = 'et_builder_get_dynamic_attribute_field_default';
@@ -1042,13 +1042,15 @@ function et_builder_filter_resolve_default_dynamic_content( $content, $name, $se
 			break;
 
 		case 'post_featured_image':
+			$is_blog_query = isset( $wp_query->et_pb_blog_query ) && $wp_query->et_pb_blog_query;
+
 			if ( isset( $overrides[ $name ] ) ) {
 				$id      = (int) $overrides[ $name ];
 				$content = wp_get_attachment_image_url( $id, 'full' );
 				break;
 			}
 
-			if ( is_category() || is_tag() || is_tax() ) {
+			if ( ! $is_blog_query && ( is_category() || is_tag() || is_tax() ) ) {
 				$term_id       = (int) get_queried_object_id();
 				$attachment_id = (int) get_term_meta( $term_id, 'thumbnail_id', true );
 				$url           = wp_get_attachment_image_url( $attachment_id, 'full' );

@@ -6,7 +6,7 @@ class ET_Builder_Module_Field_Scroll extends ET_Builder_Module_Field_Base {
 		return array(
 			'prefix'      => '',
 			'label'       => esc_html__( 'Scroll Transform Effects', 'et_builder' ),
-			'description' => 'Using Scrolling Effects, you can transform elements on your page as you scroll. The animation\'s transition is based on the user\'s scrolling behavior. Once the element enters the browser viewport (top), the animation begins, and it once it leaves the viewport (bottom), the animation ends.',
+			'description' => esc_html__( 'Using Scrolling Effects, you can transform elements on your page as you scroll. The animation\'s transition is based on the user\'s scrolling behavior. Once the element enters the browser viewport (top), the animation begins, and it once it leaves the viewport (bottom), the animation ends.', 'et_builder' ),
 			'tab_slug'    => 'custom_css',
 			'toggle_slug' => 'scroll_effects',
 			'options'     => array(),
@@ -39,6 +39,24 @@ class ET_Builder_Module_Field_Scroll extends ET_Builder_Module_Field_Base {
 			);
 		}
 
+		$motion_triggers = array(
+			'motion_trigger_start' => array(
+				'label'           => esc_html__( 'Motion Effect Trigger', 'et_builder' ),
+				'type'            => 'select',
+				'option_category' => 'configuration',
+				'options'         => array(
+					'middle' => esc_html__( 'Middle of Element', 'et_builder' ),
+					'top' => esc_html__( 'Top of Element', 'et_builder' ),
+					'bottom' => esc_html__( 'Bottom of Element', 'et_builder' ),
+				),
+				'default'         => 'middle',
+				'description'     => esc_html__( 'Here you can choose when motion effects are triggered: When the top of the element enters into view, when the middle of the element enters into view, or when the bottom of the element enters into view.', 'et_builder' ),
+				'tab_slug'        => $settings['tab_slug'],
+				'toggle_slug'     => $settings['toggle_slug'],
+				'bb_support'      => false,
+			),
+		);
+
 		return array_merge(
 			$grid_motion_toggle,
 			array(
@@ -54,7 +72,8 @@ class ET_Builder_Module_Field_Scroll extends ET_Builder_Module_Field_Base {
 					'composite_structure' => $this->get_options( $settings['options'], $settings['tab_slug'], $settings['toggle_slug'], $prefix ),
 					'bb_support'          => false,
 				),
-			)
+			),
+			$motion_triggers
 		);
 	}
 

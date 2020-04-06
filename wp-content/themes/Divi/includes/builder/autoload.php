@@ -203,7 +203,7 @@ function et_pb_option_template() {
 /**
  * @return ET_Builder_Module_Helper_Background
  *
- * @since ??
+ * @since 4.3.3
  */
 function et_pb_background_options() {
 	return ET_Builder_Module_Helper_Background::instance();

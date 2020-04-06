@@ -455,6 +455,7 @@ class ET_Builder_Module_Gallery extends ET_Builder_Module {
 
 		foreach ( $_attachments as $key => $val ) {
 			$attachments[$key] = $_attachments[$key];
+			$attachments[$key]->image_alt_text  = get_post_meta( $val->ID, '_wp_attachment_image_alt', true);
 			$attachments[$key]->image_src_full  = wp_get_attachment_image_src( $val->ID, 'full' );
 			$attachments[$key]->image_src_thumb = wp_get_attachment_image_src( $val->ID, array( $width, $height ) );
 		}
@@ -610,7 +611,7 @@ class ET_Builder_Module_Gallery extends ET_Builder_Module {
 				: '';
 
 			$image_attrs = array(
-				'alt' => $attachment->post_title,
+				'alt'          => $attachment->image_alt_text,
 			);
 
 			if ( 'on' !== $fullwidth ) {

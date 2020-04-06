@@ -11,7 +11,7 @@ class ET_Theme_Builder_Woocommerce_Product_Variation_Placeholder extends WC_Prod
 	 * Get internal type.
 	 * Define custom internal type so custom data store can be used to bypass database value retrieval
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 *
 	 * @return string
 	 */

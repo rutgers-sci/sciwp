@@ -485,6 +485,20 @@ class ET_Builder_Settings {
 				'tab_slug'    => 'content',
 				'toggle_slug' => 'background',
 			),
+			'et_pb_page_z_index'      => array(
+				'type'        => 'range',
+				'id'          => 'et_pb_page_z_index',
+				'range_settings'   => array(
+					'min'  => -1000,
+					'max'  => 1000,
+					'step' => 1,
+				),
+				'unitless'    => true,
+				'label'       => esc_html__( 'Z Index', 'et_builder' ),
+				'default'     => '',
+				'tab_slug'    => 'advanced',
+				'toggle_slug' => 'position',
+			),
 			'et_pb_static_css_file'               => self::_get_static_css_generation_field( 'page' ),
 		) );
 
@@ -612,6 +626,7 @@ class ET_Builder_Settings {
 			'et_pb_post_settings_project_tags'       => self::_get_object_terms( $post_id, 'project_tag' ),
 			et_pb_overflow()->get_field_x( 'et_pb_' ) => $overflow_x,
 			et_pb_overflow()->get_field_y( 'et_pb_' ) => $overflow_y,
+			'et_pb_page_z_index' => get_post_meta( $post_id, '_et_pb_page_z_index', true )
 		);
 		/**
 		 * Filters Divi Builder page settings values.
@@ -1056,6 +1071,7 @@ class ET_Builder_Settings {
 			'ab_testing'            => esc_html__( 'Split Testing', 'et_builder' ),
 			'text'                  => esc_html__( 'Text', 'et_builder' ),
 			'visibility'            => esc_html__( 'Visibility', 'et_builder' ),
+			'position'              => esc_html__( 'Position', 'et_builder' ),
 		);
 
 		/**

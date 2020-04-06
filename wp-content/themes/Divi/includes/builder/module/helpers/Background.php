@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * (eg. post slider which needs to apply module background on individual slide that has featured
  * image).
  *
- * @since ??
+ * @since 4.3.3
  *
  * @todo Use `ET_Builder_Module_Helper_Background->get_background_style()` for `ET_Builder_Element->process_advanced_background_options()`
  *
@@ -28,7 +28,7 @@ class ET_Builder_Module_Helper_Background {
 	/**
 	 * Get gradient properties based on given props
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 *
 	 * @param array $props           Module's props
 	 * @param string $base_prop_name Background base prop name
@@ -51,7 +51,7 @@ class ET_Builder_Module_Helper_Background {
 	/**
 	 * Get gradient properties for hover mode
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 *
 	 * @param array $props                       Module's props
 	 * @param string $base_prop_name             Background base prop name
@@ -102,7 +102,7 @@ class ET_Builder_Module_Helper_Background {
 	/**
 	 * Get background gradient style based on properties given
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 *
 	 * @param array $args {
 	 *     @type string $type
@@ -142,7 +142,7 @@ class ET_Builder_Module_Helper_Background {
 	/**
 	 * Get individual background image style
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 *
 	 * @param string $attr                 Background attribute name
 	 * @param string $base_prop_name       Base background prop name
@@ -166,7 +166,7 @@ class ET_Builder_Module_Helper_Background {
 	/**
 	 * Get background UI option's style based on given props and prop name
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 *
 	 * @todo Further simplify this method; Break it down into more encapsulated methods
 	 *

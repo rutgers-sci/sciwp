@@ -2,7 +2,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '4.3.3' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '4.4.2' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -1148,6 +1148,51 @@ function et_fb_current_page_woocommerce_components() {
 }
 
 /**
+ * Array of WooCommerce Tabs.
+ *
+ * @since 4.4.2 Fixed fatal error @link https://github.com/elegantthemes/Divi/issues/19404
+ * @since 4.4.2 Added Custom Tabs support.
+ *
+ * @used-by et_fb_current_page_params()
+ *
+ * @return array
+ */
+function et_fb_woocommerce_tabs() {
+	global $product, $post;
+	$old_product = $product;
+	$old_post    = $post;
+
+	if ( ! isset( $product ) && et_is_woocommerce_plugin_active() ) {
+		$product = ET_Builder_Module_Helper_Woocommerce_Modules::get_product( 'latest' );
+
+		if ( $product ) {
+			$post = get_post( $product->get_id() );
+		} else {
+			$product = $old_product;
+			return ET_Builder_Module_Helper_Woocommerce_Modules::get_default_tab_options();
+		}
+	}
+
+	// On non-product post types, the filter will cause fatal error
+	// unless we have global $product set.
+	$tabs    = apply_filters( 'woocommerce_product_tabs', array() );
+	$options = array();
+
+	foreach ( $tabs as $name => $tab ) {
+		$options[ $name ] = array(
+			'value' => $name,
+			'label' => $tab['title'],
+		);
+	}
+
+	// Reset global $product.
+	$product = $old_product;
+	$post    = $old_post;
+
+	return $options;
+}
+
+/**
  * Get the category taxonomy associated with a given post type.
  *
  * @since 4.0.6
@@ -1270,6 +1315,8 @@ function et_fb_current_page_params() {
 		'langCode'                 => get_locale(),
 		'page_layout'              => $post_id ? get_post_meta( $post_id, '_et_pb_page_layout', true ) : '',
 		'woocommerceComponents'    => $exclude_woo ? array() : et_fb_current_page_woocommerce_components(),
+		'woocommerceTabs'          => et_builder_tb_enabled() && et_is_woocommerce_plugin_active() ?
+			ET_Builder_Module_Helper_Woocommerce_Modules::get_default_tab_options() : et_fb_woocommerce_tabs(),
 	);
 
 	return apply_filters( 'et_fb_current_page_params', $current_page );
@@ -2957,6 +3004,14 @@ function et_pb_get_page_custom_css( $post_id = 0 ) {
 		);
 	}
 
+	if ( isset( $page_settings['et_pb_page_z_index'] ) && '' !== $page_settings['et_pb_page_z_index'] ) {
+		$output .= sprintf(
+			'%2$s .et_builder_inner_content { z-index: %1$s; }',
+			esc_html( $page_settings['et_pb_page_z_index'] ),
+			esc_html( '.et-db #et-boc .et-l' . $selector_prefix )
+		);
+	}
+
 	return apply_filters( 'et_pb_page_custom_css', $output );
 }
 endif;
@@ -3223,7 +3278,7 @@ function et_builder_prioritize_meta_box() {
 				$wp_meta_boxes[ $page ][ $context ][ $priority ] = array_merge( array( ET_BUILDER_LAYOUT_POST_TYPE => $divi ), $boxes );
 
 				// If our mbox is the first one in custom ordering
-				if ( 0 === strpos( $custom[ $context ], ET_BUILDER_LAYOUT_POST_TYPE ) ) {
+				if ( is_array( $custom ) && 0 === strpos( $custom[ $context ], ET_BUILDER_LAYOUT_POST_TYPE ) ) {
 					// Find all metaboxes that are not included in custom order
 					$sorted = explode( ',', $custom[ $context ] );
 					$add    = array_diff( array_keys( $boxes ), $sorted );
@@ -5700,7 +5755,7 @@ function et_pb_pagebuilder_meta_box() {
 		'<script type="text/template" id="et-builder-section-template">
 			<div class="et-pb-right-click-trigger-overlay"></div>
 			%1$s
-			<div class="et-pb-section-content et-pb-data-cid%3$s%4$s" data-cid="<%%= cid %%>" data-skip="<%%= typeof( et_pb_skip_module ) === \'undefined\' ? \'false\' : \'true\' %%>">
+			<div class="et-pb-section-content et-pb-data-cid%3$s%4$s<%%= typeof et_pb_template_type !== \'undefined\' && \'module\' === et_pb_template_type ? \' et_pb_hide_insert\' : \'\' %%>" data-cid="<%%= cid %%>" data-skip="<%%= typeof( et_pb_skip_module ) === \'undefined\' ? \'false\' : \'true\' %%>">
 				%5$s
 			</div>
 			%2$s
@@ -7461,6 +7516,10 @@ function et_builder_update_settings( $settings, $post_id = 'global' ) {
 				break;
 
 			case 'range':
+				// Avoid setting absolute value for range if option is z_index.
+				if ( 'et_pb_page_z_index' == $setting_key ) {
+					break;
+				}
 				$setting_value = absint( $setting_value );
 				$range_min     = isset( $fields[ $setting_key ]['range_settings'] ) && isset( $fields[ $setting_key ]['range_settings']['min'] ) ?
 					absint( $fields[ $setting_key ]['range_settings']['min'] ) : -1;
@@ -10137,7 +10196,7 @@ function et_builder_get_shortcuts( $on = 'fb' ) {
 				),
 			),
 			'module_lock' => array(
-				'kbd'  => array( 'super', 'l' ),
+				'kbd'  => array( 'super', 'shift', 'l' ),
 				'desc' => esc_html__( 'Lock Module', 'et_builder' ),
 				'on' => array(
 					'fb',
@@ -10145,7 +10204,7 @@ function et_builder_get_shortcuts( $on = 'fb' ) {
 				),
 			),
 			'module_disable' => array(
-				'kbd'  => array( 'super', 'd' ),
+				'kbd'  => array( 'super', 'shift', 'd' ),
 				'desc' => esc_html__( 'Disable Module', 'et_builder' ),
 				'on' => array(
 					'fb',
@@ -10367,6 +10426,13 @@ function et_builder_get_shortcuts( $on = 'fb' ) {
 				'kbd'  => array( 'shift', 'space' ),
 				'desc' => esc_html__( 'Quick Actions', 'et_builder' ),
 				'on' => array(
+					'fb',
+				),
+			),
+			'layers_view' => array(
+				'kbd'  => array( 'super', 'l' ),
+				'desc' => esc_html__( 'Layers View', 'et_builder' ),
+				'on'   => array(
 					'fb',
 				),
 			),

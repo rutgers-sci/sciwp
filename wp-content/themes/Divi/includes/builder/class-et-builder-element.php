@@ -277,7 +277,7 @@ class ET_Builder_Element {
 	 * Disabled by default; activated by setting $save_processed_background property to true
 	 * Only gradient related value is saved right now; more can be added later if needed
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 */
 	protected $processed_background      = array();
 	protected $save_processed_background = false;
@@ -2714,6 +2714,7 @@ class ET_Builder_Element {
 		$unsynced_global_attributes = array();
 		$use_updated_global_sync_method = false;
 		$global_module_id = isset( $atts['global_module'] ) ? $atts['global_module'] : false;
+		$is_specialty_placeholder = isset( $atts['template_type'] ) && 'section' === $atts['template_type'] && isset( $atts['specialty'] ) && 'on' === $atts['specialty'];
 		$is_global_template = false;
 		$real_parent_type = $parent_type;
 
@@ -3030,6 +3031,7 @@ class ET_Builder_Element {
 			'content'                     => $prepared_content,
 			'is_module_child'             => 'child' === $module_type,
 			'is_structure_element'        => !empty($this->is_structure_element),
+			'is_specialty_placeholder'    => $is_specialty_placeholder,
 			'is_official_module'          => $this->_is_official_module,
 			'child_title_var'             => $child_title_var,
 			'child_title_fallback_var'    => $child_title_fallback_var,
@@ -5095,7 +5097,7 @@ class ET_Builder_Element {
 			'type'            => 'select_animation',
 			'option_category' => 'configuration',
 			'default'         => 'none',
-			'description'     => esc_html__( 'Pick an animation style to enable animations for this element. Once enabled, you will be able to customize your animation style further. To disable animations, choose the None option.' ),
+			'description'     => esc_html__( 'Pick an animation style to enable animations for this element. Once enabled, you will be able to customize your animation style further. To disable animations, choose the None option.', 'et_builder' ),
 			'options'         => array(
 				'none'   => esc_html__( 'None', 'et_builder' ),
 				'fade'   => esc_html__( 'Fade', 'et_builder' ),
@@ -5123,7 +5125,7 @@ class ET_Builder_Element {
 			'type'            => 'select',
 			'option_category' => 'configuration',
 			'default'         => 'center',
-			'description'     => esc_html__( 'Pick from up to five different animation directions, each of which will adjust the starting and ending position of your animated element.' ),
+			'description'     => esc_html__( 'Pick from up to five different animation directions, each of which will adjust the starting and ending position of your animated element.', 'et_builder' ),
 			'options'         => array(
 				'center' => esc_html__( 'Center', 'et_builder' ),
 				'left'   => esc_html__( 'Right', 'et_builder' ),
@@ -5147,7 +5149,7 @@ class ET_Builder_Element {
 				'step' => 50,
 			),
 			'default'             => '1000ms',
-			'description'         => esc_html__( 'Speed up or slow down your animation by adjusting the animation duration. Units are in milliseconds and the default animation duration is one second.' ),
+			'description'         => esc_html__( 'Speed up or slow down your animation by adjusting the animation duration. Units are in milliseconds and the default animation duration is one second.', 'et_builder' ),
 			'validate_unit'       => true,
 			'fixed_unit'          => 'ms',
 			'fixed_range'         => true,
@@ -5168,7 +5170,7 @@ class ET_Builder_Element {
 				'step' => 50,
 			),
 			'default'             => '0ms',
-			'description'         => esc_html__( 'If you would like to add a delay before your animation runs you can designate that delay here in milliseconds. This can be useful when using multiple animated modules together.' ),
+			'description'         => esc_html__( 'If you would like to add a delay before your animation runs you can designate that delay here in milliseconds. This can be useful when using multiple animated modules together.', 'et_builder' ),
 			'validate_unit'       => true,
 			'fixed_unit'          => 'ms',
 			'fixed_range'         => true,
@@ -5192,7 +5194,7 @@ class ET_Builder_Element {
 					'step' => 1,
 				),
 				'default'         => '50%',
-				'description'     => esc_html__( 'Intensity effects how subtle or aggressive your animation will be. Lowering the intensity will create a smoother and more subtle animation while increasing the intensity will create a snappier more aggressive animation.' ),
+				'description'     => esc_html__( 'Intensity effects how subtle or aggressive your animation will be. Lowering the intensity will create a smoother and more subtle animation while increasing the intensity will create a snappier more aggressive animation.', 'et_builder' ),
 				'validate_unit'   => true,
 				'fixed_unit'      => '%',
 				'fixed_range'     => true,
@@ -5216,7 +5218,7 @@ class ET_Builder_Element {
 				'max_limit' => 100,
 			),
 			'default'             => '0%',
-			'description'         => esc_html__( 'By increasing the starting opacity, you can reduce or remove the fade effect that is applied to all animation styles.' ),
+			'description'         => esc_html__( 'By increasing the starting opacity, you can reduce or remove the fade effect that is applied to all animation styles.', 'et_builder' ),
 			'validate_unit'       => true,
 			'fixed_unit'          => '%',
 			'fixed_range'         => true,
@@ -5232,7 +5234,7 @@ class ET_Builder_Element {
 			'type'              => 'select',
 			'option_category'   => 'configuration',
 			'default'           => 'ease-in-out',
-			'description'       => esc_html__( 'Here you can adjust the easing method of your animation. Easing your animation in and out will create a smoother effect when compared to a linear speed curve.' ),
+			'description'       => esc_html__( 'Here you can adjust the easing method of your animation. Easing your animation in and out will create a smoother effect when compared to a linear speed curve.', 'et_builder' ),
 			'options'         => array(
 				'ease-in-out' => esc_html__( 'Ease-In-Out', 'et_builder' ),
 				'ease'        => esc_html__( 'Ease', 'et_builder' ),
@@ -5251,7 +5253,7 @@ class ET_Builder_Element {
 			'type'                => 'select',
 			'option_category'     => 'configuration',
 			'default'             => 'once',
-			'description'         => esc_html__( 'By default, animations will only play once. If you would like to loop your animation continuously you can choose the Loop option here.' ),
+			'description'         => esc_html__( 'By default, animations will only play once. If you would like to loop your animation continuously you can choose the Loop option here.', 'et_builder' ),
 			'options'             => array(
 				'once' => esc_html__( 'Once', 'et_builder' ),
 				'loop' => esc_html__( 'Loop', 'et_builder' ),
@@ -5910,7 +5912,7 @@ class ET_Builder_Element {
 			'option_category'  => 'layout',
 			'default'          => 'normal',
 			'default_on_child' => true,
-			'description'      => esc_html__( 'Modify how this element blends with any layers beneath it. To reset, choose the "Normal" option.' ),
+			'description'      => esc_html__( 'Modify how this element blends with any layers beneath it. To reset, choose the "Normal" option.', 'et_builder' ),
 			'options'          => array(
 				'normal'      => esc_html__( 'Normal', 'et_builder' ),
 				'multiply'    => esc_html__( 'Multiply', 'et_builder' ),
@@ -6333,7 +6335,7 @@ class ET_Builder_Element {
 				$bg_color_args = is_array( $bg_color_options ) ? $bg_color_options : array();
 				$additional_options["{$option_name}_background_color"] = array_merge( array(
 					'label'           => sprintf( esc_html__( '%1$s Background Color', 'et_builder' ), $option_settings['label'] ),
-					'description'     => esc_html__( "Pick a color to fill the module's input fields.", 'et_builder' ),
+					'description'     => esc_html__( 'Pick a color to fill the module\'s input fields.', 'et_builder' ),
 					'type'            => 'color-alpha',
 					'option_category' => 'field',
 					'custom_color'    => true,
@@ -12331,18 +12333,25 @@ class ET_Builder_Element {
 			return;
 		}
 
-		$options    = $this->get_scroll_effects_options();
-		$motion     = ET_Builder_Module_Helper_Motion::instance();
-		$responsive = et_pb_responsive_options();
-		$devices    = array(
+		// Accordion Module reuses the Toggle Module and its child are not marked as child on FE, so check this specific case.
+		$is_child_element = 'child' === $this->type || 'et_pb_accordion_item' === $function_name;
+		$options          = $this->get_scroll_effects_options();
+		$motion           = ET_Builder_Module_Helper_Motion::instance();
+		$responsive       = et_pb_responsive_options();
+		$devices          = array(
 			$responsive::DESKTOP,
 			$responsive::TABLET,
 			$responsive::PHONE,
 		);
 
+		// Reset saved parent effects to not apply them on subsequent modules.
+		if ( !$is_child_element ) {
+			self::$parent_motion_effects = array();
+		}
+
 		foreach ( $options as $id => $option ) {
 			$is_effect_enabled = 'on' === $this->prop( $id . '_enable' );
-			$is_inherit_parent = 'child' === $this->type && !empty( self::$parent_motion_effects ) && isset( self::$parent_motion_effects['effect_id'] ) && $id === self::$parent_motion_effects['effect_id'];
+			$is_inherit_parent = $is_child_element && !empty( self::$parent_motion_effects ) && isset( self::$parent_motion_effects[ $id ] );
 
 			if ( !$is_effect_enabled && !$is_inherit_parent ) {
 				continue;
@@ -12352,7 +12361,7 @@ class ET_Builder_Element {
 
 			foreach ( $devices as $device ) {
 				if ( ! $is_effect_enabled ) {
-					$item                = self::$parent_motion_effects;
+					$item                = self::$parent_motion_effects[ $id ];
 					$item['id']          = '.' . self::get_module_order_class( $function_name );
 					$item['module_type'] = esc_html( $function_name );
 				} else {
@@ -12361,19 +12370,23 @@ class ET_Builder_Element {
 					$saved_value   = $this->prop( $field, $default_value );
 					$value         = $motion->getValue( $saved_value, $default_value );
 					$grid_motion   = $this->prop( 'enable_grid_motion', 'off' );
+					$trigger_start = $this->prop( 'motion_trigger_start', 'middle' );
+					$trigger_end   = $this->prop( 'motion_trigger_end', 'middle' );
 					$grid_modules  = array('et_pb_gallery', 'et_pb_portfolio', 'et_pb_fullwidth_portfolio', 'et_pb_filterable_portfolio', 'et_pb_shop', 'et_pb_blog');
 
 					$item = array(
-						'id'          => '.' . self::get_module_order_class( $function_name ),
-						'start'       => $motion->getStartLimit( $value ),
-						'midStart'    => $motion->getStartMiddle( $value ),
-						'midEnd'      => $motion->getEndMiddle( $value ),
-						'end'         => $motion->getEndLimit( $value ),
-						'startValue'  => (float) $motion->getStartValue( $value ),
-						'midValue'    => (float) $motion->getMiddleValue( $value ),
-						'endValue'    => (float) $motion->getEndValue( $value ),
-						'resolver'    => $option['resolver'],
-						'module_type' => esc_html( $function_name ),
+						'id'            => '.' . self::get_module_order_class( $function_name ),
+						'start'         => $motion->getStartLimit( $value ),
+						'midStart'      => $motion->getStartMiddle( $value ),
+						'midEnd'        => $motion->getEndMiddle( $value ),
+						'end'           => $motion->getEndLimit( $value ),
+						'startValue'    => (float) $motion->getStartValue( $value ),
+						'midValue'      => (float) $motion->getMiddleValue( $value ),
+						'endValue'      => (float) $motion->getEndValue( $value ),
+						'resolver'      => $option['resolver'],
+						'module_type'   => esc_html( $function_name ),
+						'trigger_start' => $trigger_start,
+						'trigger_end'   => $trigger_end,
 					);
 
 					$transform_class = ET_Builder_Module_Fields_Factory::get( 'Transform' );
@@ -12393,16 +12406,15 @@ class ET_Builder_Element {
 					}
 
 					if ( $this->child_slug && 'on' === $grid_motion ) {
-						self::$parent_motion_effects = $item;
-						self::$parent_motion_effects['effect_id'] = $id;
-						unset(self::$parent_motion_effects['id'], self::$parent_motion_effects['grid_motion'], self::$parent_motion_effects['children_count'], self::$parent_motion_effects['module_index']);
+						self::$parent_motion_effects[ $id ] = $item;
+						unset(self::$parent_motion_effects[ $id ]['id'], self::$parent_motion_effects[ $id ]['grid_motion'], self::$parent_motion_effects[ $id ]['children_count'], self::$parent_motion_effects[ $id ]['module_index']);
 
 						$item['child_slug'] = $this->child_slug;
 					}
 
-					if ( 'child' === $this->type ) {
-						if ( !empty( self::$parent_motion_effects ) ) {
-							$additional_item = self::$parent_motion_effects;
+					if ( $is_child_element ) {
+						if ( !empty( self::$parent_motion_effects[ $id ] ) ) {
+							$additional_item = self::$parent_motion_effects[ $id ];
 							$additional_item['id'] = $item['id'];
 
 							self::$_scroll_effects_fields[ $device ][] = $additional_item;
@@ -14982,7 +14994,8 @@ class ET_Builder_Element {
 			// Add missing toggle definitions for any existing toggles used in custom modules
 			foreach ( $custom_modules as $module_slug => $module ) {
 				foreach ( $module->get_complete_fields() as $field_name => $field_info ) {
-					$tab_slug    = self::$_->array_get( $field_info, 'tab_slug', 'general' );
+					$tab_slug    = self::$_->array_get( $field_info, 'tab_slug' );
+					$tab_slug    = empty( $tab_slug ) ? 'general' : $tab_slug;
 					$toggle_slug = self::$_->array_get( $field_info, 'toggle_slug' );
 
 					if ( ! $toggle_slug || isset( $toggles_array[ $module_slug ][ $tab_slug ]['toggles'][ $toggle_slug ] ) ) {
@@ -17101,10 +17114,11 @@ class ET_Builder_Element {
 	 *
 	 * @param string $attribute
 	 * @param string $html 'limited', 'full', 'none'
+	 * @param string $predefined_value Predifined value need to escape.
 	 *
 	 * @return string
 	 */
-	protected function _esc_attr( $attribute, $html = 'none' ) {
+	protected function _esc_attr( $attribute, $html = 'none', $predefined_value = null ) {
 		$html               = in_array( $html, array( 'limited', 'full' ), true ) ? $html : 'none';
 		$raw                = isset( $this->attrs_unprocessed[ $attribute ] ) ? $this->attrs_unprocessed[ $attribute ] : '';
 		$formatted          = isset( $this->props[ $attribute ] ) ? $this->props[ $attribute ] : '';
@@ -17114,6 +17128,10 @@ class ET_Builder_Element {
 		if ( 'content' === $attribute && ! isset( $this->attrs_unprocessed[ $attribute ] ) ) {
 			$raw       = $this->content_unprocessed;
 			$formatted = $this->content;
+		}
+
+		if ( ! is_null( $predefined_value ) ) {
+			$formatted = $predefined_value;
 		}
 
 		if ( ! $this->_is_dynamic_value( $attribute, $raw, $dynamic_attributes ) ) {
@@ -17529,7 +17547,7 @@ class ET_Builder_Element {
 	 * Get whether the provided element content contains at least one of the
 	 * specified modules based on their slugs.
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 *
 	 * @param string $content
 	 * @param string[] $module_slugs

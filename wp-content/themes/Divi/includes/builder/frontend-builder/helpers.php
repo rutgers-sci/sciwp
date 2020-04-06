@@ -566,6 +566,11 @@ function et_fb_get_static_backend_helpers($post_type) {
 				'name'       => esc_html__( 'Column', 'et_builder' ),
 				'namePlural' => esc_html__( 'Columns', 'et_builder' ),
 			),
+			array(
+				'slug'       => 'et_pb_column_inner',
+				'name'       => esc_html__( 'Column', 'et_builder' ),
+				'namePlural' => esc_html__( 'Columns', 'et_builder' ),
+			),
 		),
 		'et_builder_css_media_queries' => ET_Builder_Element::get_media_quries( 'for_js' ),
 		'builderOptions'               => et_builder_options(),
@@ -1557,9 +1562,11 @@ function et_fb_get_static_backend_helpers($post_type) {
 			'endABTesting'             => esc_html__( 'End Split Test', 'et_builder' ),
 			'moduleType'               => array(
 				'module'   => esc_html__( 'Module', 'et_builder' ),
+				'column'   => esc_html__( 'Column', 'et_builder' ),
 				'row'      => esc_html__( 'Row', 'et_builder' ),
 				'section'  => esc_html__( 'Section', 'et_builder' ),
 				'modules'  => esc_html__( 'Modules', 'et_builder' ),
+				'columns'  => esc_html__( 'Columns', 'et_builder' ),
 				'rows'     => esc_html__( 'Rows', 'et_builder' ),
 				'sections' => esc_html__( 'Sections', 'et_builder' ),
 			),
@@ -1587,6 +1594,7 @@ function et_fb_get_static_backend_helpers($post_type) {
 			'makeStylesDefault'        => esc_html__( 'Make Styles Default', 'et_builder' ),
 			'modifyDefaultValue'       => esc_html__( 'Modify Default Value', 'et_builder' ),
 			'modifyDefaultValues'      => esc_html__( 'Modify Default Values', 'et_builder' ),
+			'goToLayer'                => esc_html__( 'Go To Layer', 'et_builder' ),
 		),
 		'tooltips' => array(
 			'insertModule'          => esc_html__( 'Insert Module', 'et_builder' ),
@@ -1730,6 +1738,29 @@ function et_fb_get_static_backend_helpers($post_type) {
 			'customDefaults' => array(
 				'title'    => esc_html__( '%s Defaults', 'et_builder' ),
 				'defaults' => esc_html__( 'Defaults', 'et_builder' ),
+			),
+			'layersView' => array(
+				'column'                => array(
+					'settings'  => esc_html__( 'Column Settings', 'et_builder' ),
+					'duplicate' => esc_html__( 'Duplicate Column', 'et_builder' ),
+					'delete'    => esc_html__( 'Delete Column', 'et_builder' ),
+				),
+				'title'                 => esc_html__( 'Layers', 'et_builder' ),
+				'toggleAll'             => esc_html__( 'Open/Close All', 'et_builder' ),
+				'toggleCollapse'        => esc_html__( 'Collapse', 'et_builder' ),
+				'toggleExpand'          => esc_html__( 'Expand', 'et_builder' ),
+				'searchLayers'          => esc_html__( 'Search Layers', 'et_builder' ),
+				'searchFilterItems'     => array(
+					'show_only' => array(
+						'section' => esc_html__( 'Sections', 'et_builder' ),
+						'row'     => esc_html__( 'Rows', 'et_builder' ),
+						'column'  => esc_html__( 'Columns', 'et_builder' ),
+						'module'  => esc_html__( 'Modules', 'et_builder' ),
+						'global'  => esc_html__( 'Global Elements', 'et_builder' ),
+					),
+				),
+				'filterNotice'          => esc_html__( 'No layers exist for this search query. Click here to clear your search filters.', 'et_builder' ),
+				'filterNoticeClickable' => esc_html__( 'Click here', 'et_builder' ),
 			),
 		),
 		'selectControl' => array(
@@ -1977,6 +2008,7 @@ function et_fb_get_static_backend_helpers($post_type) {
 			'global_module_alert'                      => esc_html__( 'You cannot add global modules into global sections or rows', 'et_builder' ),
 			'cannot_move_module_goal_out_from_subject' => esc_html__( 'Once set, a goal that has been placed inside a split testing subject cannot be moved outside the split testing subject. You can end your split test and start a new one if you would like to make this change.', 'et_builder' ),
 			'stop_dropping_3_col_row'                  => esc_html__( 'This number of columns cannot be used on this row.', 'et_builder' ),
+			'onlyColumnDraggedAway'                    => esc_html__( 'The row must have at least one column.', 'et_builder' ),
 		),
 		'tooltip' => array(
 			'pageSettingsBar' => array(

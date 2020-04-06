@@ -42,7 +42,7 @@ class ET_Core_API_Spam_ReCaptcha extends ET_Core_API_Spam_Provider {
 	}
 
 	public function action_wp_enqueue_scripts() {
-		$deps   = array( 'jquery' );
+		$deps   = array( 'jquery', 'es6-promise' );
 
 		/** 
 		 * reCAPTCHA v3 actions may only contain alphanumeric characters and slashes/underscore.
@@ -59,6 +59,7 @@ class ET_Core_API_Spam_ReCaptcha extends ET_Core_API_Spam_Provider {
 			wp_enqueue_script( 'recaptcha-v3', "https://www.google.com/recaptcha/api.js?render={$this->data['site_key']}" );
 		}
 
+		wp_enqueue_script( 'es6-promise', ET_CORE_URL . 'admin/js/es6-promise.auto.min.js' );
 		wp_enqueue_script( 'et-core-api-spam-recaptcha', ET_CORE_URL . 'admin/js/recaptcha.js', $deps );
 		wp_localize_script( 'et-core-api-spam-recaptcha', 'et_core_api_spam_recaptcha', array(
 			'site_key'    => empty( $this->data['site_key'] ) ? '' : $this->data['site_key'],

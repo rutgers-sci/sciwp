@@ -128,7 +128,7 @@ class ET_Theme_Builder_Woocommerce_Product_Variable_Placeholder extends WC_Produ
 	 * `WC_Product_Variable->get_available_variation()` except for the checks which are removed
 	 * so placeholder value can be passed
 	 *
-	 * @since ??
+	 * @since 4.3.3
 	 *
 	 * @param int|object $variation not needed since it will be overwritten by placeholder variation
 	 *                   but it needs to be kept for compatibility with base class' method
@@ -188,7 +188,7 @@ class ET_Theme_Builder_Woocommerce_Product_Variable_Placeholder extends WC_Produ
 	 * extending WC_Product_Variable and set fixed value for get_available_variations() method
 	 *
 	 * @since 4.0.1
-	 * @since ?? `Replaced ET_Theme_Builder_Woocommerce_Product_Variable_Placeholder` with
+	 * @since 4.3.3 `Replaced ET_Theme_Builder_Woocommerce_Product_Variable_Placeholder` with
 	 *              `ET_Theme_Builder_Woocommerce_Product_Variation_Placeholder` (which is now called
 	 *              at `get_available_variations()` method and similar to `WC_Product_Variation`'s
 	 *              method with no check). It has all variation-required methods and properties

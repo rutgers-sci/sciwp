@@ -889,7 +889,7 @@ function et_builder_wc_is_non_product_post_type() {
  *
  * @since 3.29
  *
- * @since ?? Loads WC scripts on Shop, Product Category & Product Tags archives.
+ * @since 4.3.3 Loads WC scripts on Shop, Product Category & Product Tags archives.
  */
 function et_builder_wc_load_scripts() {
 	global $post;
@@ -1107,6 +1107,33 @@ function et_builder_set_product_content_status( $post_id ) {
 }
 
 /**
+ * Gets Woocommerce Tabs for the given Product ID.
+ *
+ * @since ??
+ */
+function et_builder_get_woocommerce_tabs() {
+	// Nonce verification.
+	et_core_security_check( 'edit_posts', 'et_builder_get_woocommerce_tabs', 'nonce' );
+
+	$_          = et_();
+	$product_id = $_->array_get( $_POST, 'product', 0 );
+
+	if ( null === $product_id || ! et_is_woocommerce_plugin_active() ) {
+		wp_send_json_error();
+	}
+
+	// Allow Latest Product ID which is a string 'latest'.
+	// `This Product` tabs are defined in et_fb_current_page_params()
+	if ( ! in_array( $product_id, array( 'current', 'latest' ) ) && 0 === absint( $product_id ) ) {
+		wp_send_json_error();
+	}
+
+	$tabs = ET_Builder_Module_Woocommerce_Tabs::get_tabs( array( 'product' => $product_id ) );
+
+	wp_send_json_success( $tabs );
+}
+
+/**
  * Returns alternative hook to make Woo Extra Product Options display fields in FE when TB is
  * enabled.
  *
@@ -1133,7 +1160,7 @@ function et_builder_trigger_extra_product_options( $hook ) {
  *
  * @param string $content
  *
- * @since ??
+ * @since 4.3.3
  *
  * @return string
  */
@@ -1156,6 +1183,36 @@ function et_builder_avoid_nested_shortcode_parsing( $content ) {
 	}
 
 	return $content;
+}
+
+/**
+ * Parses Product description to
+ *
+ * - converts any [embed][/embed] shortcode to its respective HTML.
+ * - strips `et_` shortcodes to avoid nested rendering in Woo Tabs module.
+ * - adds <p> tag to keep the paragraph sanity.
+ * - runs other shortcodes if any using do_shortcode.
+ *
+ * @since 4.4.1
+ *
+ * @param string $description
+ *
+ * @return string
+ */
+function et_builder_wc_parse_description( $description ) {
+	if ( ! is_string( $description ) ) {
+		return $description;
+	}
+
+
+	global $wp_embed;
+
+	$parsed_description = et_strip_shortcodes( $description );
+	$parsed_description = $wp_embed->run_shortcode( $parsed_description );
+	$parsed_description = do_shortcode( $parsed_description );
+	$parsed_description = wpautop( $parsed_description );
+
+	return $parsed_description;
 }
 
 /**
@@ -1225,6 +1282,11 @@ function et_builder_wc_init() {
 	add_action( 'et_update_post', 'et_builder_set_product_content_status' );
 
 	/*
+	 * Handle get Woocommerce tabs AJAX call initiated by Tabs checkbox in settings modal.
+	 */
+	add_action( 'wp_ajax_et_builder_get_woocommerce_tabs', 'et_builder_get_woocommerce_tabs' );
+
+	/*
 	 * Fix Woo Extra Product Options addon compatibility.
 	 * @see https://github.com/elegantthemes/Divi/issues/17909
 	 */
@@ -1235,6 +1297,8 @@ function et_builder_wc_init() {
 	 * @see https://github.com/elegantthemes/Divi/issues/18682
 	 */
 	add_filter( 'the_content', 'et_builder_avoid_nested_shortcode_parsing' );
+
+	add_filter( 'et_builder_wc_description', 'et_builder_wc_parse_description' );
 }
 
 et_builder_wc_init();
