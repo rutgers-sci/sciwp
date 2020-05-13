@@ -1177,7 +1177,7 @@ if ( ! function_exists( 'et_get_attachment_id_by_url_sql' ) ) :
 	/**
 	 * Generate SQL query syntax to compute attachment ID by URL.
 	 *
-	 * @since ??
+	 * @since 4.4.2
 	 *
 	 * @param string $url The URL being looked up.
 	 *
