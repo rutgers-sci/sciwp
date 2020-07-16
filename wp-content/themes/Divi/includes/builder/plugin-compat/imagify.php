@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Compatibility for the Imagify plugin.
  *
- * @since ??
+ * @since 4.4.6
  *
  * @link https://wordpress.org/plugins/imagify/
  */
@@ -15,7 +15,7 @@ class ET_Builder_Plugin_Compat_Imagify extends ET_Builder_Plugin_Compat_Base {
 	/**
 	 * Constructor.
 	 *
-	 * @since ??
+	 * @since 4.4.6
 	 */
 	public function __construct() {
 		$this->plugin_id = 'imagify/imagify.php';
@@ -25,7 +25,7 @@ class ET_Builder_Plugin_Compat_Imagify extends ET_Builder_Plugin_Compat_Base {
 	/**
 	 * Hook methods to WordPress.
 	 *
-	 * @since ??
+	 * @since 4.4.6
 	 *
 	 * @return void
 	 */
@@ -42,7 +42,7 @@ class ET_Builder_Plugin_Compat_Imagify extends ET_Builder_Plugin_Compat_Base {
 	/**
 	 * Overrides main style if needed. Please modify it accordingly in the future.
 	 *
-	 * @since ??
+	 * @since 4.4.6
 	 */
 	public function overrides_main_style() {
 		if ( ! function_exists( 'get_imagify_option' ) ) {
@@ -81,7 +81,7 @@ class ET_Builder_Plugin_Compat_Imagify extends ET_Builder_Plugin_Compat_Base {
 	/**
 	 * Overrides customizer style if needed. Please modify it accordingly in the future.
 	 *
-	 * @since ??
+	 * @since 4.4.6
 	 */
 	function overrides_customizer_styles() {
 		if ( ! function_exists( 'get_imagify_option' ) ) {

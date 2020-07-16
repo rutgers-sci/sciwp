@@ -32,7 +32,7 @@ class ET_Builder_Plugin_Compat_The_Events_Calendar extends ET_Builder_Plugin_Com
 	 * @todo once this issue is fixed in future version, run version_compare() to limit the scope of the hooked fix
 	 *
 	 * @since 3.10
-	 * @since ?? Bump loop_start hook priority to cover post hijacking issue.
+	 * @since 4.4.6 Bump loop_start hook priority to cover post hijacking issue.
 	 *
 	 * @return void
 	 */
@@ -109,7 +109,7 @@ class ET_Builder_Plugin_Compat_The_Events_Calendar extends ET_Builder_Plugin_Com
 	 * Maybe disable post spoofing when a TB body layout is used.
 	 *
 	 * @since 4.2.2
-	 * @since ?? Maybe disable post hijacking on Page Template v2.
+	 * @since 4.4.6 Maybe disable post hijacking on Page Template v2.
 	 */
 	function maybe_disable_post_spoofing() {
 		if ( et_theme_builder_overrides_layout( ET_THEME_BUILDER_BODY_LAYOUT_POST_TYPE ) ) {

@@ -2148,7 +2148,7 @@ img#about-image {
   color: #7cc68d !important; }
 
 .et_color_scheme_green .et-search-form, .et_color_scheme_green .nav li ul, .et_color_scheme_green .et_mobile_menu, .et_color_scheme_green .footer-widget li:before, .et_color_scheme_green .et_pb_pricing li:before {
-  border-color: #7cc68d !important; }
+  border-color: #7cc68d; }
 
 .et_color_scheme_pink a {
   color: #c37cc6; }
@@ -2166,7 +2166,7 @@ img#about-image {
   color: #c37cc6 !important; }
 
 .et_color_scheme_pink .et-search-form, .et_color_scheme_pink .nav li ul, .et_color_scheme_pink .et_mobile_menu, .et_color_scheme_pink .footer-widget li:before, .et_color_scheme_pink .et_pb_pricing li:before {
-  border-color: #c37cc6 !important; }
+  border-color: #c37cc6; }
 
 .et_color_scheme_red a {
   color: #cd5c5c; }
@@ -3940,6 +3940,7 @@ body #main-content .et_builder_inner_content > p {
  */
 @font-face {
   font-family: 'ETmodules';
+  font-display: swap;
   src: url("core/admin/fonts/modules.eot");
   src: url("core/admin/fonts/modules.eot?#iefix") format("embedded-opentype"), url("core/admin/fonts/modules.ttf") format("truetype"), url("core/admin/fonts/modules.woff") format("woff"), url("core/admin/fonts/modules.svg#ETmodules") format("svg");
   font-weight: normal;
@@ -9297,6 +9298,7 @@ span.comment_date {
   /* Blog Module Inner Modules */
   /* Color Layouts */
   /* Grid Layout */
+  /* Grid Layout - Phone */
   /* Video Format Overlay */
   /* Video Module */
   /* Column Adjustments */
@@ -10871,6 +10873,9 @@ span.comment_date {
   .et-db #et-boc .et-l .et_pb_blog_grid .column {
     float: left;
     max-width: 100%; }
+  @media all and (max-width: 767px) {
+    .et-db #et-boc .et-l .et_pb_blog_grid .column {
+      float: none; } }
   .et-db #et-boc .et-l .et_pb_blog_grid .et_pb_post {
     border: 1px solid #D8D8D8;
     padding: 19px;
@@ -13138,6 +13143,10 @@ span.comment_date {
   .et-db #et-boc .et-l .et_pb_fullwidth_slider .et_pb_container {
     width: 80%;
     max-width: 1080px; }
+  .et-db #et-boc .et-l .et_pb_slide_video .mejs-mediaelement {
+    position: relative; }
+    .et-db #et-boc .et-l .et_pb_slide_video .mejs-mediaelement .wp-video-shortcode {
+      display: block; }
   .et-db #et-boc .et-l .et-pb-arrow-prev,
   .et-db #et-boc .et-l .et-pb-arrow-next {
     position: absolute;
@@ -13618,6 +13627,8 @@ span.comment_date {
   .et-db #et-boc .et-l .et_pb_section_video:not(.et_pb_menu):not(.et_pb_fullwidth_menu) {
     overflow: hidden;
     position: relative; }
+  .et-db #et-boc .et-l .et_pb_column > .et_pb_section_video_bg {
+    z-index: -1; }
   .et-db #et-boc .et-l .et_pb_section_video_bg {
     visibility: visible;
     position: absolute;
@@ -13728,6 +13739,10 @@ span.comment_date {
     display: block; }
   .et-db #et-boc .et-l .et_pb_fullscreen {
     padding: 0; }
+  .et-db #et-boc .et-l header.et-l.et-l--header:after {
+    clear: both;
+    display: block;
+    content: ''; }
   .et-db #et-boc .et-l .et_pb_fullwidth_header .et_pb_fullwidth_header_container {
     position: relative;
     z-index: 3;
@@ -13888,7 +13903,11 @@ span.comment_date {
   .et-db #et-boc .et-l .et_pb_fullwidth_header .et_pb_fullwidth_header_container .header-content a.et_pb_button {
     margin-top: 20px;
     display: inline-block; }
-  .et-db #et-boc .et-l .et_pb_fullwidth_header .et_pb_fullwidth_header_container .et_pb_button_two {
+  .et-db #et-boc .et-l .et_pb_fullwidth_header .et_pb_fullwidth_header_container .et_pb_button_one {
+    margin-right: 15px; }
+  .et-db #et-boc .et-l .et_pb_fullwidth_header .et_pb_fullwidth_header_container.right .et_pb_button_one {
+    margin-right: 0; }
+  .et-db #et-boc .et-l .et_pb_fullwidth_header .et_pb_fullwidth_header_container.right .et_pb_button_two {
     margin-left: 15px; }
   .et-db #et-boc .et-l .et_pb_fullwidth_header .et_pb_fullwidth_header_overlay {
     content: "";
@@ -13919,9 +13938,11 @@ span.comment_date {
     z-index: 3;
     right: 0;
     bottom: 0;
-    left: 0; }
+    left: 0;
+    pointer-events: none; }
   .et-db #et-boc .et-l .et_pb_fullwidth_header .et_pb_fullwidth_header_scroll a {
-    display: inline-block; }
+    display: inline-block;
+    pointer-events: all; }
   .et-db #et-boc .et-l .et_pb_fullwidth_header .et_pb_fullwidth_header_scroll a .et-pb-icon {
     color: #FFF;
     font-size: 3.5em; }
@@ -13983,6 +14004,9 @@ span.comment_date {
     width: 100%; }
   .et-db #et-boc .et-l .et_pb_gallery_fullwidth .et_pb_gallery_item:first-child {
     display: block; }
+  .et-db #et-boc .et-l .et_pb_gallery .et_pb_bg_layout_light .et-pb-arrow-prev,
+  .et-db #et-boc .et-l .et_pb_gallery .et_pb_bg_layout_light .et-pb-arrow-next {
+    color: inherit; }
   .et-db #et-boc .et-l .et_pb_portfolio.et_pb_section_parallax .pagination,
   .et-db #et-boc .et-l .et_pb_portfolio.et_pb_section_parallax .wp-pagenavi,
   .et-db #et-boc .et-l .et_pb_portfolio.et_pb_section_video .pagination,
@@ -15422,13 +15446,21 @@ span.comment_date {
         font-size: 14px;
         margin: .4em 0 0; }
       .et-db #et-boc .et-l .et_pb_column_1_2 .et_pb_slide_image,
+      .et-db #et-boc .et-l .et_pb_column_1_2 .et_pb_slide_video,
       .et-db #et-boc .et-l .et_pb_column_3_5 .et_pb_slide_image,
+      .et-db #et-boc .et-l .et_pb_column_3_5 .et_pb_slide_video,
       .et-db #et-boc .et-l .et_pb_column_1_4 .et_pb_slide_image,
+      .et-db #et-boc .et-l .et_pb_column_1_4 .et_pb_slide_video,
       .et-db #et-boc .et-l .et_pb_column_1_5 .et_pb_slide_image,
+      .et-db #et-boc .et-l .et_pb_column_1_5 .et_pb_slide_video,
       .et-db #et-boc .et-l .et_pb_column_1_6 .et_pb_slide_image,
+      .et-db #et-boc .et-l .et_pb_column_1_6 .et_pb_slide_video,
       .et-db #et-boc .et-l .et_pb_column_1_3 .et_pb_slide_image,
+      .et-db #et-boc .et-l .et_pb_column_1_3 .et_pb_slide_video,
       .et-db #et-boc .et-l .et_pb_column_2_5 .et_pb_slide_image,
-      .et-db #et-boc .et-l .et_pb_column_3_8 .et_pb_slide_image {
+      .et-db #et-boc .et-l .et_pb_column_2_5 .et_pb_slide_video,
+      .et-db #et-boc .et-l .et_pb_column_3_8 .et_pb_slide_image,
+      .et-db #et-boc .et-l .et_pb_column_3_8 .et_pb_slide_video {
         top: auto;
         bottom: auto;
         position: relative; }
