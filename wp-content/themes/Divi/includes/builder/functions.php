@@ -8,7 +8,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '4.6.6' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '4.7.3' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -1213,6 +1213,31 @@ function et_fb_app_preferences_settings() {
 		'lv_modal_position_y'               => array(
 			'type'    => 'int',
 			'default' => 0,
+		),
+		// Re: "width/height": responsive dimensions presume portrait orientation.
+		'responsive_tablet_width'           => array(
+			'type'    => 'int',
+			'default' => 768,
+		),
+		'responsive_tablet_height'          => array(
+			'type'    => 'int',
+			'default' => 0,
+		),
+		'responsive_phone_width'            => array(
+			'type'    => 'int',
+			'default' => 400,
+		),
+		'responsive_phone_height'           => array(
+			'type'    => 'int',
+			'default' => 0,
+		),
+		'responsive_minimum_width'          => array(
+			'type'    => 'int',
+			'default' => 320,
+		),
+		'responsive_maximum_width'          => array(
+			'type'    => 'int',
+			'default' => 980,
 		),
 	);
 
@@ -5307,6 +5332,8 @@ if ( ! function_exists( 'et_pb_load_global_module' ) ) {
 					'post_type' => ET_BUILDER_LAYOUT_POST_TYPE,
 				)
 			);
+
+			$query->the_post(); // Call the_post() to properly configure post data.
 
 			wp_reset_postdata();
 			if ( ! empty( $query->post ) ) {
