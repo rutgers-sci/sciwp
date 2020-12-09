@@ -1,3 +1,30 @@
+version 4.7.4 ( updated 11-24-2020 )
+- Introduced hooks for add, undo, redo, jump to, and discard actions on settings modal.
+- Fixed Featured Images import and export for Library items.
+- Fixed some shortcut keys not being overridden in Select2 input fields.
+- Fixed incorrect selectors in Woo Add to Cart module that affected Border options.
+- Fixed empty logo image alt text when not set from divi builder settings.
+- Fixed sticky elements position resets to top-left if sticky tab active in mobile view.
+- Fixed woocommerce long description can't update in classic Divi builder.
+- Fixed an issue in Visual Builder where the preview width could extend beyond the maximum allowed Tablet View width.
+- Fixed the styles on the password-protected page.
+- Fixed broken layout block preview after undo and redo actions.
+- Fixed empty title in bar counters module.
+- Fixed LearnDash content not being rendered properly when Post Content module is being used on theme builder body layout.
+- Fixed broken layout on product tour tooltip modal.
+- Align reset variations link on the right.
+- Fixed excerpt length issue that occurred when Excerpt Length set to 0 and showing dots.
+- Fixed project bottom margin when Divi Builder is enabled.
+	* core/components/Portability.php
+	* epanel/custom_functions.php
+	* functions.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/functions.php
+	* includes/builder/module/FullwidthMenu.php
+	* includes/builder/module/Menu.php
+	* includes/builder/plugin-compat/sfwd-lms.php
+	* includes/builder/scripts/utils/utils.js
+
 version 4.7.3 ( updated 11-19-2020 )
 - Fixed javascript error in select font options.
 	* includes/builder/frontend-builder/bundle.js
