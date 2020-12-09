@@ -1,3 +1,39 @@
+version 4.7.5 ( updated 12-09-2020 )
+- Fixed Email module button looks incorrect in 1/6 and 1/5 columns layout.
+- Fixed email optin module's extra space above form when no title or description exists.
+- Fixed anchor link doesn't work on default Divi menu after WordPress 5.6 released.
+- Fixed Slider module controls when opacity or Sepia filter is enabled.
+- Fixed locked section's Paste Row issue.
+- Submit email opt-in form when users hit enter.
+- Fixed reCAPTCHA account selecting in Settings Modal.
+- Fixed section divider changes position on mobile and tablet in the option.
+- Fixed Fullwidth Slider image position when lazy loading image is enabled.
+- Fixed unwanted h2 font-size change on posts within the Builder content on mobile screens.
+- Fixed center text alignment of blurb module when image/icon placement is set to left and content is not enough.
+- Fixed Post Navigation Module link arrow custom CSS that was affecting the label too.
+- Fixed hash anchor to tab for woo tabs module.
+- Fixed mobile menu background color in VB.
+- Fixed blurb module strange right padding with RTL languages.
+- Fixed blog module excerpt for languages that don't have space between words.
+- Fixed PHP 8 libxml_disable_entity_loader deprecation warning by adding conditional statement to run the method only on PHP 7.4 and below.
+- Fixed preload key requests for modules.ttf.
+- Fixed Centered Inline Logo header style showing Cart icon on the left.
+- Fixed setting 1 column in footer showing in 2 columns in tablets.
+- Removed top & bottom margin that were wrongly applied to the WooCommerce Related Products module.
+	* core/components/Portability.php
+	* core/components/data/Utils.php
+	* core/components/lib/OAuth.php
+	* core/functions.php
+	* epanel/custom_functions.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/test/css-modules-compiler.js
+	* includes/builder/module/PostsNavigation.php
+	* includes/builder/module/woocommerce/Tabs.php
+	* includes/builder/plugin-compat/sfwd-lms.php
+	* includes/builder/scripts/frontend/global-functions.js
+	* includes/builder/scripts/frontend/scripts.js
+	* js/src/custom.js
+
 version 4.7.4 ( updated 11-24-2020 )
 - Introduced hooks for add, undo, redo, jump to, and discard actions on settings modal.
 - Fixed Featured Images import and export for Library items.
