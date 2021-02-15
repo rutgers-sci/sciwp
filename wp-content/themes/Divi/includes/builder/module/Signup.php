@@ -965,7 +965,9 @@ class ET_Builder_Module_Signup extends ET_Builder_Module_Type_WithSpamProtection
 					$ip_address = 'on' === $this->props['ip_address'] ? 'true' : 'false';
 
 					if ( false !== strpos( $list, '|' ) ) {
-						list( $account_name, $list ) = explode( '|', $list );
+						$exploded     = explode( '|', $list );
+						$list         = array_pop( $exploded ); // Pops the last index as the list id.
+						$account_name = implode( '|', $exploded ); // Rebuild the rest array as the account name, in case there is a vertical line `|` in the account name and it was exploded.
 					} else {
 						$account_name = self::get_account_name_for_list_id( $provider, $list );
 					}
@@ -1009,7 +1011,16 @@ class ET_Builder_Module_Signup extends ET_Builder_Module_Type_WithSpamProtection
 		return self::$_providers;
 	}
 
-	function render( $attrs, $content = null, $render_slug ) {
+	/**
+	 * Renders the module output.
+	 *
+	 * @param  array  $attrs       List of attributes.
+	 * @param  string $content     Content being processed.
+	 * @param  string $render_slug Slug of module that is used for rendering output.
+	 *
+	 * @return string
+	 */
+	public function render( $attrs, $content, $render_slug ) {
 		parent::render( $attrs, $content, $render_slug );
 
 		global $et_pb_half_width_counter;

@@ -70,7 +70,7 @@ class ET_Builder_Module_Fullwidth_Menu extends ET_Builder_Module {
 					'css'             => array(
 						'main'         => "{$this->main_css_element} ul li a",
 						'limited_main' => "{$this->main_css_element} ul li a, {$this->main_css_element} ul li",
-						'hover'        => "{$this->main_css_element} ul li:hover a",
+						'hover'        => "{$this->main_css_element} ul li:hover > a",
 					),
 					'line_height'     => array(
 						'default' => '1em',
@@ -640,7 +640,7 @@ class ET_Builder_Module_Fullwidth_Menu extends ET_Builder_Module {
 		$menuClass .= ( '' !== $args['submenu_direction'] ? sprintf( ' %s', esc_attr( $args['submenu_direction'] ) ) : '' );
 
 		$menu_args = array(
-			'theme_location' => 'primary-menu',
+			'theme_location' => '',
 			'container'      => '',
 			'fallback_cb'    => '',
 			'menu_class'     => $menuClass,
@@ -650,7 +650,15 @@ class ET_Builder_Module_Fullwidth_Menu extends ET_Builder_Module {
 
 		if ( '' !== $args['menu_id'] ) {
 			$menu_args['menu'] = (int) $args['menu_id'];
+		} else {
+			// When menu ID is not preset, let's use the primary menu.
+			// However, it's highly unlikely that the menu module won't have an ID.
+			// When were're using menu module via the `menu_id` we dont need the menu's theme location.
+			// We only need it when the menu doesn't have any ID and that occurs only used on headers and/or footers,
+			// Or any other static places where we need menu by location and not by ID.
+			$menu_args['theme_location'] = 'primary-menu';
 		}
+
 
 		$filter     = $is_fullwidth ? 'et_fullwidth_menu_args' : 'et_menu_args';
 		$primaryNav = wp_nav_menu( apply_filters( $filter, $menu_args ) );
@@ -812,9 +820,10 @@ class ET_Builder_Module_Fullwidth_Menu extends ET_Builder_Module {
 					'selector'    => str_replace( '%%order_class%%', '%%order_class%%:hover', $selector ),
 					'declaration' => sprintf(
 						'display: %1$s;',
-						esc_html( $hover )
+						esc_html( $hover_display )
 					),
 				);
+
 				ET_Builder_Element::set_style( $render_slug, $el_style );
 			}
 
@@ -1002,7 +1011,16 @@ class ET_Builder_Module_Fullwidth_Menu extends ET_Builder_Module {
 		);
 	}
 
-	function render( $attrs, $content = null, $render_slug ) {
+	/**
+	 * Renders the module output.
+	 *
+	 * @param  array  $attrs       List of attributes.
+	 * @param  string $content     Content being processed.
+	 * @param  string $render_slug Slug of module that is used for rendering output.
+	 *
+	 * @return string
+	 */
+	public function render( $attrs, $content, $render_slug ) {
 		$menu_slug         = self::$menu_slug;
 		$background_color  = $this->props['background_color'];
 		$menu_id           = $this->props['menu_id'];

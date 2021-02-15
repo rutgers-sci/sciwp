@@ -267,6 +267,7 @@ class ET_Builder_Module_Gallery extends ET_Builder_Module {
 					'caption_font_size',
 					'caption_all_caps',
 					'caption_letter_spacing',
+					'hover_icon',
 					'hover_overlay_color',
 					'auto',
 					'posts_number',
@@ -375,6 +376,7 @@ class ET_Builder_Module_Gallery extends ET_Builder_Module {
 				'type'            => 'select_icon',
 				'option_category' => 'configuration',
 				'class'           => array( 'et-pb-font-icon' ),
+				'depends_show_if' => 'off',
 				'tab_slug'        => 'advanced',
 				'toggle_slug'     => 'overlay',
 				'mobile_options'  => true,
@@ -496,7 +498,16 @@ class ET_Builder_Module_Gallery extends ET_Builder_Module {
 		return et_pb_get_alignment( $text_orientation );
 	}
 
-	function render( $attrs, $content = null, $render_slug ) {
+	/**
+	 * Renders the module output.
+	 *
+	 * @param  array  $attrs       List of attributes.
+	 * @param  string $content     Content being processed.
+	 * @param  string $render_slug Slug of module that is used for rendering output.
+	 *
+	 * @return string
+	 */
+	public function render( $attrs, $content, $render_slug ) {
 		$sticky                 = et_pb_sticky_options();
 		$multi_view             = et_pb_multi_view_options( $this );
 		$gallery_ids            = $this->props['gallery_ids'];

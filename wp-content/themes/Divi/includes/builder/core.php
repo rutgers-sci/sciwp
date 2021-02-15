@@ -1232,11 +1232,13 @@ function et_pb_retrieve_templates( $layout_type = 'layout', $module_width = '', 
 		)
 	);
 
-	$query->the_post(); // Call the_post() to properly configure post data.
-
-	wp_reset_postdata();
-
 	if ( ! empty( $query->posts ) ) {
+		// Call the_post() to properly configure post data. Make sure to call the_post() and
+		// wp_reset_postdata() only if the posts result exist to avoid unexpected issues.
+		$query->the_post();
+
+		wp_reset_postdata();
+
 		foreach ( $query->posts as $single_post ) {
 
 			if ( 'module' === $layout_type ) {
@@ -1616,11 +1618,13 @@ function et_pb_get_global_module() {
 			)
 		);
 
-		$query->the_post(); // Call the_post() to properly configure post data.
-
-		wp_reset_postdata();
-
 		if ( ! empty( $query->post ) ) {
+			// Call the_post() to properly configure post data. Make sure to call the_post() and
+			// wp_reset_postdata() only if the posts result exist to avoid unexpected issues.
+			$query->the_post();
+
+			wp_reset_postdata();
+
 			if ( 'skip' === $global_autop ) {
 				$post_content = $query->post->post_content;
 			} else {
@@ -2472,6 +2476,8 @@ function et_fb_get_nonces() {
 		'retrieveGlobalPresetsHistory'    => wp_create_nonce( 'et_builder_retrieve_global_presets_history' ),
 		'migrateModuleCustomizerPhaseTwo' => wp_create_nonce( 'et_builder_migrate_module_customizer_phase_two' ),
 		'getWoocommerceTabs'              => wp_create_nonce( 'et_builder_get_woocommerce_tabs' ),
+		'globalColorsSave'                => wp_create_nonce( 'et_builder_global_colors_save' ),
+		'defaultColorsUpdate'             => wp_create_nonce( 'et_builder_default_colors_update' ),
 	);
 
 	return array_merge( $nonces, $fb_nonces );
@@ -2550,7 +2556,7 @@ if ( ! function_exists( 'et_builder_email_add_account' ) ) :
 
 		$provider_slug = isset( $_POST['et_provider'] ) ? sanitize_text_field( $_POST['et_provider'] ) : '';
 		$name_key      = "et_{$provider_slug}_account_name";
-		$account_name  = isset( $_POST[ $name_key ] ) ? sanitize_text_field( $_POST[ $name_key ] ) : '';
+		$account_name  = isset( $_POST[ $name_key ] ) ? sanitize_text_field( stripslashes( $_POST[ $name_key ] ) ) : ''; // phpcs:ignore ET.Sniffs.ValidatedSanitizedInput.InputNotSanitized -- sanitize_text_field() function does sanitation.
 
 		if ( isset( $_POST['module_class'] ) && in_array( $_POST['module_class'], array( 'Signup', 'Contact_Form' ), true ) ) {
 			$module_class = sanitize_text_field( $_POST['module_class'] );
@@ -2592,6 +2598,14 @@ if ( ! function_exists( 'et_builder_email_add_account' ) ) :
 				'custom_fields'            => $_->array_get( $list_data, 'custom_fields', array() ),
 				'predefined_custom_fields' => ET_Core_API_Email_Providers::instance()->custom_fields_data(),
 			);
+		} elseif ( is_array( $result ) && isset( $result['redirect_url'] ) ) {
+			$result = array(
+				'error'                    => false,
+				'redirect_url'             => $result['redirect_url'],
+				'accounts_list'            => $_->array_get( $list_data, 'accounts_list', $list_data ),
+				'custom_fields'            => $_->array_get( $list_data, 'custom_fields', array() ),
+				'predefined_custom_fields' => ET_Core_API_Email_Providers::instance()->custom_fields_data(),
+			);
 		} else {
 			$result = array(
 				'error'                    => true,
@@ -2608,6 +2622,69 @@ if ( ! function_exists( 'et_builder_email_add_account' ) ) :
 	add_action( 'wp_ajax_et_builder_email_add_account', 'et_builder_email_add_account' );
 endif;
 
+if ( ! function_exists( 'et_builder_finish_oauth2_authorization' ) ) :
+	/**
+	 * Process the Email Optin OAuth2 authorization from builder / VB.
+	 * This will be loaded in a popup window.
+	 *
+	 * @since 4.9.0
+	 *
+	 * @throws Exception If the Provider or Account not exists.
+	 *
+	 * @return void
+	 */
+	function et_builder_finish_oauth2_authorization() {
+		if ( ! isset( $_GET['et-core-api-email-auth'] ) || empty( esc_attr( $_GET['et-core-api-email-auth'] ) ) ) { // // phpcs:ignore ET.Sniffs.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended -- logic for nonce checks are following
+			return;
+		}
+
+		if ( ! isset( $_GET['state'] ) || 0 !== strpos( $_GET['state'], 'ET_Core' ) ) { // phpcs:ignore ET.Sniffs.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended -- logic for nonce checks are following
+			return;
+		}
+
+		$authenticated = false;
+		try {
+			et_core_nonce_verified_previously();
+
+			list( $_, $name, $account, $nonce ) = explode( '|', sanitize_text_field( rawurldecode( $_GET['state'] ) ) ); // @phpcs:ignore ET.Sniffs.ValidatedSanitizedInput.InputNotSanitized -- Sanitized with sanitize_text_field
+
+			if ( ! $name || ! $account || ! $nonce ) {
+				return;
+			}
+
+			$_GET['nonce'] = $nonce;
+
+			et_core_security_check( 'manage_options', 'et_core_api_service_oauth2', 'nonce', '_GET' );
+
+			$providers = ET_Core_API_Email_Providers::instance();
+			if ( ! $providers->account_exists( $name, $account ) ) {
+				throw new Exception( __( 'Account not exists.', 'et_builder' ) );
+			}
+
+			$provider = $providers->get( $name, $account, 'builder' );
+			if ( ! $provider ) {
+				throw new Exception( __( 'Email provider not exists.', 'et_builder' ) );
+			}
+
+			$authenticated = $provider->is_authenticated();
+			if ( ! $authenticated ) {
+				$authenticated = $provider->authenticate();
+			}
+		} catch ( Exception $err ) {
+			$authenticated = false;
+		}
+		?>
+		<script type="text/javascript">
+			// Send a message to the window opener to close this window and process further.
+			if (window.opener) {
+				window.opener.postMessage({ authenticated: <?php echo $authenticated ? 1 : 0; ?> }, window.opener.location);
+			}
+		</script>
+		<?php
+		exit();
+	}
+	add_action( 'init', 'et_builder_finish_oauth2_authorization' );
+endif;
 
 if ( ! function_exists( 'et_builder_email_get_fields_from_post_data' ) ) :
 	/**
@@ -2699,8 +2776,6 @@ if ( ! function_exists( 'et_builder_email_get_lists_field_data' ) ) :
 endif;
 
 
-
-
 if ( ! function_exists( 'et_builder_email_get_lists' ) ) :
 	/**
 	 * Ajax handler for the Email Opt-in Module's "Fetch Lists" action.
@@ -2709,7 +2784,7 @@ if ( ! function_exists( 'et_builder_email_get_lists' ) ) :
 		et_core_security_check( 'manage_options', 'et_builder_email_fetch_lists_nonce' );
 		// phpcs:disable WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- BB is common abbreviation.
 		$provider_slug = isset( $_POST['et_provider'] ) ? sanitize_text_field( $_POST['et_provider'] ) : '';
-		$account_name  = isset( $_POST['et_account'] ) ? sanitize_text_field( $_POST['et_account'] ) : '';
+		$account_name  = isset( $_POST['et_account'] ) ? sanitize_text_field( stripslashes( $_POST['et_account'] ) ) : ''; // phpcs:ignore ET.Sniffs.ValidatedSanitizedInput.InputNotSanitized -- sanitize_text_field() function does sanitation.
 		$is_bb         = isset( $_POST['et_bb'] );
 
 		if ( empty( $provider_slug ) || empty( $account_name ) ) {
@@ -2839,7 +2914,7 @@ if ( ! function_exists( 'et_builder_email_remove_account' ) ) :
 		et_core_security_check( 'manage_options', 'et_builder_email_remove_account_nonce' );
 
 		$provider_slug = isset( $_POST['et_provider'] ) ? sanitize_text_field( $_POST['et_provider'] ) : '';
-		$account_name  = isset( $_POST['et_account'] ) ? sanitize_text_field( $_POST['et_account'] ) : '';
+		$account_name  = isset( $_POST['et_account'] ) ? sanitize_text_field( stripslashes( $_POST['et_account'] ) ) : ''; // phpcs:ignore ET.Sniffs.ValidatedSanitizedInput.InputNotSanitized -- sanitize_text_field() function does sanitation.
 
 		if ( isset( $_POST['module_class'] ) && in_array( $_POST['module_class'], array( 'Signup', 'Contact_Form' ), true ) ) {
 			$module_class = sanitize_text_field( $_POST['module_class'] );
@@ -2894,7 +2969,7 @@ if ( ! function_exists( 'et_pb_submit_subscribe_form' ) ) :
 		$use_spam_service = get_option( 'et_pb_signup_' . $checksum );
 
 		$provider_slug = $utils->array_get_sanitized( $_POST, 'et_provider' );
-		$account_name  = $utils->array_get_sanitized( $_POST, 'et_account' );
+		$account_name  = stripslashes( $utils->array_get_sanitized( $_POST, 'et_account' ) );
 		$custom_fields = $utils->array_get( $_POST, 'et_custom_fields', array() );
 		$provider      = $providers->get( $provider_slug, $account_name, 'builder' );
 

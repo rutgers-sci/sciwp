@@ -99,6 +99,7 @@ function et_esc_html_once( $text, $value = '' ) {
 require_once ET_BUILDER_DIR . 'compat/early.php';
 require_once ET_BUILDER_DIR . 'feature/gutenberg/blocks/Layout.php';
 require_once ET_BUILDER_DIR . 'feature/gutenberg/utils/Conversion.php';
+require_once ET_BUILDER_DIR . 'feature/gutenberg/EditorTypography.php';
 require_once ET_BUILDER_DIR . 'core.php';
 require_once ET_BUILDER_DIR . 'conditions.php';
 require_once ET_BUILDER_DIR . 'post/PostStack.php';
@@ -173,6 +174,8 @@ if ( wp_doing_ajax() && ! is_customize_preview() ) {
 			'et_theme_builder_api_import_theme_builder_step',
 			'et_pb_submit_subscribe_form',
 			'et_builder_get_woocommerce_tabs',
+			'et_builder_global_colors_save',
+			'et_builder_default_colors_update',
 		),
 	);
 
@@ -1147,7 +1150,7 @@ if ( ! function_exists( 'et_fb_enqueue_react' ) ) :
 	function et_fb_enqueue_react() {
 		$DEBUG         = defined( 'ET_DEBUG' ) && ET_DEBUG;
 		$core_scripts  = ET_CORE_URL . 'admin/js';
-		$react_version = '16.7.0';
+		$react_version = '16.12.0';
 
 		wp_dequeue_script( 'react' );
 		wp_dequeue_script( 'react-dom' );
