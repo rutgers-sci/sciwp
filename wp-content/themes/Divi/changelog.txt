@@ -1,3 +1,21 @@
+version 4.9.2 ( updated 03-12-2021 )
+- Fixed meta links color on the Front End not matching the Visual Builder in the Blog module when using grid layout.
+- Improved logic to allow the last and only row to be moved outside specialty sections.
+- Fixed copy paste styles issue on module with Global Color used.
+- Fixed lost hover state global color.
+- Fixed headers and footers created from Theme Builder were not respecting LearnDash focus mode.
+- Fixed a compatibility issue with EWWW Image Optimizer Lazy Load which caused an issue with all modules using AJAX pagination.
+- Added new fonts to the List of Google Fonts which available without API key.
+	* core/components/SupportCenter.php
+	* core/components/api/email/FluentCRM.php
+	* core/json-data/google-fonts.json
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/functions.php
+	* includes/builder/module/Blog.php
+	* includes/builder/plugin-compat/scripts/sfwd-lms.js
+	* includes/builder/plugin-compat/sfwd-lms.php
+	* includes/builder/scripts/frontend/scripts.js
+
 version 4.9.1 ( updated 03-03-2021 )
 - Fixed issue where you couldn't save a theme builder template when Yoast SEO plugin is activated.
 - Fixed global colors are not updated in presets.

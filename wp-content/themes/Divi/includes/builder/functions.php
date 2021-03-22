@@ -8,7 +8,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '4.9.1' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '4.9.2' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -10755,6 +10755,15 @@ function et_fb_add_additional_attrs( $processed_attrs, $output ) {
 	foreach ( $processed_attrs as $attr => $value ) {
 		if ( ! preg_match( '~_hover(_enabled)?$~', $attr ) ) {
 			continue;
+		}
+
+		// If value starts with `gcid-` then it's a global color ID.
+		if ( strpos( $value, 'gcid-' ) === 0 ) {
+			$global_color_info = et_builder_get_global_color_info( $value );
+
+			if ( ! empty( $global_color_info['color'] ) ) {
+				$value = esc_attr( $global_color_info['color'] );
+			}
 		}
 
 		$allowlisted_attrs[ $attr ] = $value;

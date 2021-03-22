@@ -12,7 +12,7 @@
 /**
  * Wrapper for FluentCRM's API.
  *
- * @since ??
+ * @since 4.9.1
  *
  * @package ET\Core\API\Email
  */
