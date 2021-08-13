@@ -2784,7 +2784,10 @@ class ET_Builder_Element {
 			$this->shortcode_atts();
 		}
 
-		$this->process_global_colors();
+		if ( ! $et_fb_processing_shortcode_object ) {
+			$this->process_global_colors();
+		}
+
 		$this->process_additional_options( $render_slug );
 		$this->process_custom_css_fields( $render_slug );
 
@@ -3576,9 +3579,9 @@ class ET_Builder_Element {
 			}
 		}
 
-		// Enable `Global Colors` inside preset attrs.
-		if ( ! empty( $module_preset_settings['global_colors_info'] ) ) {
-			$attrs['global_colors_info'] = $module_preset_settings['global_colors_info'];
+		// Decode all characters inside json object so it can be parsed correctly.
+		if ( ! empty( $attrs['global_colors_info'] ) ) {
+			$attrs['global_colors_info'] = str_replace( array( '%91', '%93', '%22' ), array( '[', ']', '"' ), $attrs['global_colors_info'] );
 		}
 
 		// Format FB component path
@@ -12073,7 +12076,7 @@ class ET_Builder_Element {
 		$fields['template_type']      = '';
 		$fields['inline_fonts']       = '';
 		$fields['collapsed']          = '';
-		$fields['global_colors_info'] = '';
+		$fields['global_colors_info'] = '{}';
 
 		// Default props of each modules are always identical; thus saves it as static prop
 		// so the next same modules doesn't need to process all of these again repetitively.

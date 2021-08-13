@@ -8,7 +8,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '4.9.10' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '4.9.11' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -1814,7 +1814,8 @@ function et_fb_process_to_shortcode( $object, $options = array(), $library_item_
 					}
 
 					// Encode backslash for custom CSS-related and json attributes.
-					$json_attributes = array( 'checkbox_options', 'radio_options', 'select_options' );
+					$json_attributes = array( 'checkbox_options', 'radio_options', 'select_options', 'conditional_logic_rules' );
+
 					if ( 0 === strpos( $attribute, 'custom_css_' ) || in_array( $attribute, $json_attributes, true ) ) {
 						$value = str_ireplace( '\\', '%92', $value );
 

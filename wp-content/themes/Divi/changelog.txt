@@ -1,3 +1,26 @@
+version 4.9.11 ( updated 08-11-2021 )
+- Fixed broken widget styles after WordPress 5.8 update.
+- Fixed an issue with Google Fonts sync where when there was an error in the API response (ex: invalid API Key) the sync would be attempted on each page load instead of once every 24 hours.
+- The setting of the video backgrounds In the Bar Counters module was fixed on VB.
+- Improved Global Colors performance.
+- Fixed Global Colors usage in presets.
+- Fixed fatal error when a post contains post excerpt dynamic content.
+- Fixes the "Invalid argument supplied for foreach()" warning.
+- Fixed a bug where conditional logic would return an error when the conditional value used the double-quote character.
+- Fixed fatal error on Extra theme when users open new Widget Block Editor.
+- Fixed theme settings color palette on Firefox.
+	* core/components/Portability.php
+	* epanel/css/panel.css
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/core.php
+	* includes/builder/feature/global-presets/Settings.php
+	* includes/builder/feature/gutenberg/blocks/Layout.php
+	* includes/builder/feature/woocommerce-modules.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/functions.php
+	* includes/builder/module/ContactFormItem.php
+	* includes/builder/scripts/src/builder.js
+
 version 4.9.10 ( updated 07-19-2021 )
 - Improved custom widget area feature on Widget page to adapt new Widget Block Editor.
 - Fixed builder crash when extending styles of child modules that were newly created.

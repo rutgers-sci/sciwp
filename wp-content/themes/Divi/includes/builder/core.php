@@ -112,7 +112,7 @@ if ( ! function_exists( 'et_builder_should_load_framework' ) ) :
 		}
 
 		$is_admin              = is_admin();
-		$required_admin_pages  = array( 'edit.php', 'post.php', 'post-new.php', 'admin.php', 'customize.php', 'edit-tags.php', 'admin-ajax.php', 'export.php', 'options-permalink.php', 'themes.php', 'revision.php' ); // list of admin pages where we need to load builder files.
+		$required_admin_pages  = array( 'edit.php', 'post.php', 'post-new.php', 'admin.php', 'customize.php', 'edit-tags.php', 'admin-ajax.php', 'export.php', 'options-permalink.php', 'themes.php', 'revision.php', 'widgets.php' ); // list of admin pages where we need to load builder files.
 		$specific_filter_pages = array( 'edit.php', 'post.php', 'post-new.php', 'admin.php', 'edit-tags.php' ); // list of admin pages where we need more specific filtering.
 		$post_id               = (int) et_()->array_get( $_GET, 'post', 0 );
 
@@ -5091,25 +5091,39 @@ function et_builder_old_fonts_mapping() {
 
 if ( ! function_exists( 'et_builder_google_fonts_sync' ) ) :
 	/**
-	 * Sync google fonts. clear font cache every 12 hours.
+	 * Sync Google Fonts. Clear font cache every 24 hours.
 	 */
 	function et_builder_google_fonts_sync() {
 		$google_api_key = et_pb_get_google_api_key();
 
+		// Bail early if 'fonts_cache_status' transient is not expired.
+		if ( false !== get_transient( 'fonts_cache_status' ) ) {
+			return;
+		}
+
+		// Bail early if Google API Key is empty or Google Fonts is disabled.
 		if ( '' === $google_api_key || ! et_core_use_google_fonts() ) {
 			return;
 		}
 
+		// Set 'fonts_cache_status' transient to true, marking the font cache update attempt to avoid making the request more than once a day in case of an error.
+		set_transient( 'fonts_cache_status', true, 24 * HOUR_IN_SECONDS );
+
 		$google_fonts_api_url  = sprintf( 'https://www.googleapis.com/webfonts/v1/webfonts?key=%1$s', $google_api_key );
 		$google_fonts_response = wp_remote_get( esc_url_raw( $google_fonts_api_url ) );
 
-		$google_fonts = is_array( $google_fonts_response ) ? et_core_parse_google_fonts_json( wp_remote_retrieve_body( $google_fonts_response ) ) : array();
+		// Check if the response is an array and we have a valid 200 response, otherwise log an error.
+		if ( is_array( $google_fonts_response ) && 200 === $google_fonts_response['response']['code'] ) {
+			$google_fonts = wp_remote_retrieve_body( $google_fonts_response );
 
-		if ( ! empty( $google_fonts ) ) {
-			// save google fonts.
-			update_option( 'et_google_fonts_cache', $google_fonts );
-			// save google fonts cache status.
-			set_transient( 'fonts_cache_status', 'valid', 12 * HOUR_IN_SECONDS );
+			if ( ! empty( $google_fonts ) ) {
+				// Save Google Fonts.
+				update_option( 'et_google_fonts_cache', $google_fonts );
+			}
+		} else {
+			et_debug( 'An unkown error has occured while trying to retrieve the fonts from the Google Fonts API. Please ensure your Google API Key is valid and active.' );
+
+			return;
 		}
 	}
 endif;
@@ -5124,10 +5138,7 @@ if ( ! function_exists( 'et_builder_get_google_fonts' ) ) :
 			return array();
 		}
 
-		// Update fonts cache daily.
-		if ( 'valid' !== get_transient( 'fonts_cache_status' ) ) {
-			et_builder_google_fonts_sync();
-		}
+		et_builder_google_fonts_sync();
 
 		$google_fonts_cache = get_option( 'et_google_fonts_cache', array() );
 

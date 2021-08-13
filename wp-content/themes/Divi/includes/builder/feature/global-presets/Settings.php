@@ -216,7 +216,34 @@ class ET_Builder_Global_Presets_Settings {
 			$result = (array) $this->_settings->{$module_slug}->presets->{$real_preset_id}->settings;
 		}
 
+		$result = $this->maybe_set_global_colors( $result );
+
 		return $result;
+	}
+
+	/**
+	 * Returns Global Presets settings with global colors injected.
+	 *
+	 * @since ??
+	 *
+	 * @param array $attrs - The module attributes.
+	 *
+	 * @return array
+	 */
+	public function maybe_set_global_colors( $attrs ) {
+		if ( empty( $attrs['global_colors_info'] ) ) {
+			return $attrs;
+		}
+
+		$gc_info = json_decode( $attrs['global_colors_info'], true );
+
+		foreach ( $gc_info as $color_id => $option_names ) {
+			foreach ( $option_names as $option_name ) {
+				$attrs[ $option_name ] = $color_id;
+			}
+		}
+
+		return $attrs;
 	}
 
 	/**
@@ -475,6 +502,7 @@ class ET_Builder_Global_Presets_Settings {
 	/**
 	 * Performs Global Presets format normalization.
 	 * Usually used to cast format from array to object
+	 * Also used to normalize global colors
 	 *
 	 * @since 4.5.0
 	 *
@@ -516,6 +544,23 @@ class ET_Builder_Global_Presets_Settings {
 
 						foreach ( $settings_filtered as $setting_name => $value ) {
 							$result->$module->presets->$preset_id->settings->$setting_name = $value;
+						}
+
+						// Insert correct global color IDs for affected settings.
+						$global_colors_info = isset( $settings_filtered['global_colors_info'] ) ? json_decode( $settings_filtered['global_colors_info'], true ) : array();
+
+						if ( ! empty( $global_colors_info ) ) {
+							foreach ( $global_colors_info as $color_id => $options_list ) {
+								if ( empty( $options_list ) ) {
+									continue;
+								}
+
+								foreach ( $options_list as $global_color_option ) {
+									if ( isset( $result->$module->presets->$preset_id->settings->$global_color_option ) ) {
+										$result->$module->presets->$preset_id->settings->$global_color_option = $color_id;
+									}
+								}
+							}
 						}
 					} else {
 						$result->$module->presets->$preset->settings = (object) array();
