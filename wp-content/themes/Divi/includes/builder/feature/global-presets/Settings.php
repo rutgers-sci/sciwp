@@ -81,7 +81,17 @@ class ET_Builder_Global_Presets_Settings {
 
 	protected function _register_hooks() {
 		add_action( 'et_after_version_rollback', array( $this, 'after_version_rollback' ), 10, 3 );
-		add_action( 'et_builder_modules_loaded', array( $this, 'migrate_custom_defaults' ), 100 );
+
+		// If migration is needed, ensure that all modules get fully loaded.
+		// phpcs:disable PEAR.Functions.FunctionCallSignature -- Anonymous functions.
+		add_action( 'et_builder_framework_loaded', function() {
+			if ( ! self::are_custom_defaults_migrated() ) {
+				add_filter( 'et_builder_should_load_all_module_data', '__return_true' );
+			}
+		});
+		// phpcs:enable
+
+		add_action( 'et_builder_ready', array( $this, 'migrate_custom_defaults' ), 100 );
 	}
 
 	/**
@@ -224,7 +234,7 @@ class ET_Builder_Global_Presets_Settings {
 	/**
 	 * Returns Global Presets settings with global colors injected.
 	 *
-	 * @since ??
+	 * @since 4.10.0
 	 *
 	 * @param array $attrs - The module attributes.
 	 *
@@ -363,8 +373,10 @@ class ET_Builder_Global_Presets_Settings {
 			return;
 		}
 
+		$this->_settings = (array) $this->_settings;
+
 		// Re-run migration to Global Presets if a user has not yet saved any presets.
-		if ( et_is_builder_plugin_active() && ! empty( (array) $this->_settings ) ) {
+		if ( et_is_builder_plugin_active() && ! empty( $this->_settings ) ) {
 			et_update_option( self::CUSTOM_DEFAULTS_MIGRATED_FLAG, true );
 			return;
 		}

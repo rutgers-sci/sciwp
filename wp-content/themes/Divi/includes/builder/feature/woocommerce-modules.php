@@ -1322,6 +1322,20 @@ function et_builder_wc_init() {
 	add_filter( 'the_content', 'et_builder_avoid_nested_shortcode_parsing' );
 
 	add_filter( 'et_builder_wc_description', 'et_builder_wc_parse_description' );
+
+	/*
+	 * In the case of dynamic module framework's shortcode manager
+	 * we need to fire this hook on its own,
+	 */
+	if ( ! et_builder_should_load_all_module_data() ) {
+		add_action(
+			'et_builder_module_lazy_shortcodes_registered',
+			[
+				'ET_Builder_Module_Woocommerce_Cart_Notice',
+				'disable_default_notice',
+			]
+		);
+	}
 }
 
 et_builder_wc_init();

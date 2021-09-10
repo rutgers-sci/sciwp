@@ -507,7 +507,7 @@ h1#epanel-title {
 	border-radius: 3px;
 	border: none;
 	box-shadow: none;
-	background: #F1F5F9;
+	background-color: #F1F5F9;
 	padding: 13px;
 	font-size: 13px;
 	color: #4c5866;
@@ -541,6 +541,7 @@ h1#epanel-title {
 
 .et-epanel-box select {
 	width: 55%;
+	line-height: 21px;
 }
 
 /**

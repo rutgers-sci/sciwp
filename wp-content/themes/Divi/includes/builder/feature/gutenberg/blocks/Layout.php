@@ -167,7 +167,7 @@ class ET_GB_Block_Layout {
 	 * Filter rendered blocks on FE.
 	 *
 	 * @since 4.1.0
-	 * @since ?? Filter core/post-excerpt rendered output.
+	 * @since 4.10.0 Filter core/post-excerpt rendered output.
 	 *
 	 * @param string $block_content Saved & serialized block data.
 	 * @param array  $block         Block info.
@@ -204,7 +204,7 @@ class ET_GB_Block_Layout {
 	 * Filter post excerpt of REST API request.
 	 *
 	 * @since 4.9.10
-	 * @since ?? Only filter post excerpt rendered from REST API request. This API request
+	 * @since 4.10.0 Only filter post excerpt rendered from REST API request. This API request
 	 *               is being used by Block Editor.
 	 *
 	 * @param string $post_excerpt Current post excerpt rendered.
@@ -224,7 +224,7 @@ class ET_GB_Block_Layout {
 	 * Get rendered post excerpt built with builder. Always return rendered $post_excerpt
 	 * because it's already wrapped with Post Excerpt block wrapper.
 	 *
-	 * @since ??
+	 * @since 4.10.0
 	 *
 	 * @param string  $post_excerpt Current rendered post excerpt.
 	 * @param boolean $is_wrapped   Whether the post excerpt is wrapped or not.
@@ -374,14 +374,8 @@ class ET_GB_Block_Layout {
 			);
 		}
 
-		// frontend-builder-scripts.js handle might change when scripts are minified
-		$builder_script_handle = apply_filters(
-			'et_builder_modules_script_handle',
-			'et-builder-modules-script'
-		);
-
 		wp_localize_script(
-			$builder_script_handle,
+			et_get_combined_script_handle(),
 			'ETBlockLayoutModulesScript',
 			array(
 				// blockId is dash separated alphanumeric uuid value

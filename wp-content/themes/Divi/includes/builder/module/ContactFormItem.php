@@ -402,7 +402,7 @@ class ET_Builder_Module_Contact_Form_Item extends ET_Builder_Module {
 		$form_field_text_color      = $this->props['form_field_text_color'];
 		$checkbox_checked           = $this->props['checkbox_checked'];
 		$checkbox_options           = $this->props['checkbox_options'];
-		$booleancheckbox_options    = $this->props['booleancheckbox_options'];
+		$booleancheckbox_options    = isset( $this->props['booleancheckbox_options'] ) ? $this->props['booleancheckbox_options'] : false;
 		$radio_options              = $this->props['radio_options'];
 		$select_options             = $this->props['select_options'];
 		$min_length                 = $this->props['min_length'];
@@ -925,4 +925,6 @@ class ET_Builder_Module_Contact_Form_Item extends ET_Builder_Module {
 	}
 }
 
-new ET_Builder_Module_Contact_Form_Item();
+if ( et_builder_should_load_all_module_data() ) {
+	new ET_Builder_Module_Contact_Form_Item();
+}
