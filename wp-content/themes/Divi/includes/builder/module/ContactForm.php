@@ -11,6 +11,7 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 		$this->vb_support      = 'on';
 		$this->child_slug      = 'et_pb_contact_field';
 		$this->child_item_text = esc_html__( 'Field', 'et_builder' );
+		$this->_use_unique_id  = true;
 
 		$this->main_css_element = '%%order_class%%.et_pb_contact_form_container';
 
@@ -527,8 +528,12 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 						'required_mark' => 'required' === self::$_->array_get( $value, 'required_mark', 'required' ) ? 'on' : 'off',
 					);
 
-					// check all the required fields, generate error message if required field is empty.
-					$field_value = isset( $_POST[ $value['field_id'] ] ) ? trim( sanitize_text_field( $_POST[ $value['field_id'] ] ) ) : '';
+					// Check all the required fields, generate error message if required field is empty.
+					// Use `sanitize_textarea_field` for message field content to preserve newlines.
+					$sanitize_callback = isset( $value['original_id'] ) && 'text' === $value['field_type'] ? 'sanitize_textarea_field' : 'sanitize_text_field';
+
+					// phpcs:ignore ET.Sniffs.ValidatedSanitizedInput.InputNotSanitized -- The $sanitize_callback will sanitize the field value.
+					$field_value = isset( $_POST[ $value['field_id'] ] ) ? trim( call_user_func( $sanitize_callback, $_POST[ $value['field_id'] ] ) ) : '';
 
 					if ( 'required' === $value['required_mark'] && empty( $field_value ) && ! is_numeric( $field_value ) ) {
 						$et_error_message .= sprintf( '<p class="et_pb_contact_error_text">%1$s</p>', esc_html__( 'Make sure you fill in all required fields.', 'et_builder' ) );
@@ -656,6 +661,36 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 			$et_error_message = sprintf( '<p>%1$s</p>', et_core_esc_previously( $success_message ) );
 		}
 
+		// Contact form should always have the ID. Use saved ID or generate automatically.
+		$module_id = '' !== $this->module_id( false ) ? $this->module_id( false ) : 'et_pb_contact_form_' . $et_pb_contact_form_num;
+		$unique_id = self::$_->array_get( $this->props, '_unique_id' );
+
+		if ( $nonce_result ) {
+			// Additional info to be passed on the `et_pb_contact_form_submit` hook.
+			$contact_form_info = array(
+				'contact_form_id'        => $module_id,
+				'contact_form_number'    => $et_pb_contact_form_num,
+				'contact_form_unique_id' => $unique_id,
+				'module_slug'            => $render_slug,
+				'post_id'                => $this->get_the_ID(),
+			);
+
+			/**
+			 * Fires after contact form is submitted.
+			 *
+			 * Use $et_contact_error variable to check whether there is an error on the form
+			 * entry submit process or not.
+			 *
+			 * @since ??
+			 *
+			 * @param array $processed_fields_values Processed fields values.
+			 * @param array $et_contact_error        Whether there is an error on the form
+			 *                                       entry submit process or not.
+			 * @param array $contact_form_info       Additional contact form info.
+			 */
+			do_action( 'et_pb_contact_form_submit', $processed_fields_values, $et_contact_error, $contact_form_info );
+		}
+
 		$form        = '';
 		$current_url = ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 
@@ -687,11 +722,11 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 				'
 				<div class="et_pb_contact">
 					<form class="et_pb_contact_form clearfix" method="post" action="%1$s">
-						%8$s
-						<input type="hidden" value="et_contact_proccess" name="et_pb_contactform_submit_%7$s"/>
+						%7$s
+						<input type="hidden" value="et_contact_proccess" name="et_pb_contactform_submit_%6$s"/>
 						<div class="et_contact_bottom_container">
 							%2$s
-							<button type="submit" name="et_builder_submit_button" class="et_pb_contact_submit et_pb_button%6$s"%5$s%9$s%10$s%11$s>%3$s</button>
+							<button type="submit" name="et_builder_submit_button" class="et_pb_contact_submit et_pb_button"%5$s%8$s%9$s%10$s>%3$s</button>
 						</div>
 						%4$s
 					</form>
@@ -704,12 +739,11 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 					' data-icon="%1$s"',
 					esc_attr( et_pb_process_font_icon( $custom_icon ) )
 				) : '', // #5
-				'' !== $custom_icon && 'on' === $button_custom ? ' et_pb_custom_button_icon' : '',
 				esc_attr( $et_pb_contact_form_num ),
 				$content,
 				'' !== $custom_icon_tablet && 'on' === $button_custom ? sprintf( ' data-icon-tablet="%1$s"', esc_attr( et_pb_process_font_icon( $custom_icon_tablet ) ) ) : '',
-				'' !== $custom_icon_phone && 'on' === $button_custom ? sprintf( ' data-icon-phone="%1$s"', esc_attr( et_pb_process_font_icon( $custom_icon_phone ) ) ) : '', // #10
-				$multi_view_data_attr
+				'' !== $custom_icon_phone && 'on' === $button_custom ? sprintf( ' data-icon-phone="%1$s"', esc_attr( et_pb_process_font_icon( $custom_icon_phone ) ) ) : '',
+				$multi_view_data_attr // #10
 			);
 		}
 
@@ -725,12 +759,9 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 		// Remove automatically added classname
 		$this->remove_classname( $render_slug );
 
-		// Contact form should always have the ID. Use saved ID or generate automatically
-		$module_id = '' !== $this->module_id( false ) ? $this->module_id( false ) : 'et_pb_contact_form_' . $et_pb_contact_form_num;
-
 		$output = sprintf(
 			'
-			<div id="%4$s" class="%5$s" data-form_unique_num="%6$s"%7$s>
+			<div id="%4$s" class="%5$s" data-form_unique_num="%6$s" data-form_unique_id="%10$s"%7$s>
 				%9$s
 				%8$s
 				%1$s
@@ -742,11 +773,12 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 			$et_error_message,
 			$form,
 			esc_attr( $module_id ),
-			$this->module_classname( $render_slug ),
+			$this->module_classname( $render_slug ), // #5
 			esc_attr( $et_pb_contact_form_num ),
 			'on' === $use_redirect && '' !== $redirect_url ? sprintf( ' data-redirect_url="%1$s"', esc_attr( $redirect_url ) ) : '',
 			$video_background,
-			$parallax_image_background
+			$parallax_image_background,
+			esc_attr( $unique_id ) // #10
 		);
 
 		return $output;
