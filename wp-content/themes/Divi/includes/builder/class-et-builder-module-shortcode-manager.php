@@ -17,26 +17,26 @@ class ET_Builder_Module_Shortcode_Manager {
 	/**
 	 * Modules container.
 	 *
-	 * @access private
+	 * @access public
 	 * @var array
 	 */
-	private $_modules_map = [];
+	public static $modules_map = [];
 
 	/**
 	 * WooCommerce modules container.
 	 *
-	 * @access private
+	 * @access public
 	 * @var array
 	 */
-	private $_woo_modules_map = [];
+	public static $woo_modules_map = [];
 
 	/**
 	 * Structural Modules container.
 	 *
-	 * @access private
+	 * @access public
 	 * @var array
 	 */
-	private $_structural_modules_map = [];
+	public static $structural_modules_map = [];
 
 	/**
 	 * Initialize shortcode manager class.
@@ -51,6 +51,27 @@ class ET_Builder_Module_Shortcode_Manager {
 		$this->register_structural_modules();
 		$this->register_woo_modules();
 		$this->register_shortcode();
+	}
+
+	/**
+	 * Get modules map.
+	 *
+	 * @since 4.14.5
+	 *
+	 * @param string $type Modules map type.
+	 *
+	 * @return array Modules map.
+	 */
+	public static function get_modules_map( $type = false ) {
+		if ( 'woo_modules' === $type ) {
+			return self::$woo_modules_map;
+		}
+
+		if ( 'structural_modules' === $type ) {
+			return self::$structural_modules_map;
+		}
+
+		return self::$modules_map;
 	}
 
 	/**
@@ -180,9 +201,6 @@ class ET_Builder_Module_Shortcode_Manager {
 			'et_pb_search'                      => [
 				'classname' => 'ET_Builder_Module_Search',
 			],
-			'et_pb_shop'                        => [
-				'classname' => 'ET_Builder_Module_Shop',
-			],
 			'et_pb_sidebar'                     => [
 				'classname' => 'ET_Builder_Module_Sidebar',
 			],
@@ -251,7 +269,8 @@ class ET_Builder_Module_Shortcode_Manager {
 		 * @param array $additional_modules Additional modules.
 		 */
 		$additional_modules = apply_filters( 'et_module_classes', [] );
-		$this->_modules_map = array_merge( $this->_modules_map, $modules, $additional_modules );
+
+		self::$modules_map = array_merge( self::$modules_map, $modules, $additional_modules );
 	}
 
 	/**
@@ -309,7 +328,8 @@ class ET_Builder_Module_Shortcode_Manager {
 		 * @param array $additional_modules Additional modules.
 		 */
 		$additional_modules = apply_filters( 'et_fullwidth_module_classes', [] );
-		$this->_modules_map = array_merge( $this->_modules_map, $modules, $additional_modules );
+
+		self::$modules_map = array_merge( self::$modules_map, $modules, $additional_modules );
 	}
 
 	/**
@@ -348,8 +368,9 @@ class ET_Builder_Module_Shortcode_Manager {
 		 *
 		 * @param array $additional_modules Additional modules.
 		 */
-		$additional_modules            = apply_filters( 'et_structural_module_classes', [] );
-		$this->_structural_modules_map = array_merge( $modules, $additional_modules );
+		$additional_modules = apply_filters( 'et_structural_module_classes', [] );
+
+		self::$structural_modules_map = array_merge( $modules, $additional_modules );
 	}
 
 	/**
@@ -366,53 +387,80 @@ class ET_Builder_Module_Shortcode_Manager {
 		}
 
 		$woo_modules = [
-			'et_pb_wc_add_to_cart'      => [
+			'et_pb_wc_add_to_cart'              => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Add_To_Cart',
 			],
-			'et_pb_wc_additional_info'  => [
+			'et_pb_wc_additional_info'          => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Additional_Info',
 			],
-			'et_pb_wc_breadcrumb'       => [
+			'et_pb_wc_breadcrumb'               => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Breadcrumb',
 			],
-			'et_pb_wc_cart_notice'      => [
+			'et_pb_wc_cart_notice'              => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Cart_Notice',
 			],
-			'et_pb_wc_description'      => [
+			'et_pb_wc_description'              => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Description',
 			],
-			'et_pb_wc_gallery'          => [
+			'et_pb_wc_gallery'                  => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Gallery',
 			],
-			'et_pb_wc_images'           => [
+			'et_pb_wc_images'                   => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Images',
 			],
-			'et_pb_wc_meta'             => [
+			'et_pb_wc_meta'                     => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Meta',
 			],
-			'et_pb_wc_price'            => [
+			'et_pb_wc_price'                    => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Price',
 			],
-			'et_pb_wc_rating'           => [
+			'et_pb_wc_rating'                   => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Rating',
 			],
-			'et_pb_wc_related_products' => [
+			'et_pb_wc_related_products'         => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Related_Products',
 			],
-			'et_pb_wc_reviews'          => [
+			'et_pb_wc_reviews'                  => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Reviews',
 			],
-			'et_pb_wc_stock'            => [
+			'et_pb_wc_stock'                    => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Stock',
 			],
-			'et_pb_wc_tabs'             => [
+			'et_pb_wc_tabs'                     => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Tabs',
 			],
-			'et_pb_wc_title'            => [
+			'et_pb_wc_title'                    => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Title',
 			],
-			'et_pb_wc_upsells'          => [
+			'et_pb_wc_upsells'                  => [
 				'classname' => 'ET_Builder_Module_Woocommerce_Upsells',
+			],
+			'et_pb_wc_cart_products'            => [
+				'classname' => 'ET_Builder_Module_Woocommerce_Cart_Products',
+			],
+			'et_pb_wc_cross_sells'              => [
+				'classname' => 'ET_Builder_Module_Woocommerce_Cross_Sells',
+			],
+			'et_pb_wc_cart_totals'              => [
+				'classname' => 'ET_Builder_Module_Woocommerce_Cart_Totals',
+			],
+			'et_pb_wc_checkout_billing'         => [
+				'classname' => 'ET_Builder_Module_Woocommerce_Checkout_Billing',
+			],
+			'et_pb_wc_checkout_shipping'        => [
+				'classname' => 'ET_Builder_Module_Woocommerce_Checkout_Shipping',
+			],
+			'et_pb_wc_checkout_order_details'   => [
+				'classname' => 'ET_Builder_Module_Woocommerce_Checkout_Order_Details',
+			],
+			'et_pb_wc_checkout_payment_info'    => [
+				'classname' => 'ET_Builder_Module_Woocommerce_Checkout_Payment_Info',
+			],
+			'et_pb_wc_checkout_additional_info' => [
+				'classname' => 'ET_Builder_Module_Woocommerce_Checkout_Additional_Info',
+			],
+			'et_pb_shop'                        => [
+				'classname' => 'ET_Builder_Module_Shop',
 			],
 		];
 
@@ -429,9 +477,10 @@ class ET_Builder_Module_Shortcode_Manager {
 		 *
 		 * @param array $additional_modules Additional modules.
 		 */
-		$additional_modules     = apply_filters( 'et_woo_module_classes', [] );
-		$this->_woo_modules_map = $woo_modules;
-		$this->_modules_map     = array_merge( $this->_modules_map, $woo_modules, $additional_modules );
+		$additional_modules = apply_filters( 'et_woo_module_classes', [] );
+
+		self::$woo_modules_map = $woo_modules;
+		self::$modules_map     = array_merge( self::$modules_map, $woo_modules, $additional_modules );
 	}
 
 	/**
@@ -502,7 +551,7 @@ class ET_Builder_Module_Shortcode_Manager {
 	public function register_lazy_shortcodes() {
 		// A fake handler has to be registered for every shortcode, otherways
 		// code will exit early and the pre_do_shortcode_tag hook won't be executed.
-		foreach ( $this->_modules_map as $shortcode_slug => $module_data ) {
+		foreach ( self::$modules_map as $shortcode_slug => $module_data ) {
 			add_shortcode( $shortcode_slug, '__return_empty_string' );
 		}
 
@@ -550,7 +599,7 @@ class ET_Builder_Module_Shortcode_Manager {
 
 		// Only compute this once.
 		if ( empty( $module_slugs ) ) {
-			$module_slugs = array_keys( $this->_woo_modules_map );
+			$module_slugs = array_keys( self::$woo_modules_map );
 		}
 
 		return array_unique( array_merge( $loaded, $module_slugs ) );
@@ -569,7 +618,7 @@ class ET_Builder_Module_Shortcode_Manager {
 
 		// Only compute this once.
 		if ( empty( $module_slugs ) ) {
-			$module_slugs = array_keys( $this->_modules_map );
+			$module_slugs = array_keys( self::$modules_map );
 		}
 
 		return array_unique( array_merge( $loaded, $module_slugs ) );
@@ -588,7 +637,7 @@ class ET_Builder_Module_Shortcode_Manager {
 
 		// Only compute this once.
 		if ( empty( $structural_module_slugs ) ) {
-			$structural_module_slugs = array_keys( $this->_structural_modules_map );
+			$structural_module_slugs = array_keys( self::$structural_modules_map );
 		}
 
 		return array_unique( array_merge( $loaded, $structural_module_slugs ) );
@@ -618,12 +667,12 @@ class ET_Builder_Module_Shortcode_Manager {
 	 */
 	public function maybe_load_module_from_slug( $tag ) {
 
-		if ( empty( $this->_modules_map[ $tag ] ) ) {
+		if ( empty( self::$modules_map[ $tag ] ) ) {
 			// None of our business.
 			return;
 		}
 
-		$module =& $this->_modules_map[ $tag ];
+		$module =& self::$modules_map[ $tag ];
 
 		if ( empty( $module['instance'] ) ) {
 			/**

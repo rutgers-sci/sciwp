@@ -589,7 +589,7 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 				? $email
 				: get_site_option( 'admin_email' );
 
-			$et_site_name = get_option( 'blogname' );
+			$et_site_name = strval( get_option( 'blogname' ) );
 
 			$contact_name = isset( $processed_fields_values['name'] ) ? stripslashes( sanitize_text_field( $processed_fields_values['name']['value'] ) ) : '';
 
@@ -681,7 +681,7 @@ class ET_Builder_Module_Contact_Form extends ET_Builder_Module_Type_WithSpamProt
 			 * Use $et_contact_error variable to check whether there is an error on the form
 			 * entry submit process or not.
 			 *
-			 * @since ??
+			 * @since 4.13.1
 			 *
 			 * @param array $processed_fields_values Processed fields values.
 			 * @param array $et_contact_error        Whether there is an error on the form

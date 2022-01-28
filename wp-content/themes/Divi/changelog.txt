@@ -1,3 +1,354 @@
+version 4.14.7 ( updated 01-20-2022 )
+- Fixed an issue where the Global Presets history didn't update with every action causing changes to not save.
+- Fixed lazy loading images to occur only on below the fold content when Divi Builder is used.
+- Recover some Block Editor control buttons on Template Editor mode.
+- Fixed broken layout on Divi Woo Products module.
+- Fixed incorrectly set Page Type in Theme Builder when using the Woo Notice module.
+- Fixed issue where flip section divider is not showing in Safari.
+- Fixed issue where the menu items wrap into multiple lines.
+- Fixed builder issue when users edit a WooCommerce product and use FSE theme.
+- Improved Theme Builder Template compatibility with Block Editor Template.
+- Fixed Account name/password incorrect validation while on Checkout page built using Divi Builder.
+- Fixed Divi block styling issue on Template Editor.
+- Disable ET buttons when users open Template Editor.
+- Fixed issue where global color becomes static if hover options are enabled.
+- Fixed Payment form repeatedly showing in all Divi Checkout modules.
+- Fixed an issue where the Pricing Table child element text color didn't overwrite the parent module text color in some cases.
+- Added support for SVG files in portability export.
+	* core/components/Portability.php
+	* includes/builder/compat/early.php
+	* includes/builder/feature/BlockEditorIntegration.php
+	* includes/builder/feature/BlockTemplates.php
+	* includes/builder/feature/dynamic-assets/class-dynamic-assets.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/module/FullwidthMenu.php
+	* includes/builder/module/Menu.php
+	* includes/builder/module/PricingTablesItem.php
+	* includes/builder/module/woocommerce/CheckoutAdditionalInfo.php
+	* includes/builder/module/woocommerce/CheckoutBilling.php
+	* includes/builder/module/woocommerce/CheckoutOrderDetails.php
+	* includes/builder/module/woocommerce/CheckoutShipping.php
+	* includes/builder/scripts/frontend/woocommerce-modules.js
+	* includes/builder/templates/block-template-canvas.php
+
+version 4.14.6 ( updated 01-13-2022 )
+- Fixed auto-opening preview tab when Divi Woo Product page is loaded w/ Rank Math plugin enabled.
+- Fixed unintended lag in the Visual Builder caused by a previous bug fix.
+- Fixed an issue where the layout(s) images were not exported from Divi Libray in some cases.
+	* core/components/Portability.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/class-et-builder-module-shortcode-manager.php
+	* includes/builder/core.php
+	* includes/builder/feature/content-retriever/retrievers/PageContentRetriever.php
+	* includes/builder/feature/gutenberg/blocks/Layout.php
+	* includes/builder/feature/gutenberg/blocks/PostExcerpt.php
+	* includes/builder/feature/woocommerce-modules.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/theme-builder/woocommerce.php
+	* includes/builder/functions.php
+	* includes/builder/plugin-compat/wp-rocket.php
+	* includes/builder/scripts/frontend/scripts.js
+
+version 4.14.5 ( updated 01-05-2022 )
+- Fixed missing Table Header styles in Phone mode when using the Cart Products module.
+- Added option to let user enable or disable Theme Builder Editor inside Visual Builder.
+- Fixed the broken magic colors system.
+- Fixed a compatibility issue with WP Rocket where the option to remove unused CSS was removing required CSS for the Blog Module's column size.
+- Fixed PHP 8.1 deprecated FILTER_SANITIZE_STRING constant on BFB initial content.
+- Fixed PHP 8.1 deprecated FILTER_SANITIZE_STRING constant on Global Presets and Colors features.
+- Fixed broken WooCommerce extensions elements added on single product, product related pages, and Woo modules.
+- Fixed Divi icons rendering saved in the Global Presets(GP) with unicode format: &amp;#x24; on VB.
+- Fixed the Cart Products table styles allowing the table to be responsive.
+- Fixed an issue with slide move-to that caused unwanted max-height being applied on all modules that use this function.
+- Fixed issue with double wrappers when page has only the Body Layout created in Theme Builder.
+- Fixed error in the console when scrolling and having 3rd party modules with child in the content.
+- Fixed missing no account warning text when accessing Library Layouts of Divi Layout block.
+- Fixed PHP 8.1 warnings when Dynamic Assets feature is enabled.
+- Fixed some PHP 8.1 deprecation warnings and errors.
+- Fixed an issue where the Blog module grid style would not work correctly due to Salvattore failing to retrieve the number of columns.
+- Improved display of Divi icons when Dynamic Assets is turning on.
+- Fixed incorrect Core - Post Excerpt block result on the FE.
+- Fixed copy/paste between Radio and Selected Radio option groups in the Checkout Payment module.
+- Fixed wrong height of Full-width slider image when placed immediately after transparent primary Menu.
+- Fixed reCaptcha not visible when Dynamic CSS option is disabled.
+- Added "Posts for Current Page" loop option for Blog module in Visual Theme Builder Editor.
+- Fixed some PHP 8.1 deprecation warnings and errors.
+	* core/components/SupportCenter.php
+	* core/components/api/spam/ReCaptcha.php
+	* core/components/mu-plugins/SupportCenterSafeModeDisablePlugins.php
+	* core/ui/utils/property-resolver.js
+	* epanel/core_functions.php
+	* epanel/custom_functions.php
+	* functions.php
+	* header.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/class-et-builder-module-shortcode-manager.php
+	* includes/builder/core.php
+	* includes/builder/feature/BlockEditorIntegration.php
+	* includes/builder/feature/content-retriever/retrievers/PageContentRetriever.php
+	* includes/builder/feature/dynamic-assets/class-dynamic-assets.php
+	* includes/builder/feature/dynamic-content.php
+	* includes/builder/feature/gutenberg/blocks/Layout.php
+	* includes/builder/feature/gutenberg/blocks/PostExcerpt.php
+	* includes/builder/feature/icon-manager/ExtendedFontIcons.php
+	* includes/builder/feature/woocommerce-modules.php
+	* includes/builder/framework.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/helpers.php
+	* includes/builder/frontend-builder/theme-builder/dynamic-content.php
+	* includes/builder/frontend-builder/theme-builder/woocommerce.php
+	* includes/builder/functions.php
+	* includes/builder/module/BarCountersItem.php
+	* includes/builder/module/CircleCounter.php
+	* includes/builder/module/ContactForm.php
+	* includes/builder/module/CountdownTimer.php
+	* includes/builder/module/woocommerce/CartProducts.php
+	* includes/builder/plugin-compat/sg-cachepress.php
+	* includes/builder/plugin-compat/sitepress-multilingual-cms.php
+	* includes/builder/plugin-compat/wp-rocket.php
+	* includes/builder/scripts/frontend/scripts.js
+	* includes/social_icons.php
+	* single.php
+	* theme-header.php
+
+version 4.14.4 ( updated 12-17-2021 )
+- Fixed a conflict with SiteGround Optimizer where the Theme Customizer styles would not work when the Output Styles Inline option was enabled in Divi's Theme Options.
+- Fixed a compatibility issue with SiteGround Optimizer that would cause the Divi Builder to timeout.
+- Fixed order class suffix changing from _0 to _1 due to the use of do_shortcode().
+	* composer.json
+	* includes/builder/feature/dynamic-assets/class-dynamic-assets.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/functions.php
+	* includes/builder/plugin-compat/sg-cachepress.php
+	* includes/builder/scripts/src/builder.js
+
+version 4.14.3 ( updated 12-16-2021 )
+- Added the all new "Product Stock" condition to Display Conditions feature.
+- Added the all new "Custom Field" condition to Display Conditions feature.
+- Added the all new "URL Parameter" condition to Display Conditions feature.
+- Fixed various various TinyMCE editor options not working in Theme Builder in Extra theme.
+- Fixed repetitive text on all Checkout modules along w/ the missing default border width for the payment methods.
+- Fixed all Checkout modules that displayed errors when a Product in cart goes out of stock while Checkout.
+- The margin container in the Icon Module was reassigned to the main Icon Module container.
+- Fixed Fields Text size option not targeting the right elements on Checkout page.
+- Fixed default pricing tables color for frequency not being properly applied in certain cases.
+- Fixed an issue where preset CSS are always Loaded even when presets are not used.
+- Fixed fatal error shown when Shop module, used on a page, is viewed after disabling the Woocommerce plugin.
+- Fixed Checkout workflow failure when checkout page is built using Theme Builder.
+- Fixed using of slashes in the Date Format option in Blog, Fullwidth Post Title and Post Title modules.
+- Fixed max-height set on image module for mobile devices resulting in stretched image.
+- Fixed a PHP warning that occurred when the stored Global Presets History was an array instead of an object.
+- Fixed shipping address not working when Cart Totals module is used.
+- Fixed inconsistent form notice's font weight in the Checkout Payment module.
+- Fixed bottom content jumping issue with Sliders on Webkit based browsers.
+- Fixed a PHP 8 deprecation notice in the Cross Sells Module.
+- Fixed bug with removing sections from Post Content module when there is only one section inside the Body Layout.
+- Fixed issue with editing page content that is nested inside the Post Content Module in Body Template in Full Site Editing mode.
+- Fixed Blurb module header color transition not working with the Text Color option.
+- Fixed an issue with video responsiveness and dimensions on accordion module when dynamic js lib was enabled.
+- Improve SiteGround Optimizer plugin compatibility with Dynamic Assets.
+- Fixed broken Column Label Option Group styles on Table & Phone modes in Cart Totals module.
+- Fixed compatibility issues with Optima Express IDX Plugin.
+- Improve reCaptcha compatibility with 3rd Party reCaptcha solutions.
+- Fixed Cart Totals module's Table Cells Background Color option not working in Phone mode.
+- Fixed Fields Focus Text color being overridden in Checkout Info module.
+	* composer.json
+	* includes/builder/autoload.php
+	* includes/builder/class-et-builder-module-shortcode-manager.php
+	* includes/builder/core.php
+	* includes/builder/feature/ajax-data/AjaxData.php
+	* includes/builder/feature/dynamic-assets/class-dynamic-assets.php
+	* includes/builder/feature/global-presets/History.php
+	* includes/builder/feature/woocommerce-modules.php
+	* includes/builder/framework.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/i18n/display-conditions.php
+	* includes/builder/functions.php
+	* includes/builder/module/Blog.php
+	* includes/builder/module/Blurb.php
+	* includes/builder/module/Icon.php
+	* includes/builder/module/Image.php
+	* includes/builder/module/field/DisplayConditions.php
+	* includes/builder/module/field/display-conditions/CustomField.php
+	* includes/builder/module/field/display-conditions/ProductStock.php
+	* includes/builder/module/field/display-conditions/UrlParameter.php
+	* includes/builder/module/woocommerce/CartNotice.php
+	* includes/builder/module/woocommerce/CartTotals.php
+	* includes/builder/module/woocommerce/CheckoutAdditionalInfo.php
+	* includes/builder/module/woocommerce/CheckoutBilling.php
+	* includes/builder/module/woocommerce/CheckoutOrderDetails.php
+	* includes/builder/module/woocommerce/CheckoutShipping.php
+	* includes/builder/module/woocommerce/CrossSells.php
+	* includes/builder/plugin-compat/sg-cachepress.php
+	* includes/builder/scripts/frontend/scripts.js
+	* includes/builder/scripts/frontend/woocommerce-modules.js
+	* includes/builder/scripts/src/builder.js
+
+version 4.14.2 ( updated 11-30-2021 )
+- Fixed issue with Divi activation upon editing Divi Layout Block in Gutenberg.
+- Fixed the margin applying for the icon with the left placement in the Blurb module.
+- Fixed delayed editor switching from GB to VB when activating VB by replacing waitForSave() that is based on@wordpress/data's subscribe() with evaluating state and props change that is already passed by Higher Order Component from store's state.
+- Fixed break in gallery module tablet layout when item titles have different lengths.
+- Added wrapper to expanded icon picker styles.
+- Fixed Text alignment option not working on front-end pages.
+- Fixed padding setting for modules that have buttons (including the Button module) and set an button's icon.
+- Fixed issue that renders invisible text in Gutenberg editor.
+- Fixed center text alignment not working for the Person module.
+- Fixed console error caused by invalid srcset attributes in SVG images when "Enable Responsive Images" option is on.
+- Improved Display Conditions technical implementation for rendering Tooltip contents.
+- Fixed tablet/mobile (auto) width not reflecting in VB when width is assigned in responsive view for desktop only.
+- Fixed the Fields default border radius value for Cart Totals and Cart Products modules.
+- Fixed PHP 8 deprecation warning on Icon module.
+- Fixed error when accessing background image of button module.
+- Improved display of Divi icons when Dynamic Assets is turning on.
+- Added loading of the Icon Modules styles on FE.
+- Fixed some layout export errors in PHP 8.
+- Fixed hidden sections dots appearing in page dot navigation.
+- Fixed Default white link color in Footer Widgets set from Theme Customizer was not working.
+	* core/components/Portability.php
+	* includes/builder/feature/dynamic-assets/class-dynamic-assets.php
+	* includes/builder/feature/gutenberg/EditorTypography.php
+	* includes/builder/feature/icon-manager/ExtendedFontIcons.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/i18n/display-conditions.php
+	* includes/builder/functions.php
+	* includes/builder/module/Icon.php
+	* includes/builder/module/field/display-conditions/Author.php
+	* includes/builder/module/field/display-conditions/Browser.php
+	* includes/builder/module/field/display-conditions/CartContents.php
+	* includes/builder/module/field/display-conditions/Categories.php
+	* includes/builder/module/field/display-conditions/CategoryPage.php
+	* includes/builder/module/field/display-conditions/Cookie.php
+	* includes/builder/module/field/display-conditions/DateArchive.php
+	* includes/builder/module/field/display-conditions/DateTime.php
+	* includes/builder/module/field/display-conditions/DynamicPosts.php
+	* includes/builder/module/field/display-conditions/LoggedInStatus.php
+	* includes/builder/module/field/display-conditions/OperatingSystem.php
+	* includes/builder/module/field/display-conditions/PageVisit.php
+	* includes/builder/module/field/display-conditions/PostType.php
+	* includes/builder/module/field/display-conditions/ProductPurchase.php
+	* includes/builder/module/field/display-conditions/SearchResults.php
+	* includes/builder/module/field/display-conditions/TagPage.php
+	* includes/builder/module/field/display-conditions/Tags.php
+	* includes/builder/module/field/display-conditions/UserRole.php
+	* includes/builder/module/woocommerce/CartProducts.php
+	* includes/builder/module/woocommerce/CartTotals.php
+	* js/src/custom-dynamic.js
+	* js/src/custom.js
+
+version 4.14.1 ( updated 11-23-2021 )
+- Fixed broken styles in the Divi Builder Plugin due to missing content wrapper.
+- Fixed et_get_first_section console error.
+- Fixed validation when Country, whose state isn't pre-defined, is selected during Checkout.
+- Fixed issue affecting Checkout when using Divi modules as well as the default WooCommerce checkout shortcode.
+- Fixed "no available payment" warning showing twice.
+- Fixed broken shipping fields on Checkout page when WooCommerce shortcode within Text module.
+- Fixed a bug that caused generated file lock files to not delete when they should have, during the creation of dynamic css files.
+- Fixed PHP error occurring when the WP Rest API is used fetch posts which include a WC Cart Notice module in their content.
+- Fixed hidden quantity text in the quantity field on WooCommerce product pages.
+- Fixed static CSS cache clearing not working on Windows.
+	* core/components/cache/Directory.php
+	* includes/builder/core.php
+	* includes/builder/feature/dynamic-assets/class-dynamic-assets.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/module/woocommerce/CartNotice.php
+	* includes/builder/scripts/frontend/scripts.js
+	* includes/builder/scripts/frontend/woocommerce-modules.js
+	* includes/builder/scripts/src/builder.js
+	* js/src/custom.js
+
+version 4.14 ( updated 11-22-2021 )
+- Introduced 8 new Divi WooCommerce modules, including the ability to customize your WooCommerce cart and checkout pages.
+- An additional conversion of icons values created in previous Divi versions for 3p modules was added.
+- The algorithm for checking the presence of icons in the content for Dynamic Assets has been changed, now it searches for the values of icons in the content, regardless of which field they are in.
+- Fixed Display Conditions feature integration with Find & Replace feature so now they work together as expected.
+- Fixed bug with copying and pasting elements between different pages, and enabled copying and pasting elements from one Theme Builder area to another.
+- Fixed issue with double wrappers when page has only the Body Layout created in Theme Builder.
+- Added extra conversion for the case with the font_icon__hover option when the "Allowlist" mechanism is run.
+- Fixed broken icon fonts that occurred when a page's CSS cache was first generated using http, and then later served using https.
+- Added a fallback check that will regenerate Dynamic CSS when we identify that the cached CSS files are missing Theme Builder CSS for whatever reason.
+- Changed default transparent RGBA value to mitigate the issue with how color interpolation works in Safari browser.
+- Fixed pagination not working for Portfolio module when used in a Theme Builder template.
+- Fixed wrong height of Full-width slider image when placed immediately after transparent primary Menu.
+- Fixed an issue with Settings Options field visibility checks when field dependencies were removed.
+- Fixed an edge case in the Builder where Blurb Module would break on a specific combination of Image and Scroll Effects.
+- Fixed child theme's style version being ignored when it's enqueued.
+- Fixed the issue when reCaptcha was enabled in some cases even if it is not used anywhere on the site.
+	* composer.json
+	* core/admin/fonts/builder.eot
+	* core/admin/fonts/builder.ttf
+	* core/admin/fonts/builder.woff
+	* core/components/api/spam/ReCaptcha.php
+	* core/components/data/Utils.php
+	* core/functions.php
+	* includes/builder/autoload.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/class-et-builder-module-shortcode-manager.php
+	* includes/builder/core.php
+	* includes/builder/feature/AjaxCache.php
+	* includes/builder/feature/ajax-data/AjaxData.php
+	* includes/builder/feature/display-conditions/DisplayConditions.php
+	* includes/builder/feature/dynamic-assets/class-dynamic-assets.php
+	* includes/builder/feature/dynamic-assets/dynamic-assets.php
+	* includes/builder/feature/dynamic-content.php
+	* includes/builder/feature/global-presets/Settings.php
+	* includes/builder/feature/icon-manager/ExtendedFontIcons.php
+	* includes/builder/feature/woocommerce-modules.php
+	* includes/builder/feature/woocommerce/placeholder/WoocommerceProductSimplePlaceholder.php
+	* includes/builder/feature/woocommerce/templates/cart/cart-totals.php
+	* includes/builder/feature/woocommerce/templates/cart/cart.php
+	* includes/builder/feature/woocommerce/templates/cart/cross-sells.php
+	* includes/builder/feature/woocommerce/templates/checkout/form-login.php
+	* includes/builder/feature/woocommerce/templates/checkout/payment-method.php
+	* includes/builder/feature/woocommerce/templates/checkout/payment.php
+	* includes/builder/feature/woocommerce/templates/checkout/review-order.php
+	* includes/builder/feature/woocommerce/templates/global/form-login-fe.php
+	* includes/builder/feature/woocommerce/templates/global/form-login.php
+	* includes/builder/feature/woocommerce/templates/global/quantity-input.php
+	* includes/builder/framework.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/helpers.php
+	* includes/builder/frontend-builder/theme-builder/woocommerce.php
+	* includes/builder/functions.php
+	* includes/builder/module/Comments.php
+	* includes/builder/module/ContactForm.php
+	* includes/builder/module/Portfolio.php
+	* includes/builder/module/field/Border.php
+	* includes/builder/module/field/MarginPadding.php
+	* includes/builder/module/helpers/WoocommerceModules.php
+	* includes/builder/module/settings/Migration.php
+	* includes/builder/module/settings/migration/ContactFormUniqueID.php
+	* includes/builder/module/settings/migration/IconManager.php
+	* includes/builder/module/settings/migration/WooTextOG.php
+	* includes/builder/module/woocommerce/AddToCart.php
+	* includes/builder/module/woocommerce/AdditionalInfo.php
+	* includes/builder/module/woocommerce/Breadcrumb.php
+	* includes/builder/module/woocommerce/CartNotice.php
+	* includes/builder/module/woocommerce/CartProducts.php
+	* includes/builder/module/woocommerce/CartTotals.php
+	* includes/builder/module/woocommerce/CheckoutAdditionalInfo.php
+	* includes/builder/module/woocommerce/CheckoutBilling.php
+	* includes/builder/module/woocommerce/CheckoutOrderDetails.php
+	* includes/builder/module/woocommerce/CheckoutPaymentInfo.php
+	* includes/builder/module/woocommerce/CheckoutShipping.php
+	* includes/builder/module/woocommerce/CrossSells.php
+	* includes/builder/module/woocommerce/Description.php
+	* includes/builder/module/woocommerce/Gallery.php
+	* includes/builder/module/woocommerce/Images.php
+	* includes/builder/module/woocommerce/Meta.php
+	* includes/builder/module/woocommerce/Price.php
+	* includes/builder/module/woocommerce/Rating.php
+	* includes/builder/module/woocommerce/RelatedProducts.php
+	* includes/builder/module/woocommerce/Reviews.php
+	* includes/builder/module/woocommerce/Shop.php
+	* includes/builder/module/woocommerce/Stock.php
+	* includes/builder/module/woocommerce/Tabs.php
+	* includes/builder/module/woocommerce/Title.php
+	* includes/builder/module/woocommerce/Upsells.php
+	* includes/builder/scripts/frontend/scripts.js
+	* includes/builder/scripts/frontend/woocommerce-modules.js
+	* js/src/custom.js
+
 version 4.13.1 ( updated 11-11-2021 )
 - Fixed front end .css files being enqueued inside the Visual Builder when editing category pages using the Theme Builder Editor.
 - Fixed issue with Post Content Module error inside the Specialty section.

@@ -134,6 +134,13 @@ class ET_Dynamic_Assets {
 	private $_rtl_suffix = null;
 
 	/**
+	 * Prefix used for files that contain css from theme builder templates.
+	 *
+	 * @var null
+	 */
+	private $_tb_prefix = null;
+
+	/**
 	 * Assets for all shortcode modules.
 	 *
 	 * @var null
@@ -467,6 +474,7 @@ class ET_Dynamic_Assets {
 	 */
 	public function initial_setup() {
 		// Don't do anything if it's not needed.
+
 		if ( ! $this->should_initiate() ) {
 			return;
 		}
@@ -478,7 +486,7 @@ class ET_Dynamic_Assets {
 			$this->_object_id = intval( get_queried_object()->term_id );
 		} elseif ( ! empty( $post->ID ) ) {
 			$this->_object_id = intval( $post->ID );
-		} elseif ( is_search() ) {
+		} elseif ( is_search() || $this->is_virtual_page() ) {
 			$this->_object_id = -1;
 		}
 
@@ -508,6 +516,8 @@ class ET_Dynamic_Assets {
 		$this->is_rtl             = is_rtl();
 		$this->_rtl_suffix        = $this->is_rtl ? '_rtl' : '';
 		$this->_page_builder_used = is_singular() ? et_pb_is_pagebuilder_used( $this->_post_id ) : false;
+		$this->_tb_prefix         = $this->_tb_template_ids ? '-tb' : '';
+		$generate_assets          = true;
 
 		// Create asset directory, if it does not exist.
 		$ds       = DIRECTORY_SEPARATOR;
@@ -534,10 +544,21 @@ class ET_Dynamic_Assets {
 
 		}
 
-		// If dynamic asset files do not exist, generate them.
-		$files = (array) glob( "{$this->_cache_dir_path}/{$this->_folder_name}/et*-dynamic*" );
+		$files = (array) glob( "{$this->_cache_dir_path}/{$this->_folder_name}/et*-dynamic*{$this->_tb_prefix}*" );
 
-		if ( empty( $files ) ) {
+		foreach ( $files as $file ) {
+			if ( ! et_()->includes( $file, '-late' ) ) {
+				$generate_assets = false;
+				break;
+			}
+		}
+
+		if ( $generate_assets ) {
+			// If we are regenerating early assets that are missing, we should clear the old assets as well.
+			if ( $files && ! $this->_need_late_generation ) {
+				ET_Core_PageResource::remove_static_resources( $this->_post_id, 'all', false, 'dynamic' );
+			}
+
 			$this->generate_dynamic_assets();
 		}
 	}
@@ -593,8 +614,7 @@ class ET_Dynamic_Assets {
 		}
 
 		$dynamic_assets_files = array();
-
-		$files = (array) glob( "{$this->_cache_dir_path}/{$this->_folder_name}/et*-dynamic*" );
+		$files                = (array) glob( "{$this->_cache_dir_path}/{$this->_folder_name}/et*-dynamic*{$this->_tb_prefix}*" );
 
 		if ( empty( $files ) ) {
 			return array();
@@ -862,32 +882,15 @@ class ET_Dynamic_Assets {
 		$suffix        = empty( $suffix ) ? '' : "-{$suffix}";
 		$file_name     = "et-{$this->_owner}-dynamic{$tb_ids}{$maybe_post_id}{$late_suffix}{$suffix}.css";
 		$file_path     = et_()->normalize_path( "{$file_dir}{$file_name}" );
-		$lock_file     = wp_tempnam( $file_name );
+		if ( file_exists( $file_path ) ) {
+			return;
+		}
 
 		// Iterate over all the asset data to generate dynamic asset files.
 		foreach ( $assets_data as $file_type => $data ) {
 			$file_contents .= implode( "\n", array_unique( $data['content'] ) );
 		}
-
-		if ( file_exists( $file_path ) ) {
-			return;
-		}
-
-		// Try to create a temporary directory which we'll use as a pseudo file lock.
-		if ( file_exists( $lock_file ) ) {
-			$wp_filesystem->put_contents( $lock_file, '' );
-
-			// Create the static resource file.
-			$asset_created = $wp_filesystem->put_contents( $file_path, $file_contents, FS_CHMOD_FILE );
-
-			if ( ! $asset_created ) {
-				// There's no point in continuing.
-				return;
-			} else {
-				// Remove the temporary file.
-				unlink( $lock_file );
-			}
-		}
+		$wp_filesystem->put_contents( $file_path, $file_contents, FS_CHMOD_FILE );
 	}
 
 	/**
@@ -1099,6 +1102,7 @@ class ET_Dynamic_Assets {
 		$assets_data           = array();
 		$newly_processed_files = array();
 		$files_with_url        = array( 'signup', 'icons_base', 'icons_base_social', 'icons_all', 'icons_fa_all' );
+		$no_protocol_path      = str_replace( array( 'http:', 'https:' ), '', $this->_product_dir );
 
 		foreach ( $asset_list as $asset => $asset_data ) {
 			foreach ( $asset_data as $file_type => $files ) {
@@ -1115,7 +1119,7 @@ class ET_Dynamic_Assets {
 					$file_content = $wp_filesystem->get_contents( $file );
 
 					if ( in_array( basename( $file, '.css' ), $files_with_url, true ) ) {
-						$file_content = preg_replace( '/#dynamic-product-dir/i', $this->_product_dir, $file_content );
+						$file_content = preg_replace( '/#dynamic-product-dir/i', $no_protocol_path, $file_content );
 					}
 
 					$file_content = trim( $file_content );
@@ -1163,7 +1167,6 @@ class ET_Dynamic_Assets {
 			'et_pb_social_media_follow',
 			'et_pb_team_member',
 		);
-
 		if ( ! $this->_use_divi_icons || ! $this->_use_fa_icons ) {
 			if ( empty( $this->_presets_attributes ) ) {
 				$this->_presets_attributes = $this->get_preset_attributes( $this->_all_content );
@@ -1191,7 +1194,7 @@ class ET_Dynamic_Assets {
 				}
 			}
 
-			$maybe_post_contains_divi_icon = $this->_use_divi_icons || $maybe_presets_contain_divi_icon || ( $this->check_for_dependency( et_pb_get_font_icon_modules(), $this->_processed_shortcodes ) && et_pb_check_if_post_contains_divi_font_icon( $this->_all_content ) );
+			$maybe_post_contains_divi_icon = $this->_use_divi_icons || $maybe_presets_contain_divi_icon || et_pb_check_if_post_contains_divi_font_icon( $this->_all_content );
 
 			// Load the icon font needed based on the icons being used.
 			$this->_use_divi_icons = $this->_use_divi_icons || ( 'on' !== $dynamic_icons || $maybe_post_contains_divi_icon || $this->check_if_class_exits( 'et-pb-icon', $this->_all_content ) );
@@ -1546,39 +1549,39 @@ class ET_Dynamic_Assets {
 
 		$assets_list = array(
 			// Structure elements.
-			'et_pb_section'               => array(
+			'et_pb_section'                     => array(
 				'css' => array(
 					"{$assets_prefix}/css/section{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/row{$this->_cpt_suffix}.css",
 					// Some fullwidth section modules use the et_pb_row class.
 				),
 			),
-			'et_pb_row'                   => array(
+			'et_pb_row'                         => array(
 				'css' => "{$assets_prefix}/css/row{$this->_cpt_suffix}.css",
 			),
-			'et_pb_column'                => array(),
+			'et_pb_column'                      => array(),
 
-			'et_pb_row_inner'             => array(
+			'et_pb_row_inner'                   => array(
 				'css' => "{$assets_prefix}/css/row{$this->_cpt_suffix}.css",
 			),
 
 			// Module elements.
-			'et_pb_accordion'             => array(
+			'et_pb_accordion'                   => array(
 				'css' => array(
 					"{$assets_prefix}/css/accordion{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/toggle{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_audio'                 => array(
+			'et_pb_audio'                       => array(
 				'css' => array(
 					"{$assets_prefix}/css/audio{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/audio_player{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_counter'               => array(
+			'et_pb_counter'                     => array(
 				'css' => "{$assets_prefix}/css/counter{$this->_cpt_suffix}.css",
 			),
-			'et_pb_blog'                  => array(
+			'et_pb_blog'                        => array(
 				'css' => array(
 					"{$assets_prefix}/css/blog{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/posts{$this->_cpt_suffix}.css",
@@ -1591,32 +1594,37 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/wp_gallery{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_blurb'                 => array(
+			'et_pb_blurb'                       => array(
 				'css' => array(
 					"{$assets_prefix}/css/blurb{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/legacy_animations{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_button'                => array(
+			'et_pb_icon'                        => array(
+				'css' => array(
+					"{$assets_prefix}/css/icon{$this->_cpt_suffix}.css",
+				),
+			),
+			'et_pb_button'                      => array(
 				'css' => array(
 					"{$assets_prefix}/css/button{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_circle_counter'        => array(
+			'et_pb_circle_counter'              => array(
 				'css' => "{$assets_prefix}/css/circle_counter{$this->_cpt_suffix}.css",
 			),
-			'et_pb_code'                  => array(
+			'et_pb_code'                        => array(
 				'css' => "{$assets_prefix}/css/code{$this->_cpt_suffix}.css",
 			),
-			'et_pb_comments'              => array(
+			'et_pb_comments'                    => array(
 				'css' => array(
 					"{$assets_prefix}/css/comments{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/comments_shared{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_contact_form'          => array(
+			'et_pb_contact_form'                => array(
 				'css' => array(
 					"{$assets_prefix}/css/contact_form{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/forms{$this->_cpt_suffix}.css",
@@ -1625,17 +1633,17 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_countdown_timer'       => array(
+			'et_pb_countdown_timer'             => array(
 				'css' => "{$assets_prefix}/css/countdown_timer{$this->_cpt_suffix}.css",
 			),
-			'et_pb_cta'                   => array(
+			'et_pb_cta'                         => array(
 				'css' => "{$assets_prefix}/css/cta{$this->_cpt_suffix}.css",
 				"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 			),
-			'et_pb_divider'               => array(
+			'et_pb_divider'                     => array(
 				'css' => "{$assets_prefix}/css/divider{$this->_cpt_suffix}.css",
 			),
-			'et_pb_filterable_portfolio'  => array(
+			'et_pb_filterable_portfolio'        => array(
 				'css' => array(
 					"{$assets_prefix}/css/filterable_portfolio{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/portfolio{$this->_cpt_suffix}.css",
@@ -1643,26 +1651,26 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/overlay{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_fullwidth_code'        => array(
+			'et_pb_fullwidth_code'              => array(
 				'css' => "{$assets_prefix}/css/fullwidth_code{$this->_cpt_suffix}.css",
 			),
-			'et_pb_fullwidth_header'      => array(
+			'et_pb_fullwidth_header'            => array(
 				'css' => "{$assets_prefix}/css/fullwidth_header{$this->_cpt_suffix}.css",
 				"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 			),
-			'et_pb_fullwidth_image'       => array(
+			'et_pb_fullwidth_image'             => array(
 				'css' => array(
 					"{$assets_prefix}/css/fullwidth_image{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/overlay{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_fullwidth_map'         => array(
+			'et_pb_fullwidth_map'               => array(
 				'css' => array(
 					"{$assets_prefix}/css/map{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/fullwidth_map{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_fullwidth_menu'        => array(
+			'et_pb_fullwidth_menu'              => array(
 				'css' => array(
 					"{$assets_prefix}/css/menus{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/fullwidth_menu{$this->_cpt_suffix}.css",
@@ -1670,7 +1678,7 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/header_shared{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_fullwidth_portfolio'   => array(
+			'et_pb_fullwidth_portfolio'         => array(
 				'css' => array(
 					"{$assets_prefix}/css/fullwidth_portfolio{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/grid_items{$this->_cpt_suffix}.css",
@@ -1678,7 +1686,7 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/slider_controls{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_fullwidth_post_slider' => array(
+			'et_pb_fullwidth_post_slider'       => array(
 				'css' => array(
 					"{$assets_prefix}/css/post_slider{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/fullwidth_post_slider{$this->_cpt_suffix}.css",
@@ -1689,14 +1697,14 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_fullwidth_post_title'  => array(
+			'et_pb_fullwidth_post_title'        => array(
 				'css' => array(
 					"{$assets_prefix}/css/post_title{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/fullwidth_post_title{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_fullwidth_slider'      => array(
+			'et_pb_fullwidth_slider'            => array(
 				'css' => array(
 					"{$assets_prefix}/css/fullwidth_slider{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/slider_modules{$this->_cpt_suffix}.css",
@@ -1705,7 +1713,7 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_gallery'               => array(
+			'et_pb_gallery'                     => array(
 				'css' => array(
 					"{$assets_prefix}/css/gallery{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/overlay{$this->_cpt_suffix}.css",
@@ -1715,20 +1723,20 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/magnific_popup.css",
 				),
 			),
-			'gallery'                     => array(
+			'gallery'                           => array(
 				'css' => array(
 					"{$assets_prefix}/css/wp_gallery{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/magnific_popup.css",
 					"{$assets_prefix}/css/overlay{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_image'                 => array(
+			'et_pb_image'                       => array(
 				'css' => array(
 					"{$assets_prefix}/css/image{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/overlay{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_login'                 => array(
+			'et_pb_login'                       => array(
 				'css' => array(
 					"{$assets_prefix}/css/login{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/forms{$this->_cpt_suffix}.css",
@@ -1737,10 +1745,10 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_map'                   => array(
+			'et_pb_map'                         => array(
 				'css' => "{$assets_prefix}/css/map{$this->_cpt_suffix}.css",
 			),
-			'et_pb_menu'                  => array(
+			'et_pb_menu'                        => array(
 				'css' => array(
 					"{$assets_prefix}/css/menus{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/menu{$this->_cpt_suffix}.css",
@@ -1748,17 +1756,17 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/header_shared{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_number_counter'        => array(
+			'et_pb_number_counter'              => array(
 				'css' => "{$assets_prefix}/css/number_counter{$this->_cpt_suffix}.css",
 			),
-			'et_pb_portfolio'             => array(
+			'et_pb_portfolio'                   => array(
 				'css' => array(
 					"{$assets_prefix}/css/portfolio{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/grid_items{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/overlay{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_post_slider'           => array(
+			'et_pb_post_slider'                 => array(
 				'css' => array(
 					"{$assets_prefix}/css/post_slider{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/posts{$this->_cpt_suffix}.css",
@@ -1768,37 +1776,37 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_post_nav'              => array(
+			'et_pb_post_nav'                    => array(
 				'css' => "{$assets_prefix}/css/post_nav{$this->_cpt_suffix}.css",
 			),
-			'et_pb_post_title'            => array(
+			'et_pb_post_title'                  => array(
 				'css' => array(
 					"{$assets_prefix}/css/post_title{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_pricing_tables'        => array(
+			'et_pb_pricing_tables'              => array(
 				'css' => array(
 					"{$assets_prefix}/css/pricing_tables{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_search'                => array(
+			'et_pb_search'                      => array(
 				'css' => "{$assets_prefix}/css/search{$this->_cpt_suffix}.css",
 			),
-			'et_pb_shop'                  => array(
+			'et_pb_shop'                        => array(
 				'css' => array(
 					"{$assets_prefix}/css/shop{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/overlay{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_sidebar'               => array(
+			'et_pb_sidebar'                     => array(
 				'css' => array(
 					"{$assets_prefix}/css/sidebar{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/widgets_shared{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_signup'                => array(
+			'et_pb_signup'                      => array(
 				'css' => array(
 					"{$assets_prefix}/css/signup{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/forms{$this->_cpt_suffix}.css",
@@ -1807,7 +1815,7 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_slider'                => array(
+			'et_pb_slider'                      => array(
 				'css' => array(
 					"{$assets_prefix}/css/slider{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/slider_modules{$this->_cpt_suffix}.css",
@@ -1816,34 +1824,34 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_social_media_follow'   => array(
+			'et_pb_social_media_follow'         => array(
 				'css' => "{$assets_prefix}/css/social_media_follow{$this->_cpt_suffix}.css",
 			),
-			'et_pb_tabs'                  => array(
+			'et_pb_tabs'                        => array(
 				'css' => "{$assets_prefix}/css/tabs{$this->_cpt_suffix}.css",
 			),
-			'et_pb_team_member'           => array(
+			'et_pb_team_member'                 => array(
 				'css' => array(
 					"{$assets_prefix}/css/team_member{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/legacy_animations{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_testimonial'           => array(
+			'et_pb_testimonial'                 => array(
 				'css' => "{$assets_prefix}/css/testimonial{$this->_cpt_suffix}.css",
 			),
-			'et_pb_text'                  => array(
+			'et_pb_text'                        => array(
 				'css' => "{$assets_prefix}/css/text{$this->_cpt_suffix}.css",
 			),
-			'et_pb_toggle'                => array(
+			'et_pb_toggle'                      => array(
 				'css' => "{$assets_prefix}/css/toggle{$this->_cpt_suffix}.css",
 			),
-			'et_pb_video'                 => array(
+			'et_pb_video'                       => array(
 				'css' => array(
 					"{$assets_prefix}/css/video{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/video_player{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_video_slider'          => array(
+			'et_pb_video_slider'                => array(
 				'css' => array(
 					"{$assets_prefix}/css/video_slider{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/video_player{$this->_cpt_suffix}.css",
@@ -1851,34 +1859,34 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/slider_controls{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_additional_info'    => array(
+			'et_pb_wc_additional_info'          => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_additional_info{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_add_to_cart'        => array(
+			'et_pb_wc_add_to_cart'              => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_add_to_cart{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_breadcrumb'         => array(
+			'et_pb_wc_breadcrumb'               => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_breadcrumb{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_cart_notice'        => array(
+			'et_pb_wc_cart_notice'              => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_cart_notice{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/buttons{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_description'        => array(
+			'et_pb_wc_description'              => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_description{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_gallery'            => array(
+			'et_pb_wc_gallery'                  => array(
 				'css' => array(
 					"{$assets_prefix}/css/gallery{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/overlay{$this->_cpt_suffix}.css",
@@ -1888,61 +1896,101 @@ class ET_Dynamic_Assets {
 					"{$assets_prefix}/css/slider_controls{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_images'             => array(
+			'et_pb_wc_images'                   => array(
 				'css' => array(
 					"{$assets_prefix}/css/image{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/overlay{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/woo_images{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_meta'               => array(
+			'et_pb_wc_meta'                     => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_meta{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_price'              => array(
+			'et_pb_wc_price'                    => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_price{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_rating'             => array(
+			'et_pb_wc_rating'                   => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_rating{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_related_products'   => array(
+			'et_pb_wc_related_products'         => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_related_products_upsells{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_upsells'            => array(
+			'et_pb_wc_upsells'                  => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_related_products_upsells{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_reviews'            => array(
+			'et_pb_wc_reviews'                  => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_reviews{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_stock'              => array(
+			'et_pb_wc_stock'                    => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_stock{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_tabs'               => array(
+			'et_pb_wc_tabs'                     => array(
 				'css' => array(
 					"{$assets_prefix}/css/tabs{$this->_cpt_suffix}.css",
 					"{$assets_prefix}/css/woo_tabs{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_wc_title'              => array(
+			'et_pb_wc_title'                    => array(
 				'css' => array(
 					"{$assets_prefix}/css/woo_title{$this->_cpt_suffix}.css",
 				),
 			),
-			'et_pb_icon'                  => array(
-				'css' => "{$assets_prefix}/css/icon{$this->_cpt_suffix}.css",
+			'et_pb_wc_cart_totals'              => array(
+				'css' => array(
+					"{$assets_prefix}/css/woo_cart_totals{$this->_cpt_suffix}.css",
+				),
+			),
+			'et_pb_wc_cart_products'            => array(
+				'css' => array(
+					"{$assets_prefix}/css/woo_cart_products{$this->_cpt_suffix}.css",
+				),
+			),
+			'et_pb_wc_cross_sells'              => array(
+				'css' => array(
+					"{$assets_prefix}/css/woo_cross_sells{$this->_cpt_suffix}.css",
+				),
+			),
+			'et_pb_wc_checkout_billing'         => array(
+				'css' => array(
+					"{$assets_prefix}/css/woo_checkout_billing{$this->_cpt_suffix}.css",
+				),
+			),
+			'et_pb_wc_checkout_shipping'        => array(
+				'css' => array(
+					"{$assets_prefix}/css/woo_checkout_shipping{$this->_cpt_suffix}.css",
+				),
+			),
+			'et_pb_wc_checkout_additional_info' => array(
+				'css' => array(
+					"{$assets_prefix}/css/woo_checkout_info{$this->_cpt_suffix}.css",
+				),
+			),
+			'et_pb_wc_checkout_order_details'   => array(
+				'css' => array(
+					"{$assets_prefix}/css/woo_checkout_details{$this->_cpt_suffix}.css",
+				),
+			),
+			'et_pb_wc_checkout_payment_info'    => array(
+				'css'        => array(
+					"{$assets_prefix}/css/woo_checkout_payment{$this->_cpt_suffix}.css",
+				),
+				'et_pb_icon' => array(
+					'css' => "{$assets_prefix}/css/icon{$this->_cpt_suffix}.css",
+				),
 			),
 		);
 
@@ -1977,6 +2025,9 @@ class ET_Dynamic_Assets {
 	 * @since 4.10.0
 	 */
 	public function maybe_add_global_modules_content( $content ) {
+		// Ensure the $content is valid string.
+		$content = is_string( $content ) ? $content : '';
+
 		preg_match_all( '@global_module="(\d+)"@', $content, $matches );
 
 		$global_modules = $this->get_unique_array_values( $matches[1], $this->_global_modules );
@@ -2014,6 +2065,9 @@ class ET_Dynamic_Assets {
 	public function get_early_shortcodes( $content ) {
 		$shortcodes        = array_keys( $this->get_shortcode_assets_list( false ) );
 		$processed_content = $this->maybe_add_global_modules_content( $content );
+
+		// Ensure the $processed_content is valid string.
+		$processed_content = is_string( $processed_content ) ? $processed_content : '';
 
 		preg_match_all( '@\[([^<>&/\[\]\x00-\x20=]++)@', $processed_content, $matches );
 
@@ -2537,6 +2591,9 @@ class ET_Dynamic_Assets {
 			}
 
 			foreach ( $module_presets->presets as $key => $value ) {
+				if ( empty( $value->settings ) ) {
+					continue;
+				}
 				$presets_attributes = array_merge( $presets_attributes, (array) $value->settings );
 			}
 		}
@@ -2553,13 +2610,18 @@ class ET_Dynamic_Assets {
 	 * @since 4.10.0
 	 */
 	public function check_if_attribute_exits( $attribute, $content ) {
-		$preset_attributes = array();
+		// Ensure the $content is valid string.
+		$content = is_string( $content ) ? $content : '';
+
+		$has_attribute = preg_match( '/' . $attribute . '=".+"/', $content );
 
 		if ( ! empty( $this->_presets_attributes ) ) {
 			$preset_attributes = array_keys( $this->_presets_attributes );
+
+			return $has_attribute && in_array( $attribute, $preset_attributes, true );
 		}
 
-		return preg_match( '/' . $attribute . '=".+"/', $content ) || in_array( $attribute, $preset_attributes, true );
+		return $has_attribute;
 	}
 
 	/**
@@ -2571,6 +2633,9 @@ class ET_Dynamic_Assets {
 	 * @since 4.10.5
 	 */
 	public function check_if_class_exits( $class, $content ) {
+		// Ensure the $content is valid string.
+		$content = is_string( $content ) ? $content : '';
+
 		return preg_match( '/class=".*' . preg_quote( $class, '/' ) . '/', $content );
 	}
 
@@ -2628,6 +2693,61 @@ class ET_Dynamic_Assets {
 		$all         = $this->get_global_assets_list();
 		$assets      = $all;
 		$has_btf     = ! empty( $content->btf );
+
+		global $post;
+
+		$post_id = ! empty( $post ) ? intval( $post->ID ) : 0;
+
+		if ( $post_id > 0 ) {
+			/**
+			 * Filters omit image attributes.
+			 *
+			 * @param array $img_attrs Image attributes.
+			 *
+			 * @since ??
+			 */
+			$additional_img_attrs = apply_filters( 'et_dynamic_assets_atf_omit_image_attributes', [] );
+			$default_img_attrs    = array(
+				'src',
+				'image_url',
+				'image',
+				'logo_image_url',
+				'header_image_url',
+				'logo',
+				'portrait_url',
+				'image_src',
+			);
+
+			if ( ! is_array( $additional_img_attrs ) ) {
+				$additional_img_attrs = [];
+			}
+
+			$sanitized_additional_img_attrs = [];
+			foreach ( $additional_img_attrs as $attr ) {
+				$sanitized_additional_img_attrs[] = sanitize_text_field( $attr );
+			}
+
+			$img_attrs   = array_merge( $default_img_attrs, $sanitized_additional_img_attrs );
+			$img_pattern = '';
+
+			foreach ( $img_attrs as $img_attr ) {
+				$or_conj      = ! empty( $img_pattern ) ? '|' : '';
+				$img_pattern .= "{$or_conj}({$img_attr}=)";
+			}
+
+			$result = preg_match_all( '/' . $img_pattern . '/', $content_atf, $matches );
+
+			$matched_attrs = $result ? count( $matches[0] ) : 0;
+			$skip_images   = max( $matched_attrs, 0 );
+
+			if ( $skip_images > 1 ) {
+				update_post_meta(
+					$post_id,
+					'_et_builder_dynamic_assets_loading_attr_threshold',
+					$skip_images
+				);
+			}
+		}
 
 		$atf = array_keys( $atf );
 		$all = array_keys( $all );
@@ -2695,6 +2815,59 @@ class ET_Dynamic_Assets {
 			'atf' => $atf_assets,
 			'btf' => $btf_assets,
 		];
+	}
+
+	/**
+	 * Check if current page is virtual.
+	 *
+	 * @return bool
+	 * @since 4.14.3
+	 */
+	public function is_virtual_page() {
+		global $wp;
+		$slug = $wp->request;
+
+		/**
+		 * Valid virtual pages for which dynamic css should be enabled.
+		 * Virtual pages are just custom enpoints or links added via rewrite hooks,
+		 * Meaning, it's not an actual page but it does have a valid link possibly,
+		 * custom generated by a plugin.
+		 * Add more virtual pages slug if there are known compatibility issues.
+		 *
+		 * @return bool
+		 * @since 4.14.3
+		 */
+		$valid_virtual_pages = apply_filters(
+			'et_builder_dynamic_css_virtual_pages',
+			[
+				'homes-for-sale-search',
+				'homes-for-sale-search-advanced',
+			]
+		);
+
+		if ( in_array( $slug, $valid_virtual_pages, true ) ) {
+			return true;
+		}
+
+		// Usually custom rewrite rules will return as page but will have no ID.
+		if ( is_page() && 0 === get_the_ID() ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/*
+	 * Get a list of shortcodes used in current page.
+	 */
+	public function get_saved_page_shortcodes() {
+		$all_shortcodes = $this->metadata_get( '_et_dynamic_cached_shortcodes' );
+
+		if ( empty( $all_shortcodes ) ) {
+			return array();
+		}
+
+		return $all_shortcodes;
 	}
 }
 
