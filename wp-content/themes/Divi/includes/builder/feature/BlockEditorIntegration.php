@@ -214,7 +214,11 @@ class ET_Builder_Block_Editor_Integration {
 			'status'      => get_site_option( 'et_account_status', 'not_active' ),
 		);
 
-		$library_i18n = require ET_BUILDER_DIR . 'frontend-builder/i18n/library.php';
+		if ( defined( 'ET_CLOUD_PLUGIN_DIR' ) ) {
+			$library_i18n = require ET_CLOUD_PLUGIN_DIR . '/i18n/library.php';
+		} else {
+			$library_i18n = require get_template_directory() . '/cloud/i18n/library.php';
+		}
 
 		// Set helpers needed by our own Gutenberg bundle.
 		$gutenberg = array(
@@ -270,9 +274,8 @@ class ET_Builder_Block_Editor_Integration {
 				'et_rest_process_builder_edit_data'   => wp_create_nonce( 'et_rest_process_builder_edit_data' ),
 			),
 			'urls'          => array(
-				'adminAjax'   => admin_url( 'admin-ajax.php' ),
-				'diviLibrary' => ET_BUILDER_DIVI_LIBRARY_URL,
-				'home'        => home_url( '/' ),
+				'adminAjax' => admin_url( 'admin-ajax.php' ),
+				'home'      => home_url( '/' ),
 			),
 			/**
 			 * Make DOM selectors list filterable so third party can modified it if needed
@@ -311,6 +314,8 @@ class ET_Builder_Block_Editor_Integration {
 
 		// Set translated strings for the scripts.
 		wp_set_script_translations( 'et-builder-gutenberg', 'et_builder', ET_BUILDER_DIR . 'languages' );
+
+		ET_Cloud_App::load_js( true, true );
 
 		// Block Editor Styles.
 		// Divi Layout Block.
@@ -700,8 +705,16 @@ class ET_Builder_Block_Editor_Integration {
 	 * @return void
 	 */
 	public function init_hooks() {
+		global $pagenow;
+
+		$edit_page_names = array( 'post.php', 'post-new.php', 'site-editor.php' );
+		$is_editing_page = in_array( $pagenow, $edit_page_names, true );
+
 		if ( is_admin() ) {
-			add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_assets' ), 4 );
+			// Load assets on post editing pages only.
+			if ( $is_editing_page ) {
+				add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_assets' ), 4 );
+			}
 			add_action( 'admin_print_scripts-edit.php', array( $this, 'add_new_button' ), 10 );
 			add_action( 'admin_init', array( $this, 'add_edit_link_filters' ) );
 
@@ -773,6 +786,13 @@ class ET_Builder_Block_Editor_Integration {
 			'type'          => 'string',
 		);
 		register_meta( 'post', '_et_gb_content_width', $args );
+
+
+
+		if ( $is_editing_page ) {
+			// Load Library and Cloud.
+			et_builder_load_library();
+		}
 	}
 }
 

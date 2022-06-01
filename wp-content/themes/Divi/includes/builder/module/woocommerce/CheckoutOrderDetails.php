@@ -394,6 +394,35 @@ class ET_Builder_Module_Woocommerce_Checkout_Order_Details extends ET_Builder_Mo
 	 *
 	 * @return string
 	 */
+	public static function swap_template_fe( $template, $template_name, $args, $template_path, $default_path ) {
+		$is_template_override = in_array(
+			$template_name,
+			array(
+				'checkout/form-checkout.php',
+			),
+			true
+		);
+
+		if ( $is_template_override ) {
+			return trailingslashit( ET_BUILDER_DIR ) . 'feature/woocommerce/templates/' . $template_name;
+		}
+
+		return $template;
+	}
+
+	/**
+	 * Swaps Checkout Order Details template.
+	 *
+	 * Coupon Remove Link must be shown in VB. Hence we swap the template.
+	 *
+	 * @param string $template      Template.
+	 * @param string $template_name Template name.
+	 * @param array  $args          Arguments.
+	 * @param string $template_path Template path.
+	 * @param string $default_path  Default path.
+	 *
+	 * @return string
+	 */
 	public static function swap_template( $template, $template_name, $args, $template_path, $default_path ) {
 		$is_template_override = in_array(
 			$template_name,
@@ -435,6 +464,18 @@ class ET_Builder_Module_Woocommerce_Checkout_Order_Details extends ET_Builder_Mo
 				5
 			);
 		}
+
+		if ( ! et_fb_is_computed_callback_ajax() && ! $is_tb ) {
+			remove_filter(
+				'wc_get_template',
+				[
+					'ET_Builder_Module_Woocommerce_Checkout_Order_Details',
+					'swap_template_fe',
+				],
+				10,
+				5
+			);
+		}
 	}
 
 	/**
@@ -462,6 +503,18 @@ class ET_Builder_Module_Woocommerce_Checkout_Order_Details extends ET_Builder_Mo
 				5
 			);
 		}
+
+		if ( ! et_fb_is_computed_callback_ajax() && ! $is_tb ) {
+			add_filter(
+				'wc_get_template',
+				[
+					'ET_Builder_Module_Woocommerce_Checkout_Order_Details',
+					'swap_template_fe',
+				],
+				10,
+				5
+			);
+		}
 	}
 
 	/**
@@ -481,11 +534,11 @@ class ET_Builder_Module_Woocommerce_Checkout_Order_Details extends ET_Builder_Mo
 		self::maybe_handle_hooks( $conditional_tags );
 
 		$is_cart_empty = function_exists( 'WC' ) && isset( WC()->cart ) && WC()->cart->is_empty();
-		$is_pb_mode    = et_fb_is_computed_callback_ajax();
+		$is_pb_mode    = et_fb_is_computed_callback_ajax() || is_et_pb_preview();
 		$class         = 'ET_Builder_Module_Helper_Woocommerce_Modules';
 
 		// Set dummy cart contents to output Billing when no product is in cart.
-		if ( $is_cart_empty && $is_pb_mode ) {
+		if ( ( $is_cart_empty && $is_pb_mode ) || is_et_pb_preview() ) {
 			add_filter(
 				'woocommerce_get_cart_contents',
 				// phpcs:ignore WordPress.Arrays.CommaAfterArrayItem.NoComma -- This is a function call.
@@ -494,10 +547,12 @@ class ET_Builder_Module_Woocommerce_Checkout_Order_Details extends ET_Builder_Mo
 		}
 
 		ob_start();
+
 		WC_Shortcode_Checkout::output( array() );
+
 		$markup = ob_get_clean();
 
-		if ( $is_cart_empty && $is_pb_mode ) {
+		if ( ( $is_cart_empty && $is_pb_mode ) || is_et_pb_preview() ) {
 			remove_filter(
 				'woocommerce_get_cart_contents',
 				// phpcs:ignore WordPress.Arrays.CommaAfterArrayItem.NoComma -- This is a function call.
@@ -602,7 +657,8 @@ class ET_Builder_Module_Woocommerce_Checkout_Order_Details extends ET_Builder_Mo
 		);
 
 		if ( isset( WC()->cart )
-			&& ! is_null( WC()->cart && method_exists( WC()->cart, 'check_cart_items' ) ) ) {
+			&& ! is_null( WC()->cart && method_exists( WC()->cart, 'check_cart_items' ) )
+			&& ! is_et_pb_preview() ) {
 			$return = WC()->cart->check_cart_items();
 
 			if ( wc_notice_count( 'error' ) > 0 ) {

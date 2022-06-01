@@ -263,21 +263,49 @@ final class ET_Builder_Module_Woocommerce_Checkout_Additional_Info extends ET_Bu
 	/**
 	 * Reset hooks.
 	 */
-	public static function maybe_reset_hooks() {
+	public static function maybe_reset_hooks( $conditional_tags ) {
+		$is_tb = et_()->array_get( $conditional_tags, 'is_tb', false );
+
 		ET_Builder_Module_Helper_Woocommerce_Modules::attach_wc_checkout_coupon_form();
 		ET_Builder_Module_Helper_Woocommerce_Modules::attach_wc_checkout_login_form();
 		ET_Builder_Module_Helper_Woocommerce_Modules::attach_wc_checkout_order_review();
 		ET_Builder_Module_Helper_Woocommerce_Modules::attach_wc_checkout_payment();
+
+		if ( ! et_fb_is_computed_callback_ajax() && ! $is_tb ) {
+			remove_filter(
+				'wc_get_template',
+				[
+					'ET_Builder_Module_Woocommerce_Checkout_Additional_Info',
+					'swap_template',
+				],
+				10,
+				5
+			);
+		}
 	}
 
 	/**
 	 * Handle hooks.
 	 */
-	public static function maybe_handle_hooks() {
+	public static function maybe_handle_hooks( $conditional_tags ) {
+		$is_tb = et_()->array_get( $conditional_tags, 'is_tb', false );
+
 		ET_Builder_Module_Helper_Woocommerce_Modules::detach_wc_checkout_coupon_form();
 		ET_Builder_Module_Helper_Woocommerce_Modules::detach_wc_checkout_login_form();
 		ET_Builder_Module_Helper_Woocommerce_Modules::detach_wc_checkout_order_review();
 		ET_Builder_Module_Helper_Woocommerce_Modules::detach_wc_checkout_payment();
+
+		if ( ! et_fb_is_computed_callback_ajax() && ! $is_tb ) {
+			add_filter(
+				'wc_get_template',
+				[
+					'ET_Builder_Module_Woocommerce_Checkout_Additional_Info',
+					'swap_template',
+				],
+				10,
+				5
+			);
+		}
 	}
 
 	/**
@@ -348,6 +376,35 @@ final class ET_Builder_Module_Woocommerce_Checkout_Additional_Info extends ET_Bu
 	}
 
 	/**
+	 * Swaps Checkout Order Details template.
+	 *
+	 * Coupon Remove Link must be shown in VB. Hence we swap the template.
+	 *
+	 * @param string $template      Template.
+	 * @param string $template_name Template name.
+	 * @param array  $args          Arguments.
+	 * @param string $template_path Template path.
+	 * @param string $default_path  Default path.
+	 *
+	 * @return string
+	 */
+	public static function swap_template( $template, $template_name, $args, $template_path, $default_path ) {
+		$is_template_override = in_array(
+			$template_name,
+			array(
+				'checkout/form-checkout.php',
+			),
+			true
+		);
+
+		if ( $is_template_override ) {
+			return trailingslashit( ET_BUILDER_DIR ) . 'feature/woocommerce/templates/' . $template_name;
+		}
+
+		return $template;
+	}
+
+	/**
 	 * Gets the Checkout Additional Info markup.
 	 *
 	 * @param array $args Settings used to render the module's output.
@@ -355,16 +412,16 @@ final class ET_Builder_Module_Woocommerce_Checkout_Additional_Info extends ET_Bu
 	 *
 	 * @return string
 	 */
-	public static function get_additional_info( $args = array() ) {
-		self::maybe_handle_hooks();
+	public static function get_additional_info( $args = array(), $conditional_tags = array() ) {
+		self::maybe_handle_hooks( $conditional_tags );
 
 		$is_cart_empty = function_exists( 'WC' ) && isset( WC()->cart ) && WC()->cart->is_empty();
 
 		// Is Page Builder mode?.
-		$is_pb_mode = et_fb_is_computed_callback_ajax();
+		$is_pb_mode = et_fb_is_computed_callback_ajax() || is_et_pb_preview();
 
 		// Set dummy cart contents to output Additional Information when no product is in cart.
-		if ( $is_cart_empty && $is_pb_mode ) {
+		if ( ( $is_cart_empty && $is_pb_mode ) || is_et_pb_preview() ) {
 			add_filter(
 				'woocommerce_get_cart_contents',
 				array(
@@ -388,7 +445,9 @@ final class ET_Builder_Module_Woocommerce_Checkout_Additional_Info extends ET_Bu
 		);
 
 		ob_start();
+
 		WC_Shortcode_Checkout::output( array() );
+
 		$markup = ob_get_clean();
 
 		remove_filter(
@@ -403,7 +462,7 @@ final class ET_Builder_Module_Woocommerce_Checkout_Additional_Info extends ET_Bu
 		// Reset showing Checkout Additional Info module title.
 		remove_filter( 'woocommerce_cart_needs_shipping', '__return_false' );
 
-		if ( $is_cart_empty && $is_pb_mode ) {
+		if ( ( $is_cart_empty && $is_pb_mode ) || is_et_pb_preview() ) {
 			remove_filter(
 				'woocommerce_get_cart_contents',
 				array(
@@ -414,7 +473,7 @@ final class ET_Builder_Module_Woocommerce_Checkout_Additional_Info extends ET_Bu
 			);
 		}
 
-		self::maybe_reset_hooks();
+		self::maybe_reset_hooks( $conditional_tags );
 
 		// Fallback.
 		if ( ! is_string( $markup ) ) {
@@ -510,7 +569,8 @@ final class ET_Builder_Module_Woocommerce_Checkout_Additional_Info extends ET_Bu
 		}
 
 		if ( isset( WC()->cart )
-			&& ! is_null( WC()->cart && method_exists( WC()->cart, 'check_cart_items' ) ) ) {
+			&& ! is_null( WC()->cart && method_exists( WC()->cart, 'check_cart_items' ) )
+			&& ! is_et_pb_preview() ) {
 			$return = WC()->cart->check_cart_items();
 
 			if ( wc_notice_count( 'error' ) > 0 ) {
