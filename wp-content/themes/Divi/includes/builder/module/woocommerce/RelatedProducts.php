@@ -657,12 +657,13 @@ class ET_Builder_Module_Woocommerce_Related_Products extends ET_Builder_Module {
 		self::$static_props = $args;
 		$offset_number      = et_()->array_get( $args, 'offset_number', 0 );
 		$include_cats       = et_()->array_get( $args, 'include_categories', '' );
+		$show_price         = et_()->array_get( $args, 'show_price', 'on' );
 		$include_cats       = ! empty( $include_cats ) ? explode( ',', $include_cats ) : array();
 		$is_include_cats    = is_array( $include_cats ) && count( $include_cats ) > 0;
 
 		// Force set product's class to ET_Theme_Builder_Woocommerce_Product_Variable_Placeholder
 		// in TB so related product can outputs visible content based on pre-filled value in TB
-		if ( 'true' === et_()->array_get( $conditional_tags, 'is_tb', false ) ) {
+		if ( 'true' === et_()->array_get( $conditional_tags, 'is_tb', false ) || is_et_pb_preview() ) {
 			add_filter( 'woocommerce_product_class', 'et_theme_builder_wc_product_class' );
 		}
 
@@ -708,6 +709,10 @@ class ET_Builder_Module_Woocommerce_Related_Products extends ET_Builder_Module {
 			)
 		);
 
+		if ( 'off' === $show_price ) {
+			remove_action( 'woocommerce_after_shop_loop_item_title', 'woocommerce_template_loop_price' );
+		}
+
 		$output = et_builder_wc_render_module_template( 'woocommerce_output_related_products', $args );
 
 		remove_filter(
@@ -743,6 +748,10 @@ class ET_Builder_Module_Woocommerce_Related_Products extends ET_Builder_Module {
 			);
 
 			self::$offset = 0;
+		}
+
+		if ( 'off' === $show_price ) {
+			add_action( 'woocommerce_after_shop_loop_item_title', 'woocommerce_template_loop_price' );
 		}
 
 		return $output;

@@ -323,13 +323,6 @@ class ET_Dynamic_Assets {
 	private $_enqueue_jquery_mobile = array();
 
 	/**
-	 * Whether jquery hashchange should be enqueued.
-	 *
-	 * @var array
-	 */
-	private $_enqueue_jquery_hashchange = array();
-
-	/**
 	 * Whether magnific popup should be enqueued.
 	 *
 	 * @var array
@@ -1985,11 +1978,8 @@ class ET_Dynamic_Assets {
 				),
 			),
 			'et_pb_wc_checkout_payment_info'    => array(
-				'css'        => array(
+				'css' => array(
 					"{$assets_prefix}/css/woo_checkout_payment{$this->_cpt_suffix}.css",
-				),
-				'et_pb_icon' => array(
-					'css' => "{$assets_prefix}/css/icon{$this->_cpt_suffix}.css",
 				),
 			),
 		);
@@ -2101,6 +2091,29 @@ class ET_Dynamic_Assets {
 					$template_ids[] = intval( $tb_layouts[ ET_THEME_BUILDER_FOOTER_LAYOUT_POST_TYPE ]['id'] );
 				}
 			}
+		}
+
+		return $template_ids;
+	}
+
+	/**
+	 * Get the post IDs of active WP Editor templates and template parts.
+	 *
+	 * @since 4.14.8
+	 *
+	 * @return array
+	 */
+	public function get_wp_editor_template_ids() {
+		$templates    = et_builder_get_wp_editor_templates();
+		$template_ids = array();
+
+		// Bail early if current page doesn't have templates.
+		if ( empty( $templates ) ) {
+			return $template_ids;
+		}
+
+		foreach ( $templates as $template ) {
+			$template_ids[] = isset( $template->wp_id ) ? (int) $template->wp_id : 0;
 		}
 
 		return $template_ids;
@@ -2452,22 +2465,6 @@ class ET_Dynamic_Assets {
 			}
 		}
 
-		// Handle jQuery hashchange script.
-		if ( ! $this->_enqueue_jquery_hashchange ) {
-			$jquery_hashchange_deps = array(
-				'et_pb_gallery',
-				'et_pb_fullwidth_header',
-				'et_pb_filterable_portfolio',
-				'et_pb_tabs',
-			);
-
-			$this->_enqueue_jquery_hashchange = $this->check_for_dependency( $jquery_hashchange_deps, $current_shortcodes );
-
-			if ( $this->_enqueue_jquery_hashchange || et_disable_js_on_demand() ) {
-				wp_enqueue_script( 'hashchange', ET_BUILDER_URI . '/feature/dynamic-assets/assets/js/hashchange.js', array( 'jquery' ), ET_CORE_VERSION, true );
-			}
-		}
-
 		// Handle magnific popup script.
 		if ( ! $this->_enqueue_magnific_popup ) {
 			$magnific_popup_deps = array(
@@ -2704,7 +2701,7 @@ class ET_Dynamic_Assets {
 			 *
 			 * @param array $img_attrs Image attributes.
 			 *
-			 * @since ??
+			 * @since 4.14.7
 			 */
 			$additional_img_attrs = apply_filters( 'et_dynamic_assets_atf_omit_image_attributes', [] );
 			$default_img_attrs    = array(
