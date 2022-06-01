@@ -135,6 +135,7 @@ require_once ET_BUILDER_DIR . 'compat/scripts.php';
 require_once ET_BUILDER_DIR . 'feature/gutenberg/blocks/Layout.php';
 require_once ET_BUILDER_DIR . 'feature/gutenberg/blocks/PostExcerpt.php';
 require_once ET_BUILDER_DIR . 'feature/gutenberg/utils/Conversion.php';
+require_once ET_BUILDER_DIR . 'feature/gutenberg/utils/Editor.php';
 require_once ET_BUILDER_DIR . 'feature/gutenberg/EditorTypography.php';
 require_once ET_BUILDER_DIR . 'core.php';
 require_once ET_BUILDER_DIR . 'conditions.php';
@@ -173,6 +174,9 @@ require_once ET_BUILDER_DIR . 'feature/ajax-data/AjaxData.php';
 require_once ET_BUILDER_DIR . 'feature/display-conditions/DisplayConditions.php';
 require_once ET_BUILDER_DIR . 'feature/BlockTemplates.php';
 require_once ET_BUILDER_DIR . 'feature/icon-manager/ExtendedFontIcons.php';
+require_once ET_BUILDER_DIR . 'feature/background-masks/Functions.php';
+require_once ET_BUILDER_DIR . 'feature/background-masks/PatternFields.php';
+require_once ET_BUILDER_DIR . 'feature/background-masks/MaskFields.php';
 
 // Conditional Includes.
 if ( et_is_woocommerce_plugin_active() ) {
@@ -391,7 +395,12 @@ function et_builder_load_modules_styles() {
 		'v'   => 3,
 		'key' => et_pb_get_google_api_key(),
 	);
-	$google_maps_api_url      = add_query_arg( $google_maps_api_url_args, is_ssl() ? 'https://maps.googleapis.com/maps/api/js' : 'http://maps.googleapis.com/maps/api/js' );
+
+	if ( $is_fb_enabled && ! et_builder_tb_enabled() && ! et_builder_bfb_enabled() ) {
+		$google_maps_api_url_args['callback'] = 'ETBuilderInitGoogleMaps';
+	}
+
+	$google_maps_api_url = add_query_arg( $google_maps_api_url_args, is_ssl() ? 'https://maps.googleapis.com/maps/api/js' : 'http://maps.googleapis.com/maps/api/js' );
 
 	wp_register_script( 'salvattore', ET_BUILDER_URI . '/feature/dynamic-assets/assets/js/salvattore.js', array(), ET_BUILDER_VERSION, true );
 	wp_register_script( 'google-maps-api', esc_url_raw( $google_maps_api_url ), array(), ET_BUILDER_VERSION, true );
@@ -451,6 +460,20 @@ function et_builder_load_modules_styles() {
 		'is_cache_plugin_active' => false === et_pb_detect_cache_plugins() ? 'no' : 'yes',
 		'is_shortcode_tracking'  => get_post_meta( $current_page_id, '_et_pb_enable_shortcode_tracking', true ),
 		'tinymce_uri'            => defined( 'ET_FB_ASSETS_URI' ) ? ET_FB_ASSETS_URI . '/vendors' : '',
+		/**
+		 * Filters Waypoints options for client side rendering.
+		 *
+		 * @since 4.15.0
+		 *
+		 * @param array $options {
+		 *     Filtered Waypoints options. Only support `context` at this moment because
+		 *     there is no test case for other properties.
+		 *
+		 *     @type string[] $context List of container selectors for the Waypoint. The
+		 *                             element will iterate and looking for the closest
+		 *                             parent element matches the given selectors.
+		 */
+		'waypoints_options'      => apply_filters( 'et_builder_waypoints_options', array() ),
 	);
 
 	wp_localize_script( et_get_combined_script_handle(), 'et_pb_custom', $pb_custom_data );
@@ -703,10 +726,6 @@ add_action( 'wp_print_styles', 'et_builder_dequeue_minifieds_styles', 99999999 )
 function et_is_ignore_waypoints() {
 	// WPBakery Visual Composer plugin conflicts with waypoints
 	if ( class_exists( 'Vc_Manager' ) ) {
-		return true;
-	}
-
-	if ( class_exists( 'PUM_Shortcode_Popup' ) ) {
 		return true;
 	}
 
