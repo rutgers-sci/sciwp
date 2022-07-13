@@ -44,18 +44,21 @@ function et_builder_handle_shipping_calculator_update_btn_click() {
 		return;
 	}
 
+	$nonce_verified = false;
+
+	// phpcs:ignore ET.Sniffs.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification is handled by WordPress.
+	if ( wp_verify_nonce( $_POST['woocommerce-shipping-calculator-nonce'], 'woocommerce-shipping-calculator' ) ) { // WPCS: input var ok.
+		// We can safely move forward.
+		$nonce_verified = true;
+	}
+
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verification is handled by WooCommerce plugin.
 	$referrer         = esc_url_raw( $_POST['_wp_http_referer'] );
 	$referrer_page_id = url_to_postid( $referrer );
 	$cart_page_id     = wc_get_page_id( 'cart' );
 
-	if ( $cart_page_id !== $referrer_page_id ) {
-		return;
-	}
-
-	$post_content = get_post_field( 'post_content', $referrer_page_id );
-
-	if ( has_shortcode( $post_content, 'woocommerce_cart' ) ) {
+	// Bail when nonce failed, and $referrer_page_id isn't equal to $cart_page_id.
+	if ( ! $nonce_verified && $cart_page_id !== $referrer_page_id ) {
 		return;
 	}
 
@@ -937,8 +940,9 @@ function et_builder_wc_render_module_template( $function_name, $args = array(), 
 	$overwrite_post     = in_array( 'post', $overwrite, true );
 	$overwrite_wp_query = in_array( 'wp_query', $overwrite, true );
 	$is_tb              = et_builder_tb_enabled();
+	$is_use_placeholder = $is_tb || is_et_pb_preview();
 
-	if ( $is_tb ) {
+	if ( $is_use_placeholder ) {
 		// global object needs to be set before output rendering. This needs to be performed on each
 		// module template rendering instead of once for all module template rendering because some
 		// module's template rendering uses `wp_reset_postdata()` which resets global query.
@@ -998,50 +1002,51 @@ function et_builder_wc_render_module_template( $function_name, $args = array(), 
 			);
 			break;
 		case 'woocommerce_show_product_images':
-			// WC Images module needs to modify global variable's property. Thus it is performed
-			// here instead at module's class since the $product global might be modified.
-			$gallery_ids     = $product->get_gallery_image_ids();
-			$image_id        = $product->get_image_id();
-			$show_image      = 'on' === $args['show_product_image'];
-			$show_gallery    = 'on' === $args['show_product_gallery'];
-			$show_sale_badge = 'on' === $args['show_sale_badge'];
+			if ( is_a( $product, 'WC_Product' ) ) {
+				// WC Images module needs to modify global variable's property. Thus it is performed
+				// here instead at module's class since the $product global might be modified.
+				$gallery_ids     = $product->get_gallery_image_ids();
+				$image_id        = $product->get_image_id();
+				$show_image      = 'on' === $args['show_product_image'];
+				$show_gallery    = 'on' === $args['show_product_gallery'];
+				$show_sale_badge = 'on' === $args['show_sale_badge'];
 
-			// If featured image is disabled, replace it with first gallery image's id (if gallery
-			// is enabled) or replaced it with empty string (if gallery is disabled as well).
-			if ( ! $show_image ) {
-				if ( $show_gallery && isset( $gallery_ids[0] ) ) {
-					$product->set_image_id( $gallery_ids[0] );
+				// If featured image is disabled, replace it with first gallery image's id (if gallery
+				// is enabled) or replaced it with empty string (if gallery is disabled as well).
+				if ( ! $show_image ) {
+					if ( $show_gallery && isset( $gallery_ids[0] ) ) {
+						$product->set_image_id( $gallery_ids[0] );
 
-					// Remove first image from the gallery because it'll be added as thumbnail and will be duplicated.
-					unset( $gallery_ids[0] );
+						// Remove first image from the gallery because it'll be added as thumbnail and will be duplicated.
+						unset( $gallery_ids[0] );
+						$product->set_gallery_image_ids( $gallery_ids );
+					} else {
+						$product->set_image_id( '' );
+					}
+				}
+
+				// Replaced gallery image ids with empty array.
+				if ( ! $show_gallery ) {
+					$product->set_gallery_image_ids( array() );
+				}
+
+				if ( $show_sale_badge && function_exists( 'woocommerce_show_product_sale_flash' ) ) {
+					woocommerce_show_product_sale_flash();
+				}
+
+				// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found -- Using for consistency.
+				call_user_func( $function_name );
+
+				// Reset product's actual featured image id.
+				if ( ! $show_image ) {
+					$product->set_image_id( $image_id );
+				}
+
+				// Reset product's actual gallery image id.
+				if ( ! $show_gallery ) {
 					$product->set_gallery_image_ids( $gallery_ids );
-				} else {
-					$product->set_image_id( '' );
 				}
 			}
-
-			// Replaced gallery image ids with empty array.
-			if ( ! $show_gallery ) {
-				$product->set_gallery_image_ids( array() );
-			}
-
-			if ( $show_sale_badge && function_exists( 'woocommerce_show_product_sale_flash' ) ) {
-				woocommerce_show_product_sale_flash();
-			}
-
-			// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
-			call_user_func( $function_name );
-
-			// Reset product's actual featured image id.
-			if ( ! $show_image ) {
-				$product->set_image_id( $image_id );
-			}
-
-			// Reset product's actual gallery image id.
-			if ( ! $show_gallery ) {
-				$product->set_gallery_image_ids( $gallery_ids );
-			}
-
 			break;
 		case 'wc_get_stock_html':
 			echo wc_get_stock_html( $product ); // phpcs:ignore WordPress.Security.EscapeOutput -- `wc_get_stock_html` include woocommerce's `single-product/stock.php` template.
@@ -1099,9 +1104,9 @@ function et_builder_wc_render_module_template( $function_name, $args = array(), 
 				WC()->session->set( 'wc_notices', $et_wc_cached_notices );
 			}
 			break;
+		case 'woocommerce_template_single_price':
 		case 'woocommerce_template_single_meta':
 			if ( is_a( $product, 'WC_Product' ) ) {
-
 				/*
 				 * Variable functions.
 				 * @see https://www.php.net/manual/en/functions.variable-functions.php
@@ -1110,14 +1115,17 @@ function et_builder_wc_render_module_template( $function_name, $args = array(), 
 			}
 			break;
 		default:
-			// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
-			call_user_func( $function_name );
+			// Only whitelisted functions shall be allowed until this point of execution.
+			if ( is_a( $product, 'WC_Product' ) ) {
+				// @phpcs:ignore Generic.PHP.ForbiddenFunctions.Found -- Only whitelisted functions reach here.
+				call_user_func( $function_name );
+			}
 	}
 
 	$output = ob_get_clean();
 
 	// Reset original product variable to global $product.
-	if ( $is_tb ) {
+	if ( $is_use_placeholder ) {
 		et_theme_builder_wc_reset_global_objects();
 	} elseif ( $overwrite_global ) {
 		// Reset $product global.
@@ -1257,6 +1265,7 @@ function et_builder_wc_disable_default_layout() {
  * any suitable Woo modules.
  *
  * @since 4.14.5
+ * @since 4.15.0 Move relocation process into outside callbacks loop to avoid duplication.
  */
 function et_builder_wc_relocate_single_product_summary() {
 	global $post, $wp_filter;
@@ -1334,6 +1343,8 @@ function et_builder_wc_relocate_single_product_summary() {
 	if ( ! $is_copy_needed ) {
 		return;
 	}
+
+	$modules_with_relocation = array();
 
 	/**
 	 * Filters the list of ignored `woocommerce_single_product_summary` hook callbacks.
@@ -1501,14 +1512,21 @@ function et_builder_wc_relocate_single_product_summary() {
 				remove_action( 'woocommerce_single_product_summary', $callback_function, $callback_priority );
 			}
 
-			// Finally, copy and paste it to suitable location & module.
-			add_action( "et_builder_wc_single_product_summary_{$output_location}_{$module_slug}", $callback_function );
+			// And, copy and paste it to suitable location & module.
+			add_action( "et_builder_wc_single_product_summary_{$output_location}_{$module_slug}", $callback_function, $output_priority );
 
-			// Builder - Move it to suitable Woo modules before and/or after components.
-			add_filter( "{$module_slug}_fb_before_after_components", 'et_builder_wc_single_product_summary_before_after_components', $output_priority, 3 );
+			$modules_with_relocation[] = $module_slug;
+		}
+	}
 
-			// FE - Move it to suitable Woo modules shortcode output.
-			add_filter( "{$module_slug}_shortcode_output", 'et_builder_wc_single_product_summary_module_output', $output_priority, 3 );
+	// Finally, move it to suitable Woo modules.
+	if ( ! empty( $modules_with_relocation ) ) {
+		foreach ( $modules_with_relocation as $module_slug ) {
+			// Builder - Before and/or after components.
+			add_filter( "{$module_slug}_fb_before_after_components", 'et_builder_wc_single_product_summary_before_after_components', 10, 3 );
+
+			// FE - Shortcode output.
+			add_filter( "{$module_slug}_shortcode_output", 'et_builder_wc_single_product_summary_module_output', 10, 3 );
 		}
 	}
 }
@@ -1594,7 +1612,7 @@ function et_builder_wc_single_product_summary_before_after_components( $module_c
 	$target_id        = '';
 	$overwritten_by   = '';
 	$is_tb_enabled    = et_builder_tb_enabled();
-	$is_fb_enabled    = et_core_is_fb_enabled();
+	$is_fb_enabled    = et_core_is_fb_enabled() || is_et_pb_preview();
 
 	if ( ! empty( $module_data ) ) {
 		// Get target ID if any.
@@ -1806,6 +1824,10 @@ function et_builder_has_woocommerce_module( $content = '' ) {
  * @since bool
  */
 function et_builder_wc_is_non_product_post_type() {
+	if ( wp_doing_ajax() ) {
+		return false;
+	}
+
 	global $post;
 
 	if ( $post && 'product' === $post->post_type ) {
@@ -1948,7 +1970,7 @@ function et_builder_wc_load_scripts() {
  * @since 3.29
  */
 function et_builder_wc_add_body_class( $classes ) {
-	if ( et_builder_wc_is_non_product_post_type() ) {
+	if ( et_builder_wc_is_non_product_post_type() || is_et_pb_preview() ) {
 		$classes[] = 'woocommerce';
 		$classes[] = 'woocommerce-page';
 	}
@@ -1967,7 +1989,7 @@ function et_builder_wc_add_body_class( $classes ) {
  */
 function et_builder_wc_add_inner_content_class( $classes ) {
 	// The class is required on any post with woocommerce modules and on product pages.
-	if ( et_builder_wc_is_non_product_post_type() || is_product() ) {
+	if ( et_builder_wc_is_non_product_post_type() || is_product() || is_et_pb_preview() ) {
 		$classes[] = 'product';
 	}
 
@@ -2168,6 +2190,10 @@ function et_builder_trigger_extra_product_options( $hook ) {
  * @return string
  */
 function et_builder_avoid_nested_shortcode_parsing( $content ) {
+	if ( is_et_pb_preview() ) {
+		return $content;
+	}
+
 	// Strip shortcodes only on non-builder pages that contain Builder shortcodes.
 	if ( et_pb_is_pagebuilder_used( get_the_ID() ) ) {
 		return $content;
@@ -2241,6 +2267,23 @@ function et_builder_wc_delete_post_meta( $post ) {
 }
 
 /**
+ * Adds the Preview class to the wrapper.
+ *
+ * @param string $maybe_class_string Classnames string.
+ * @return string
+ */
+function et_builder_wc_add_preview_wrap_class( $maybe_class_string ) {
+	if ( ! is_string( $maybe_class_string ) ) {
+		return $maybe_class_string;
+	}
+
+	$classes   = explode( ' ', $maybe_class_string );
+	$classes[] = 'product';
+
+	return implode( ' ', $classes );
+}
+
+/**
  * Entry point for the woocommerce-modules.php file.
  *
  * @since 3.29
@@ -2252,6 +2295,7 @@ function et_builder_wc_init() {
 	// Add WooCommerce class names on non-`product` CPT which uses builder.
 	add_filter( 'body_class', 'et_builder_wc_add_body_class' );
 	add_filter( 'et_builder_inner_content_class', 'et_builder_wc_add_inner_content_class' );
+	add_filter( 'et_pb_preview_wrap_class', 'et_builder_wc_add_preview_wrap_class' );
 	add_filter( 'et_builder_outer_content_class', 'et_builder_wc_add_outer_content_class' );
 
 	// Load WooCommerce related scripts.

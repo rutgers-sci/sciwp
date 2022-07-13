@@ -241,6 +241,7 @@ function et_fb_enqueue_assets() {
 	$fb_bundle_dependencies = apply_filters( 'et_fb_bundle_dependencies', $dependencies_list );
 
 	if ( et_pb_enqueue_google_maps_script() ) {
+		add_filter( 'script_loader_tag', 'et_fb_disable_google_maps_script', 10, 3 );
 		wp_enqueue_script(
 			'google-maps-api',
 			esc_url(
@@ -294,6 +295,29 @@ function et_fb_enqueue_assets() {
 	) as $chunk ) {
 		$additional_bundles[] = "{$app}/build/" . basename( $chunk );
 	}
+
+	if ( defined( 'ET_CLOUD_PLUGIN_DIR' ) ) {
+		$cloud_build_dir = ET_CLOUD_PLUGIN_DIR . 'build';
+		$cloud_uri       = ET_CLOUD_PLUGIN_URI;
+	} else {
+		$cloud_build_dir = get_template_directory() . '/cloud/build';
+		$cloud_uri       = get_template_directory_uri() . '/cloud';
+	}
+
+	// Divi Cloud bundles.
+	foreach ( array_merge(
+		glob( $cloud_build_dir . '/*.css' ),
+		glob( $cloud_build_dir . '/*.js' )
+	) as $chunk ) {
+		$additional_bundles[] = "{$cloud_uri}/build/" . basename( $chunk );
+	}
+
+	wp_localize_script(
+		'et-frontend-builder',
+		'et_cloud_data',
+		ET_Cloud_App::get_cloud_helpers()
+	);
+
 	// Pass bundle path and additional bundles to preload
 	wp_localize_script(
 		'et-frontend-builder',
@@ -323,6 +347,9 @@ function et_fb_enqueue_assets() {
 	add_action( 'wp_print_footer_scripts', 'et_fb_output_wp_auth_check_html', 5 );
 
 	do_action( 'et_fb_enqueue_assets' );
+
+	// Skip react loading for the Cloud app ( second param = true ) as we already did it at this point ( @see et_fb_enqueue_react() above ).
+	ET_Cloud_App::load_js( false, true );
 }
 
 function et_fb_app_src( $tag, $handle, $src ) {
@@ -339,6 +366,23 @@ function et_fb_app_src( $tag, $handle, $src ) {
 	}
 	return $tag;
 	// phpcs:enable
+}
+
+/**
+ * Disable google maps api script. Google maps api script dynamically injects scripts in the head
+ * which will be blocked by Preboot.js while DOM move resources from top window to app window.
+ * The google maps script will be reenable once the resources has been moved into iframe.
+ *
+ * @param string $tag    The `<script>` tag for the enqueued script.
+ * @param string $handle The script's registered handle.
+ * @param string $src    The script's source URL.
+ */
+function et_fb_disable_google_maps_script( $tag, $handle, $src ) {
+	if ( 'google-maps-api' !== $handle || ! et_core_is_fb_enabled() || et_builder_bfb_enabled() || et_builder_tb_enabled() ) {
+		return $tag;
+	}
+
+	return str_replace( "type='text/javascript'", "type='text/tempdisablejs' data-et-type='text/javascript'", $tag );
 }
 
 /**

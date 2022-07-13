@@ -79,7 +79,17 @@ class ET_Builder_Post_Feature_Base {
 	 */
 	public function __construct() {
 		if ( self::enabled() ) {
+			global $shortname;
+
 			$this->_post_id = ET_Builder_Element::get_current_post_id();
+
+			if ( 'extra' === $shortname ) {
+				if ( ( et_is_extra_layout_used_as_home() || et_is_extra_layout_used_as_front() ) && ! is_null( et_get_extra_home_layout_id() ) ) {
+					$this->_post_id = et_get_extra_home_layout_id();
+				} elseif ( ( is_category() || is_tag() ) && ! is_null( et_get_extra_tax_layout_id() ) ) {
+					$this->_post_id = et_get_extra_tax_layout_id();
+				}
+			}
 
 			$this->cache_prime();
 
@@ -223,11 +233,22 @@ class ET_Builder_Post_Feature_Base {
 			$tb_data[ $tb_id ] = $tb_post->post_modified_gmt;
 		}
 
+		// Ignore WP Editor template if current page use TB.
+		$wpe_data = [];
+		if ( empty( $tb_data ) ) {
+			$wpe_ids = $dynamic_assets->get_wp_editor_template_ids();
+			foreach ( $wpe_ids as $wpe_id ) {
+				$wpe_post            = get_post( $wpe_id );
+				$wpe_data[ $wpe_id ] = $wpe_post->post_modified_gmt;
+			}
+		}
+
 		return array(
 			'gph'  => ET_Builder_Global_Presets_History::instance()->get_global_history_index(),
 			'divi' => et_get_theme_version(),
 			'wp'   => $wp_version,
 			'tb'   => $tb_data,
+			'wpe'  => $wpe_data,
 		);
 	}
 

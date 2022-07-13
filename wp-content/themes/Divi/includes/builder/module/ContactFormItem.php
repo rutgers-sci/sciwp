@@ -608,7 +608,7 @@ class ET_Builder_Module_Contact_Form_Item extends ET_Builder_Module {
 			case 'textarea':
 				$input_field = sprintf(
 					'<textarea name="et_pb_contact_%3$s_%2$s" id="et_pb_contact_%3$s_%2$s" class="et_pb_contact_message input" data-required_mark="%6$s" data-field_type="%4$s" data-original_id="%3$s" placeholder="%5$s"%7$s>%1$s</textarea>',
-					( isset( $_POST[ 'et_pb_contact_' . $field_id . '_' . $current_module_num ] ) ? esc_html( sanitize_text_field( $_POST[ 'et_pb_contact_' . $field_id . '_' . $current_module_num ] ) ) : '' ),
+					( isset( $_POST[ 'et_pb_contact_' . $field_id . '_' . $current_module_num ] ) ? esc_html( sanitize_textarea_field( $_POST[ 'et_pb_contact_' . $field_id . '_' . $current_module_num ] ) ) : '' ),
 					esc_attr( $current_module_num ),
 					esc_attr( $field_id ),
 					esc_attr( $field_type ),
@@ -901,6 +901,8 @@ class ET_Builder_Module_Contact_Form_Item extends ET_Builder_Module {
 			'<p class="%5$s"%6$s data-id="%3$s" data-type="%7$s">
 				%9$s
 				%8$s
+				%11$s
+				%12$s
 				<label for="et_pb_contact_%3$s_%2$s" class="et_pb_contact_form_label"%10$s>%1$s</label>
 				%4$s
 			</p>',
@@ -917,7 +919,9 @@ class ET_Builder_Module_Contact_Form_Item extends ET_Builder_Module {
 				array(
 					'content' => '{{field_title}}',
 				)
-			)
+			),
+			et_core_esc_previously( $this->background_pattern() ), // #11
+			et_core_esc_previously( $this->background_mask() ) // #12
 		);
 
 		return $output;
@@ -934,7 +938,9 @@ class ET_Builder_Module_Contact_Form_Item extends ET_Builder_Module {
 		return 'on' === self::$_->array_get( $this->props, 'background_enable_color' )
 			|| 'on' === self::$_->array_get( $this->props, 'background_enable_image' )
 			|| 'on' === self::$_->array_get( $this->props, 'background_enable_video_mp4' )
-			|| 'on' === self::$_->array_get( $this->props, 'background_enable_video_webm' );
+			|| 'on' === self::$_->array_get( $this->props, 'background_enable_video_webm' )
+			|| 'on' === self::$_->array_get( $this->props, 'background_enable_pattern_style' )
+			|| 'on' === self::$_->array_get( $this->props, 'background_enable_mask_style' );
 	}
 }
 

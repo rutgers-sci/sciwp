@@ -323,13 +323,6 @@ class ET_Dynamic_Assets {
 	private $_enqueue_jquery_mobile = array();
 
 	/**
-	 * Whether jquery hashchange should be enqueued.
-	 *
-	 * @var array
-	 */
-	private $_enqueue_jquery_hashchange = array();
-
-	/**
 	 * Whether magnific popup should be enqueued.
 	 *
 	 * @var array
@@ -479,15 +472,34 @@ class ET_Dynamic_Assets {
 			return;
 		}
 
-		global $post;
-		global $shortname;
+		global $shortname, $post;
+
+		$current_post_id = ET_Builder_Element::get_current_post_id();
+		$current_post    = get_post( $current_post_id );
 
 		if ( $this->is_taxonomy() ) {
 			$this->_object_id = intval( get_queried_object()->term_id );
-		} elseif ( ! empty( $post->ID ) ) {
-			$this->_object_id = intval( $post->ID );
 		} elseif ( is_search() || $this->is_virtual_page() ) {
 			$this->_object_id = -1;
+		} elseif ( is_singular() ) {
+			$this->_object_id = $post->ID;
+			$current_post     = get_post( $post->ID );
+		}
+
+		$post_stack_replaced = false;
+
+		if ( 'extra' === $shortname ) {
+			if ( ( et_is_extra_layout_used_as_home() || et_is_extra_layout_used_as_front() && ! is_null( et_get_extra_home_layout_id() ) ) ) {
+				$this->_object_id = et_get_extra_home_layout_id();
+			} elseif ( ( is_category() || is_tag() ) && ! is_null( et_get_extra_tax_layout_id() ) ) {
+				$this->_object_id = et_get_extra_tax_layout_id();
+			}
+
+			// Replace the post stack if an Extra Layout is used.
+			if ( et_get_extra_home_layout_id() === $this->_object_id || et_get_extra_tax_layout_id() === $this->_object_id ) {
+				ET_Post_Stack::replace( get_post( $this->_object_id ) );
+				$post_stack_replaced = true;
+			}
 		}
 
 		$this->_folder_name = $this->get_folder_name();
@@ -505,10 +517,10 @@ class ET_Dynamic_Assets {
 			$this->_owner = 'divi-builder';
 		}
 
-		$this->_post_id           = ! empty( $post ) ? intval( $post->ID ) : -1;
+		$this->_post_id           = ! empty( $current_post ) ? intval( $current_post_id ) : -1;
 		$this->_tb_template_ids   = $this->get_theme_builder_template_ids();
 		$content_retriever        = \Feature\ContentRetriever\ET_Builder_Content_Retriever::init();
-		$this->_all_content       = $content_retriever->get_entire_page_content( $post );
+		$this->_all_content       = $content_retriever->get_entire_page_content( $current_post );
 		$this->_cache_dir_path    = et_core_cache_dir()->path;
 		$this->_cache_dir_url     = et_core_cache_dir()->url;
 		$this->_product_dir       = et_is_builder_plugin_active() ? ET_BUILDER_PLUGIN_URI : get_template_directory_uri();
@@ -561,6 +573,11 @@ class ET_Dynamic_Assets {
 
 			$this->generate_dynamic_assets();
 		}
+
+		// Restore the post stack if it's replaced earlier.
+		if ( $post_stack_replaced ) {
+			ET_Post_Stack::restore();
+		}
 	}
 
 	/**
@@ -597,6 +614,10 @@ class ET_Dynamic_Assets {
 			$folder_name = 'home';
 		} elseif ( is_404() ) {
 			$folder_name = 'notfound';
+		}
+
+		if ( et_is_extra_layout_used_as_home() ) {
+			$folder_name = $this->_object_id;
 		}
 
 		return $folder_name;
@@ -856,10 +877,6 @@ class ET_Dynamic_Assets {
 	public function generate_dynamic_assets_files( $assets_data = array(), $suffix = '' ) {
 		global $wp_filesystem;
 
-		if ( ! $this->is_cachable_request() ) {
-			return;
-		}
-
 		$tb_ids                  = '';
 		$current_tb_template_ids = $this->_tb_template_ids;
 		$late_suffix             = '';
@@ -879,9 +896,15 @@ class ET_Dynamic_Assets {
 		$ds            = DIRECTORY_SEPARATOR;
 		$file_dir      = "{$this->_cache_dir_path}{$ds}{$this->_folder_name}{$ds}";
 		$maybe_post_id = is_singular() ? '-' . $this->_post_id : '';
-		$suffix        = empty( $suffix ) ? '' : "-{$suffix}";
-		$file_name     = "et-{$this->_owner}-dynamic{$tb_ids}{$maybe_post_id}{$late_suffix}{$suffix}.css";
-		$file_path     = et_()->normalize_path( "{$file_dir}{$file_name}" );
+
+		if ( et_is_extra_layout_used_as_home() && ! is_null( et_get_extra_home_layout_id() ) ) {
+			$maybe_post_id = '-' . et_get_extra_home_layout_id();
+		}
+
+		$suffix    = empty( $suffix ) ? '' : "-{$suffix}";
+		$file_name = "et-{$this->_owner}-dynamic{$tb_ids}{$maybe_post_id}{$late_suffix}{$suffix}.css";
+		$file_path = et_()->normalize_path( "{$file_dir}{$file_name}" );
+
 		if ( file_exists( $file_path ) ) {
 			return;
 		}
@@ -1008,6 +1031,7 @@ class ET_Dynamic_Assets {
 		}
 
 		$split_global_data = [];
+		$atf_shortcodes    = [];
 
 		if ( $this->_need_late_generation ) {
 			$this->_processed_shortcodes = $this->_missed_shortcodes;
@@ -1016,6 +1040,7 @@ class ET_Dynamic_Assets {
 			$this->_presets_attributes   = $this->get_preset_attributes( $this->_all_content );
 			$this->_processed_shortcodes = $this->_early_shortcodes;
 			$global_assets_list          = $this->get_global_assets_list();
+
 			/**
 			 * Filters the Above The Fold shortcodes.
 			 *
@@ -1985,11 +2010,8 @@ class ET_Dynamic_Assets {
 				),
 			),
 			'et_pb_wc_checkout_payment_info'    => array(
-				'css'        => array(
+				'css' => array(
 					"{$assets_prefix}/css/woo_checkout_payment{$this->_cpt_suffix}.css",
-				),
-				'et_pb_icon' => array(
-					'css' => "{$assets_prefix}/css/icon{$this->_cpt_suffix}.css",
 				),
 			),
 		);
@@ -2107,6 +2129,29 @@ class ET_Dynamic_Assets {
 	}
 
 	/**
+	 * Get the post IDs of active WP Editor templates and template parts.
+	 *
+	 * @since 4.14.8
+	 *
+	 * @return array
+	 */
+	public function get_wp_editor_template_ids() {
+		$templates    = et_builder_get_wp_editor_templates();
+		$template_ids = array();
+
+		// Bail early if current page doesn't have templates.
+		if ( empty( $templates ) ) {
+			return $template_ids;
+		}
+
+		foreach ( $templates as $template ) {
+			$template_ids[] = isset( $template->wp_id ) ? (int) $template->wp_id : 0;
+		}
+
+		return $template_ids;
+	}
+
+	/**
 	 * Merge multiple arrays and returns an array with unique values.
 	 *
 	 * @since 4.10.0
@@ -2175,6 +2220,7 @@ class ET_Dynamic_Assets {
 	 * @since 4.10.0
 	 */
 	public function get_late_attributes( $detected_attributes = array() ) {
+		$attributes = array();
 		if ( ! $this->_early_attributes ) {
 			$late_attributes = ET_Builder_Module_Use_Detection::instance()->get_module_attr_values_used();
 
@@ -2295,9 +2341,8 @@ class ET_Dynamic_Assets {
 			return metadata_exists( 'post', $this->_post_id, $key );
 		}
 
-		$folder_name      = $this->get_folder_name();
 		$metadata_manager = ET_Builder_Dynamic_Assets_Feature::instance();
-		$metadata_cache   = $metadata_manager->cache_get( $key, $folder_name );
+		$metadata_cache   = $metadata_manager->cache_get( $key, $this->_folder_name );
 
 		return ! empty( $metadata_cache );
 	}
@@ -2315,10 +2360,9 @@ class ET_Dynamic_Assets {
 			return metadata_exists( 'post', $this->_post_id, $key ) ? get_post_meta( $this->_post_id, $key, true ) : '';
 		}
 
-		$folder_name      = $this->get_folder_name();
 		$metadata_manager = ET_Builder_Dynamic_Assets_Feature::instance();
 
-		return $metadata_manager->cache_get( $key, $folder_name );
+		return $metadata_manager->cache_get( $key, $this->_folder_name );
 	}
 
 	/**
@@ -2336,10 +2380,9 @@ class ET_Dynamic_Assets {
 			return;
 		}
 
-		$folder_name      = $this->get_folder_name();
 		$metadata_manager = ET_Builder_Dynamic_Assets_Feature::instance();
 
-		$metadata_manager->cache_set( $key, $value, $folder_name );
+		$metadata_manager->cache_set( $key, $value, $this->_folder_name );
 	}
 
 	/**
@@ -2449,22 +2492,6 @@ class ET_Dynamic_Assets {
 
 			if ( $this->_enqueue_jquery_mobile || et_disable_js_on_demand() ) {
 				wp_enqueue_script( 'jquery-mobile', ET_BUILDER_URI . '/feature/dynamic-assets/assets/js/jquery.mobile.js', array( 'jquery' ), ET_CORE_VERSION, true );
-			}
-		}
-
-		// Handle jQuery hashchange script.
-		if ( ! $this->_enqueue_jquery_hashchange ) {
-			$jquery_hashchange_deps = array(
-				'et_pb_gallery',
-				'et_pb_fullwidth_header',
-				'et_pb_filterable_portfolio',
-				'et_pb_tabs',
-			);
-
-			$this->_enqueue_jquery_hashchange = $this->check_for_dependency( $jquery_hashchange_deps, $current_shortcodes );
-
-			if ( $this->_enqueue_jquery_hashchange || et_disable_js_on_demand() ) {
-				wp_enqueue_script( 'hashchange', ET_BUILDER_URI . '/feature/dynamic-assets/assets/js/hashchange.js', array( 'jquery' ), ET_CORE_VERSION, true );
 			}
 		}
 
@@ -2704,7 +2731,7 @@ class ET_Dynamic_Assets {
 			 *
 			 * @param array $img_attrs Image attributes.
 			 *
-			 * @since ??
+			 * @since 4.14.7
 			 */
 			$additional_img_attrs = apply_filters( 'et_dynamic_assets_atf_omit_image_attributes', [] );
 			$default_img_attrs    = array(

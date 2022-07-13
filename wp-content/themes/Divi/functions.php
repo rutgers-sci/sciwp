@@ -14,7 +14,9 @@ function et_setup_theme() {
 	$template_directory = get_template_directory();
 
 	require_once $template_directory . '/core/init.php';
+	require_once $template_directory . '/common/init.php';
 
+	et_common_setup();
 	et_core_setup( get_template_directory_uri() );
 
 	if ( '3.0.61' === ET_CORE_VERSION ) {
@@ -65,6 +67,9 @@ function et_setup_theme() {
 	add_theme_support( 'wc-product-gallery-slider' );
 
 	add_theme_support( 'customize-selective-refresh-widgets' );
+
+	// Block editor supports.
+	add_theme_support( 'wp-block-styles' );
 
 	remove_action( 'woocommerce_sidebar', 'woocommerce_get_sidebar', 10 );
 

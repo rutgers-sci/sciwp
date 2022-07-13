@@ -958,7 +958,7 @@ function et_builder_filter_resolve_default_dynamic_content( $content, $name, $se
 
 	$_       = ET_Core_Data_Utils::instance();
 	$def     = 'et_builder_get_dynamic_attribute_field_default';
-	$post    = get_post( $post_id );
+	$post    = ( is_int( $post_id ) && 0 !== $post_id ) ? get_post( $post_id ) : false;
 	$author  = null;
 	$wrapped = false;
 	$is_woo  = false;
@@ -1599,6 +1599,32 @@ function et_builder_filter_resolve_default_dynamic_content( $content, $name, $se
 	return $content;
 }
 add_filter( 'et_builder_resolve_dynamic_content', 'et_builder_filter_resolve_default_dynamic_content', 10, 6 );
+
+/**
+ * Add iFrame to allowed wp_kses_post tags.
+ *
+ * @param array  $tags Allowed tags, attributes, and entities.
+ * @param string $context Context to judge allowed tags by. Allowed values are 'post'.
+ *
+ * @return array
+ */
+function et_builder_wp_kses_post_tags( $tags, $context ) {
+	if ( 'post' === $context && current_user_can( 'unfiltered_html' ) ) {
+		$tags['iframe'] = array(
+			'title'           => true,
+			'width'           => true,
+			'height'          => true,
+			'src'             => true,
+			'allow'           => true,
+			'frameborder'     => true,
+			'allowfullscreen' => true,
+		);
+	}
+
+	return $tags;
+}
+
+add_filter( 'wp_kses_allowed_html', 'et_builder_wp_kses_post_tags', 10, 2 );
 
 /**
  * Resolve custom field dynamic content fields.
