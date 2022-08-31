@@ -2220,8 +2220,17 @@ class ET_Dynamic_Assets {
 	 * @since 4.10.0
 	 */
 	public function get_late_attributes( $detected_attributes = array() ) {
+		global $post;
+
 		$attributes = array();
 		if ( ! $this->_early_attributes ) {
+			if ( post_password_required() ) {
+				// If a password is required to view the current post, the main content shortcode will not run,
+				// therefor, ET_Builder_Module_Use_Detection->_module_attr_values_used would have incomplete values,
+				// to fix this and any other problems caused by not running the main content shortcode, it is run here.
+				do_shortcode( $post->post_content );
+			}
+
 			$late_attributes = ET_Builder_Module_Use_Detection::instance()->get_module_attr_values_used();
 
 			if ( empty( $this->_presets_attributes ) ) {

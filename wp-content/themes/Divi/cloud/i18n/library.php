@@ -72,6 +72,7 @@ return array(
 	'Global items'                           => esc_html__( 'Global items', 'et_builder' ),
 	'Grid View'                              => esc_html_x( 'Grid View', 'Divi Library View Mode', 'et_builder' ),
 	'Help'                                   => esc_html__( 'Help', 'et_builder' ),
+	'Import These Templates'                 => esc_html__( 'Import These Templates', 'et_builder' ),
 	'Layout'                                 => esc_html_x( 'Layout', 'Divi Library Item Type', 'et_builder' ),
 	'Layout Details'                         => esc_html_x( 'Layout Details', 'Divi Library Title', 'et_builder' ),
 	'Layout Pack'                            => esc_html__( 'Layout Pack', 'et_builder' ),

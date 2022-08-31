@@ -420,32 +420,7 @@ function et_fb_get_dynamic_backend_helpers() {
 					'loginAs' => sprintf( esc_html__( 'Login as %s', 'et_builder' ), $current_user->display_name ),
 				),
 				'postContent' => array(
-					'placeholder' =>
-						'<div class="et_pb_section et_section_transparent"><div class="et_pb_row"><div class="et_pb_column et_pb_column_4_4"><div class="et_pb_text">
-						<h1>Post Content Heading 1</h1>
-						<p>Post Content Paragraph Text. Lorem ipsum dolor sit amet, <a href="#">consectetur adipiscing elit</a>. Ut vitae congue libero, nec finibus purus. Vestibulum egestas orci vel ornare venenatis. Sed et ultricies turpis. Donec sit amet rhoncus erat. Phasellus volutpat vitae mi eu aliquam.</p>
-						<h2>Post Content Heading 2</h2>
-						<p>Curabitur a commodo sapien, at pellentesque velit. Vestibulum ornare vulputate. Mauris tempus massa orci, vitae lacinia tortor maximus sit amet. In hac habitasse platea dictumst. Praesent id tincidunt dolor. Morbi gravida sapien convallis sapien tempus consequat. </p>
-						<h3>Post Content Heading 3</h3>
-						<blockquote>
-						<p>Post Content Block Quote. Vehicula velit ut felis semper, non convallis dolor fermentum. Sed sapien nisl, tempus ut semper sed, congue quis leo. Integer nec suscipit lacus. Duis luctus eros dui, nec finibus lectus tempor nec. Pellentesque at tincidunt turpis.</p>
-						</blockquote>
-						<img src="' . ET_BUILDER_PLACEHOLDER_LANDSCAPE_IMAGE_DATA . '" alt="" />
-						<h4>Post Content Heading 4</h4>
-						<ul>
-						<li>Vestibulum posuere</li>
-						<li>Mi interdum nunc dignissim auctor</li>
-						<li>Cras non dignissim quam, at volutpat massa</li>
-						</ul>
-						<h5>Post Content Heading 5</h5>
-						<ol>
-						<li>Ut mattis orci in scelerisque tempus</li>
-						<li>Velit urna sagittis arcu</li>
-						<li>Mon ultrices risus lectus non nisl</li>
-						</ol>
-						<h6>Post Content Heading 6</h6>
-						<p>posuere nec lectus sit amet, pulvinar dapibus sapien. Donec placerat erat ac fermentum accumsan. Nunc in scelerisque dui. Etiam vitae purus velit. Proin dictum auctor mi, eu congue odio tempus et. Curabitur ac semper ligula. Praesent purus ligula, ultricies vel porta ac, elementum et lacus. Nullam vitae augue aliquet, condimentum est ut, vehicula sapien. Donec euismod, sem et elementum finibus, lacus mauris pulvinar enim, nec faucibus sapien neque quis sem. Vivamus suscipit tortor eget felis porttitor volutpat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. </p>
-						</div></div></div></div>',
+					'placeholder' => et_theme_builder_get_post_content_placeholder(),
 				),
 			),
 			'modals'  => array(

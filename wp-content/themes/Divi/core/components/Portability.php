@@ -721,6 +721,7 @@ class ET_Core_Portability {
 			$import['data']   = $this->replace_images_urls( $result['images'], $import['data'] );
 			$post_type        = self::$_->array_get( $import, 'post_type', 'post' );
 			$post_title       = self::$_->array_get( $import, 'post_title', '' );
+			$post_status      = self::$_->array_get( $import, 'post_status', 'publish' );
 			$post_meta        = self::$_->array_get( $import, 'post_meta', array() );
 			$post_type_object = get_post_type_object( $post_type );
 
@@ -731,6 +732,7 @@ class ET_Core_Portability {
 			$content = array_values( $import['data'] );
 			$content = $content[0];
 			$args    = array(
+				'post_status'  => $post_status,
 				'post_type'    => $post_type,
 				'post_content' => current_user_can( 'unfiltered_html' ) ? $content : wp_kses_post( $content ),
 			);
@@ -2528,6 +2530,61 @@ class ET_Core_Portability {
 		}
 
 		return $used_global_presets;
+	}
+
+	/**
+	 * Returns Global Colors used for a given theme builder shortcode.
+	 *
+	 * @since ??
+	 *
+	 * @param array $shortcode_object - The multidimensional array representing a page structure.
+	 *
+	 * @return array The list of the Global Colors
+	 */
+	public function get_theme_builder_library_used_global_colors( $shortcode_object ) {
+		return $this->_get_used_global_colors( $shortcode_object );
+	}
+
+	/**
+	 * Returns Global Presets used for a given theme builder shortcode.
+	 *
+	 * @since ??
+	 *
+	 * @param array $shortcode_object - The multidimensional array representing a page structure.
+	 *
+	 * @return array The list of the Global Presets
+	 */
+	public function get_theme_builder_library_used_global_presets( $shortcode_object ) {
+		return $this->get_used_global_presets( $shortcode_object );
+	}
+
+	/**
+	 * Returns images used for a given theme builder shortcode.
+	 *
+	 * @since ??
+	 *
+	 * @param array $data - ID and Post content.
+	 *
+	 * @return array The list of the encoded images
+	 */
+	public function get_theme_builder_library_images( $data ) {
+		$timestamp = $this->get_timestamp();
+		$images    = $this->get_data_images( $data );
+
+		return $this->maybe_paginate_images( $images, 'encode_images', $timestamp );
+	}
+
+	/**
+	 * Returns thumbnails used for a given theme builder shortcode.
+	 *
+	 * @since ??
+	 *
+	 * @param array $data - ID and Post content.
+	 *
+	 * @return array The list of the thumbnails
+	 */
+	public function get_theme_builder_library_thumbnail_images( $data ) {
+		return $this->_get_thumbnail_images( $data );
 	}
 
 	/**
