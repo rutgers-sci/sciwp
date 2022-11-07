@@ -214,8 +214,38 @@ function et_pb_video_get_oembed_thumbnail() {
 		add_filter( 'oembed_dataparse', 'et_pb_video_oembed_data_parse', 10, 3 );
 		// Save thumbnail.
 		$image_src = wp_oembed_get( $video_url );
+
+		// If the image src is empty try making a remote call with domain referer in case it's domain-restricted vimeo video.
+		// Ref: https://developer.vimeo.com/api/oembed/videos#embedding-videos-with-domain-privacy .
+		$is_vimeo_url = false !== strpos( $video_url, 'vimeo.com' );
+
+		if ( $is_vimeo_url && ! $image_src ) {
+			$vimeo_url      = add_query_arg( 'url', $video_url, 'https://vimeo.com/api/oembed.json' );
+			$vimeo_response = wp_remote_get(
+				$vimeo_url,
+				array(
+					'headers' => array(
+						'Referer' => get_site_url(),
+					),
+				)
+			);
+
+			if ( $vimeo_response ) {
+				$vimeo_response_body = wp_remote_retrieve_body( $vimeo_response );
+
+				if ( $vimeo_response_body ) {
+					$vimeo_response_body = (array) json_decode( $vimeo_response_body );
+
+					if ( ! empty( $vimeo_response_body['thumbnail_url'] ) ) {
+						$image_src = $vimeo_response_body['thumbnail_url'];
+					}
+				}
+			}
+		}
+
 		// Set back to normal.
 		remove_filter( 'oembed_dataparse', 'et_pb_video_oembed_data_parse', 10, 3 );
+
 		if ( '' === $image_src ) {
 			die( -1 );
 		}
@@ -4639,6 +4669,7 @@ function et_pb_register_builder_portabilities() {
 		// phpcs:disable WordPress.Security.NonceVerification -- This function does not change any state, and is therefore not susceptible to CSRF.
 		// Register the Roles Editor portability.
 		$pb_roles = array(
+			'title'  => esc_html__( 'Import & Export Roles', 'et_builder' ),
 			'name'   => esc_html__( 'Divi Role Editor Settings', 'et_builder' ),
 			'type'   => 'options',
 			'target' => 'et_pb_role_settings',
@@ -4651,15 +4682,17 @@ function et_pb_register_builder_portabilities() {
 	if ( current_user_can( 'edit_posts' ) ) {
 		// Register the Builder individual layouts portability.
 		$args = array(
-			'name' => esc_html__( 'Divi Builder Layout', 'et_builder' ),
-			'type' => 'post',
-			'view' => ( function_exists( 'et_builder_should_load_framework' ) && et_builder_should_load_framework() ),
+			'title' => esc_html__( 'Import & Export Layouts', 'et_builder' ),
+			'name'  => esc_html__( 'Divi Builder Layout', 'et_builder' ),
+			'type'  => 'post',
+			'view'  => ( function_exists( 'et_builder_should_load_framework' ) && et_builder_should_load_framework() ),
 		);
 		et_core_portability_register( 'et_builder', $args );
 
 		// phpcs:disable WordPress.Security.NonceVerification -- This function does not change any state, and is therefore not susceptible to CSRF.
 		// Register the Builder Layouts Post Type portability.
 		$layouts = array(
+			'title'  => esc_html__( 'Import & Export Layouts', 'et_builder' ),
 			'name'   => esc_html__( 'Divi Builder Layouts', 'et_builder' ),
 			'type'   => 'post_type',
 			'target' => ET_BUILDER_LAYOUT_POST_TYPE,
