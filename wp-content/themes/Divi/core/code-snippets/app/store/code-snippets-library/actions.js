@@ -8,6 +8,7 @@ function insertCodeIntoField({ get, props: { snippet, codeMirrorId, isAppend, sk
   // Insert code into specified codeMirror field.
   // Append or replace depending on user preferences.
   if (isAppend) {
+    snippet = codeMirrorInstance.getValue() ? '\n' + snippet : snippet;
     codeMirrorInstance.replaceRange(snippet, {line: codeMirrorInstance.lastLine()});
   } else {
     codeMirrorInstance.setValue(snippet);

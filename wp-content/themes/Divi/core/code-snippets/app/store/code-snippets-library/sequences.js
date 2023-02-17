@@ -237,7 +237,8 @@ const importSnippetToCloud = sequence('Import code snippet to cloud', [
       };
 
       const resource = getContextByItemType(importFile.type);
-      doApiRequest({ type: 'post', resource, accessToken }, newCloudItem).then(callback);
+      const providedBaseUrl = window.ETCloudApp.getActiveFolderEndpoint();
+      doApiRequest({ type: 'post', resource, accessToken, providedBaseUrl }, newCloudItem).then(callback);
     } else {
       set(state`importState`, STATE_IDLE),
       store.set(state`cloudStatus`, { error: 'auth_error' });
@@ -296,15 +297,17 @@ const importSnippet = sequence('Import code snippet', [
 ]);
 
 const downloadSnippetContent = sequence('Download Snippet Content', [
+  () => window.ETCloudApp.setCodeSnippetPreviewState({ codeSnippetPreviewState: STATE_LOADING }),
   // eslint-disable-next-line no-shadow
-  ({ codeSnippetsLibApi, get, path, props: { snippetId, snippetContent, needImageRefresh } }) => {
+  ({ codeSnippetsLibApi, get, path, props: { snippetId, snippetContent, needImageRefresh, item_location = '' } }) => {
     // When a local item is downloaded, snippetId shall be available.
-    if (! snippetContent) {
+    if (! snippetContent && 'cloud' !== item_location ) {
       const context = get(state`context`);
       const type    = getItemTypeByContext(context);
 
       return codeSnippetsLibApi.getItemContent(snippetId, type)
-        .then(response => path.success({ snippet: response.snippet, itemId: snippetId }));
+        .then(response => path.success({ snippet: response.snippet, itemId: snippetId }))
+        .catch(() => path.error());
     }
 
     // When a Cloud item is downloaded, snippetContent shall be available.
@@ -324,6 +327,7 @@ const downloadSnippetContent = sequence('Download Snippet Content', [
 
     ],
   },
+  () => window.ETCloudApp.setCodeSnippetPreviewState({ codeSnippetPreviewState: '' }),
 ]);
 
 const closeModal = sequence('Close open modal', [

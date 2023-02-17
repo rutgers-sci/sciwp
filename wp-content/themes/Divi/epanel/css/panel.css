@@ -2054,6 +2054,10 @@ Copyright (c) 2015 Daniel Eden
 	font-size: 14px;
 }
 
+.et-code-snippets-btn--disabled {
+	cursor: not-allowed;
+}
+
 @media only screen and ( max-width: 415px ) {
 	.defaults-hover {
 		width: auto;

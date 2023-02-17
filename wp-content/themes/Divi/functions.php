@@ -362,17 +362,20 @@ add_action( 'wp_enqueue_scripts', 'et_divi_load_scripts_styles' );
  * import the Divi style.css file in their child theme .css file, which won't work.
  */
 function et_divi_enqueue_stylesheet() {
-	$theme_version          = et_get_theme_version();
-	$template_directory_uri = preg_quote( get_template_directory_uri(), '/' );
-	$styles                 = wp_styles();
-	$divi_style_enqueued    = '';
+	$theme_version = et_get_theme_version();
+	$styles        = wp_styles();
 
-	foreach ( $styles->registered as $handle => $style ) {
-		if ( preg_match( '/' . $template_directory_uri . '.*/', $style->src ) ) {
-			$divi_style_enqueued = true;
-			break;
-		}
-	}
+	// Filter the $styles array and determine if the Divi stylesheet is enqueued.
+	$divi_style_enqueued = ! empty(
+		array_filter(
+			$styles->registered,
+			function( $style ) {
+				$template_directory_uri = preg_quote( get_template_directory_uri(), '/' );
+
+				return preg_match( '/' . $template_directory_uri . '\/style.*\.css/', $style->src );
+			}
+		)
+	);
 
 	if ( ! is_child_theme() ) {
 		// If no child theme is active, we enqueue the Divi style.css located in the template dir.
@@ -8393,7 +8396,7 @@ function et_divi_maybe_change_frontend_locale( $locale ) {
 
 	return $locale;
 }
-add_filter( 'locale', 'et_divi_maybe_change_frontend_locale' );
+add_filter( 'theme_locale', 'et_divi_maybe_change_frontend_locale' );
 
 /**
  * Enable Divi gallery override if user activates it

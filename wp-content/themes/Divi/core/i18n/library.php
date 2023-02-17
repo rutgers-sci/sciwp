@@ -22,5 +22,7 @@ return [
 	'Save'                     => esc_html__( 'Save', 'et_builder' ),
 	'Cancel'                   => esc_html__( 'Cancel', 'et_builder' ),
 	'Import & Export Snippets' => esc_html__( 'Import & Export Snippets', 'et_builder' ),
+	'Import & Export Snippet'  => esc_html__( 'Import & Export Snippet', 'et_builder' ),
 	'Import Snippets'          => esc_html__( 'Import Snippets', 'et_builder' ),
+	'Import Snippet'           => esc_html__( 'Import Snippet', 'et_builder' ),
 ];

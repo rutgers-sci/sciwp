@@ -76,6 +76,10 @@ function et_theme_builder_local_library_get_layouts( $template ) {
  * @return (integer|false) Return false on failure.
  */
 function et_theme_builder_save_template_to_library( $template, $preferences = array() ) {
+	if ( ! current_user_can( 'edit_others_posts' ) ) {
+		wp_die();
+	}
+
 	$_               = et_();
 	$is_set_template = false;
 
@@ -256,6 +260,10 @@ function et_theme_builder_save_template_to_library( $template, $preferences = ar
  * @return (integer|false) Returns Post ID on success and FALSE on failure.
  */
 function et_theme_builder_save_preset_to_library( $templates, $preferences ) {
+	if ( ! current_user_can( 'edit_others_posts' ) ) {
+		wp_die();
+	}
+
 	if ( ! is_array( $templates ) ) {
 		return false;
 	}
@@ -429,6 +437,10 @@ function et_theme_builder_get_library_item_post( $item ) {
  * @return int|bool The post ID on success. The value false on failure.
  */
 function et_theme_builder_insert_library_theme_builder() {
+	if ( ! current_user_can( 'edit_others_posts' ) ) {
+		wp_die();
+	}
+
 	$post_id = wp_insert_post(
 		array(
 			'post_type'   => ET_THEME_BUILDER_THEME_BUILDER_POST_TYPE,
@@ -531,6 +543,10 @@ function et_theme_builder_create_layouts_from_library_template( $template_post, 
  * @return int|bool The template id on success. false on failure.
  */
 function et_theme_builder_create_template_from_library_template( $item_post, $global_layouts = array() ) {
+	if ( ! current_user_can( 'edit_others_posts' ) ) {
+		wp_die();
+	}
+
 	// Insert template.
 	$template_id = wp_insert_post(
 		array(
@@ -934,7 +950,9 @@ function et_theme_builder_update_library_item( $item_id, $templates ) {
 		$removed_template_ids = array_diff( $old_template_ids, $template_post_ids );
 		if ( ! empty( $removed_template_ids ) ) {
 			foreach ( $removed_template_ids as $removed_template_id ) {
-				wp_trash_post( $removed_template_id );
+				if ( current_user_can( 'delete_post', $removed_template_id ) && ET_TB_ITEM_POST_TYPE === get_post_type( $removed_template_id ) ) {
+					wp_trash_post( $removed_template_id );
+				}
 			}
 		}
 
