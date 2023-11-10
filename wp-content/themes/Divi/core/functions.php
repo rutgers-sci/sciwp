@@ -1935,13 +1935,13 @@ if ( ! function_exists( 'et_maybe_update_hosting_card_status' ) ) :
 
 		// Prepare settings for API request
 		$options = array(
-			'timeout'    => 30,
+			'timeout'    => 10,
 			'body'       => array(
 				'action'   => 'disable_hosting_card',
 				'username' => $et_username,
 				'api_key'  => $et_api_key,
 			),
-			'user-agent' => 'WordPress/' . $wp_version . '; ' . home_url( '/' ),
+			'user-agent' => 'WordPress/' . $wp_version . '; Hosting Card/' . ET_CORE_VERSION . '; ' . home_url( '/' ),
 		);
 
 		$request               = wp_remote_post( 'https://www.elegantthemes.com/api/api.php', $options );
@@ -2171,7 +2171,7 @@ add_action( 'wp_enqueue_scripts', 'et_code_snippets_vb_enqueue_scripts' );
 /**
  * Enqueue AI scripts on BFB page.
  *
- * @since ??
+ * @since 4.22.0
  *
  * @return void
  */
@@ -2185,7 +2185,9 @@ function et_ai_admin_enqueue_scripts() {
 		require_once $path . '/ai-app/ai-app.php';
 	}
 
-	ET_AI_App::load_js();
+	if ( et_pb_is_allowed( 'divi_ai' ) ) {
+		ET_AI_App::load_js();
+	}
 }
 
 add_action( 'admin_enqueue_scripts', 'et_ai_admin_enqueue_scripts' );
