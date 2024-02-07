@@ -293,7 +293,7 @@ if ( ! function_exists( 'et_update_option' ) ) {
 			if ( ! isset( $et_theme_options ) || is_customize_preview() ) {
 				$et_theme_options = get_option( $et_theme_options_name );
 			}
-			$et_theme_options[$option_name] = $new_value;
+			$et_theme_options[ $option_name ] = $new_value;
 
 			update_option( $et_theme_options_name, $et_theme_options );
 

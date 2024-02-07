@@ -81,6 +81,20 @@ class ET_Builder_Library {
 	public static $submenu_files = array( 'edit-tags.php?taxonomy=layout_category', 'edit-tags.php?taxonomy=layout_tag' );
 
 	/**
+	 * Instance of `ET_Builder_Post_Taxonomy_LayoutTag`.
+	 *
+	 * @var ET_Builder_Post_Taxonomy_LayoutTag
+	 */
+	public $layout_tags;
+
+	/**
+	 * Instance of `ET_Builder_Post_Taxonomy_LayoutWidth`.
+	 *
+	 * @var ET_Builder_Post_Taxonomy_LayoutWidth
+	 */
+	public $layout_width;
+
+	/**
 	 * ET_Builder_Library constructor.
 	 */
 	public function __construct() {
