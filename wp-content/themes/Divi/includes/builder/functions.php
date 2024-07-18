@@ -8,7 +8,7 @@
 
 if ( ! defined( 'ET_BUILDER_PRODUCT_VERSION' ) ) {
 	// Note, this will be updated automatically during grunt release task.
-	define( 'ET_BUILDER_PRODUCT_VERSION', '4.25.1' );
+	define( 'ET_BUILDER_PRODUCT_VERSION', '4.27.0' );
 }
 
 if ( ! defined( 'ET_BUILDER_VERSION' ) ) {
@@ -969,7 +969,7 @@ if ( ! function_exists( 'et_builder_page_creation_options' ) ) :
 				'imgSrc'          => 'premade.png',
 				'imgSrcHover'     => 'premade.gif',
 				'titleText'       => esc_html__( 'Choose a premade Layout', 'et_builder' ),
-				'descriptionText' => esc_html__( 'Choose from hundreds of world-class premade layouts or start from any of your existing saved layouts.', 'et_builder' ),
+				'descriptionText' => esc_html__( 'Choose from hundreds of premade layouts, start from any of your saved layouts, or clone an existing page.', 'et_builder' ),
 				'buttonText'      => esc_html__( 'Browse Layouts', 'et_builder' ),
 				'permission'      => array( 'load_layout', 'divi_library' ),
 				'setting'         => array(
@@ -2118,7 +2118,23 @@ function et_fb_process_to_shortcode( $object, $options = array(), $library_item_
 					if ( et_is_builder_plugin_active() && in_array( $type, ET_Builder_Element::get_has_content_modules(), true ) ) {
 						// Wrap content in autop to avoid tagless content on FE due to content is edited on html editor and only
 						// have one-line without newline wrap which prevent `the_content`'s wpautop filter to properly wrap it.
-						$content = wpautop( $content );
+
+						/**
+						 * Filter whether to apply wpautop to content.
+						 *
+						 * This filter allows customization of whether the wpautop filter should be applied to
+						 * the content of a shortcode. It helps in wrapping content in <p> tags automatically when necessary.
+						 *
+						 * @since 4.11.4
+						 *
+						 * @param bool   $should_wpautop Whether to apply wpautop. Default true.
+						 * @param string $type           The shortcode or module type.
+						 * @param string $content        The content to be filtered.
+						 * @param array  $item           The current shortcode being processed.
+						 */
+						$should_wpautop = apply_filters( 'et_fb_should_apply_wpautop', true, $type, $content, $item );
+
+						$content = $should_wpautop ? wpautop( $content ) : $content;
 					}
 
 					$output .= $content;
@@ -2133,7 +2149,23 @@ function et_fb_process_to_shortcode( $object, $options = array(), $library_item_
 						if ( et_is_builder_plugin_active() && in_array( $type, ET_Builder_Element::get_has_content_modules(), true ) ) {
 							// Wrap content in autop to avoid tagless content on FE due to content is edited on html editor and only
 							// have one-line without newline wrap which prevent `the_content`'s wpautop filter to properly wrap it.
-							$_content = wpautop( $_content );
+
+							/**
+							 * Filter whether to apply wpautop to content.
+							 *
+							 * This filter allows customization of whether the wpautop filter should be applied to
+							 * the content of a shortcode. It helps in wrapping content in <p> tags automatically when necessary.
+							 *
+							 * @since 4.11.4
+							 *
+							 * @param bool   $should_wpautop Whether to apply wpautop. Default true.
+							 * @param string $type           The shortcode or module type.
+							 * @param string $content        The content to be filtered.
+							 * @param array  $item           The current shortcode being processed.
+							 */
+							$should_wpautop = apply_filters( 'et_fb_should_apply_wpautop', true, $type, $_content, $item );
+
+							$_content = $should_wpautop ? wpautop( $_content ) : $_content;
 						}
 
 						$output .= $_content;
@@ -5776,7 +5808,6 @@ if ( ! function_exists( 'et_pb_postinfo_meta' ) ) :
 		if ( in_array( 'author', $postinfo, true ) ) {
 			$postinfo_meta[] = ' ' . esc_html__( 'by', 'et_builder' ) . ' <span class="author vcard">' . et_pb_get_the_author_posts_link() . '</span>';
 		}
-
 
 		if ( in_array( 'date', $postinfo, true ) ) {
 			$postinfo_meta[] = '<span class="published">' . esc_html( get_the_time( $date_format ) ) . '</span>';
@@ -9550,6 +9581,12 @@ add_action( 'admin_init', 'et_pb_remove_lb_plugin_force_editor_mode' );
  * Generates array of all Role options
  */
 function et_pb_all_role_options() {
+	// get all the roles that can edit theme options.
+	$applicability_roles = et_core_get_roles_by_capabilities( [ 'edit_theme_options' ] );
+
+	// Get all the roles that can edit theme options and edit others posts.
+	$tb_applicability_roles = et_core_get_roles_by_capabilities( [ 'edit_theme_options', 'edit_others_posts' ], true );
+
 	// get all the modules and build array of capabilities for them.
 	$all_modules_array  = ET_Builder_Element::get_modules_array();
 	$custom_user_tabs   = ET_Builder_Element::get_tabs();
@@ -9593,7 +9630,7 @@ function et_pb_all_role_options() {
 		? array(
 			'theme_customizer' => array(
 				'name'          => esc_html__( 'Theme Customizer', 'et_builder' ),
-				'applicability' => array( 'administrator' ),
+				'applicability' => $applicability_roles,
 			),
 			'page_options'     => array(
 				'name' => esc_html__( 'Page Options', 'et_builder' ),
@@ -9605,22 +9642,29 @@ function et_pb_all_role_options() {
 		'general_capabilities'        => array(
 			'section_title' => '',
 			'options'       => array(
-				'theme_options' => array(
+				'theme_options'  => array(
 					'name'          => et_is_builder_plugin_active() ? esc_html__( 'Plugin Options', 'et_builder' ) : esc_html__( 'Theme Options', 'et_builder' ),
-					'applicability' => array( 'administrator' ),
+					'applicability' => $applicability_roles,
 				),
-				'divi_library'  => array(
-					'name' => esc_html__( 'Divi Library', 'et_builder' ),
+				// Added capabilities, so we can control menu role wise effectively.
+				'divi_library'   => array(
+					'name'          => esc_html__( 'Divi Library', 'et_builder' ),
+					'applicability' => $applicability_roles,
+					'capabilities'  => 'export',
 				),
-				'theme_builder' => array(
+				'theme_builder'  => array(
 					'name'          => esc_html__( 'Theme Builder', 'et_builder' ),
-					'applicability' => array( 'administrator', 'editor' ),
+					'applicability' => $tb_applicability_roles,
 				),
-				'divi_ai'       => array(
+				'support_center' => array(
+					'name'          => esc_html__( 'Support Center', 'et_builder' ),
+					'applicability' => $applicability_roles,
+				),
+				'divi_ai'        => array(
 					'name'          => esc_html__( 'Divi AI', 'et_builder' ),
 					'applicability' => array( 'administrator', 'editor' ),
 				),
-				'ab_testing'    => array(
+				'ab_testing'     => array(
 					'name' => esc_html__( 'Split Testing', 'et_builder' ),
 				),
 			),
@@ -9706,9 +9750,15 @@ function et_pb_all_role_options() {
 
 		// Dynamically create an option foreach portability.
 		foreach ( $registered_portabilities as $portability_context => $portability_instance ) {
-			$all_role_options['portability']['options'][ "{$portability_context}_portability" ] = array(
+			$portability_options = array(
 				'name' => esc_html( $portability_instance->name ),
 			);
+
+			if ( isset( $portability_instance->applicability ) ) {
+				$portability_options['applicability'] = $portability_instance->applicability;
+			}
+
+			$all_role_options['portability']['options'][ "{$portability_context}_portability" ] = $portability_options;
 		}
 	}
 
@@ -9778,6 +9828,10 @@ function et_pb_generate_roles_tab( $all_role_options, $role ) {
 	// generate all sections of the form for current role.
 	if ( ! empty( $all_role_options ) ) {
 		foreach ( $all_role_options as $capability_id => $capability_options ) {
+			if ( isset( $capability_options['applicability'] ) && ! in_array( $role, $capability_options['applicability'], true ) ) {
+				continue;
+			}
+
 			$form_sections .= sprintf(
 				'<div class="et_pb_roles_section_container">
 					%1$s
@@ -9821,8 +9875,30 @@ function et_pb_generate_capabilities_output( $cap_array, $role ) {
 	$output = '';
 
 	if ( ! empty( $cap_array ) ) {
+		$user_has_all_capabilities = true;
+		$role_obj                  = get_role( $role );
+
 		foreach ( $cap_array as $capability => $capability_details ) {
 			if ( empty( $capability_details['applicability'] ) || ( ! empty( $capability_details['applicability'] ) && in_array( $role, $capability_details['applicability'], true ) ) ) {
+
+				// $capability_details['capabilities'] is an array of capabilities that are required to see this option.
+				if ( isset( $capability_details['capabilities'] ) ) {
+					if ( is_string( $capability_details['capabilities'] ) && ! $role_obj->has_cap( $capability_details['capabilities'] ) ) {
+						$user_has_all_capabilities = false;
+					} elseif ( is_array( $capability_details['capabilities'] ) ) {
+						foreach ( $capability_details['capabilities'] as $capability ) {
+							if ( ! $role_obj->has_cap( $capability ) ) {
+								$user_has_all_capabilities = false;
+								break;
+							}
+						}
+					}
+
+					if ( ! $user_has_all_capabilities ) {
+						continue;
+					}
+				}
+
 				$output .= sprintf(
 					'<div class="et_pb_capability_option">
 						<span class="et_pb_capability_title">%4$s</span>

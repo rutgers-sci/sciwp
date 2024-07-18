@@ -4692,6 +4692,9 @@ function et_pb_register_builder_portabilities() {
 	// Don't overwrite global.
 	$_shortname = empty( $shortname ) ? 'divi' : $shortname;
 
+	// get all the roles that can edit theme options.
+	$applicability_roles = et_core_get_roles_by_capabilities( [ 'edit_theme_options' ] );
+
 	// Make sure the Portability is loaded.
 	et_core_load_component( 'portability' );
 
@@ -4699,11 +4702,12 @@ function et_pb_register_builder_portabilities() {
 		// phpcs:disable WordPress.Security.NonceVerification -- This function does not change any state, and is therefore not susceptible to CSRF.
 		// Register the Roles Editor portability.
 		$pb_roles = array(
-			'title'  => esc_html__( 'Import & Export Roles', 'et_builder' ),
-			'name'   => esc_html__( 'Divi Role Editor Settings', 'et_builder' ),
-			'type'   => 'options',
-			'target' => 'et_pb_role_settings',
-			'view'   => ( isset( $_GET['page'] ) && "et_{$_shortname}_role_editor" === $_GET['page'] ),
+			'title'         => esc_html__( 'Import & Export Roles', 'et_builder' ),
+			'name'          => esc_html__( 'Divi Role Editor Settings', 'et_builder' ),
+			'type'          => 'options',
+			'target'        => 'et_pb_role_settings',
+			'view'          => ( isset( $_GET['page'] ) && "et_{$_shortname}_role_editor" === $_GET['page'] ),
+			'applicability' => $applicability_roles,
 		);
 		et_core_portability_register( 'et_pb_roles', $pb_roles );
 		// phpcs:enable
@@ -6260,6 +6264,18 @@ function et_builder_is_tb_admin_screen() {
 	return is_admin() && 'admin.php' === $pagenow && isset( $_GET['page'] ) && 'et_theme_builder' === $_GET['page'];
 }
 
+/**
+ * Check if the current screen is the Divi Onboarding administration screen.
+ *
+ * @since 4.26.0
+ *
+ * @return bool
+ */
+function et_builder_is_et_onboarding_page() {
+	// phpcs:ignore WordPress.Security.NonceVerification -- this is generic read-only, bool returning helper function, and not a state changing action that is susceptible to CSRF attack.
+	return is_admin() && isset( $_GET['page'] ) && 'et_onboarding' === $_GET['page'];
+}
+
 if ( ! function_exists( 'et_builder_filter_bfb_enabled' ) ) :
 	/**
 	 * Theme implementation for BFB enabled check.
@@ -7017,7 +7033,11 @@ if ( ! function_exists( 'et_fb_delete_builder_assets' ) ) :
 		);
 
 		foreach ( $image_cache_keys as $image_cache_key ) {
-			@unlink( ET_Core_Cache_File::get_cache_file_name( $image_cache_key ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- unlink may fail with the permissions denied error.
+			$cache_file_name = ET_Core_Cache_File::get_cache_file_name( $image_cache_key );
+
+			if ( file_exists( $cache_file_name ) ) {
+				@unlink( $cache_file_name ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- unlink may fail with the permissions denied error.
+			}
 		}
 
 		/**
