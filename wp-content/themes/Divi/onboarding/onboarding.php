@@ -631,6 +631,7 @@ class ET_Onboarding {
 			'react',
 			'react-dom',
 			'es6-promise',
+			'wp-color-picker',
 		];
 
 		if ( $DEBUG || $enqueue_prod_scripts || file_exists( $asset_path ) ) {
@@ -680,6 +681,17 @@ class ET_Onboarding {
 				exit;
 			}
 		}
+	}
+
+	/**
+	 * Remove Onboarding transients.
+	 *
+	 * @since ??
+	 *
+	 * @return void
+	 */
+	public static function remove_transients() {
+		delete_transient( 'et_onboarding_redirect_done' );
 	}
 
 	/**
